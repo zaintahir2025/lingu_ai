@@ -61,14 +61,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
-        path: '/quiz',
+        path: '/quiz/:lessonId',
         name: 'quiz',
-        builder: (context, state) => const QuizScreen(),
+        builder: (context, state) {
+          final lessonId = int.parse(state.pathParameters['lessonId']!);
+          return QuizScreen(lessonId: lessonId);
+        },
       ),
       GoRoute(
-        path: '/quiz/results',
+        path: '/quiz/results/:lessonId',
         name: 'quiz_results',
-        builder: (context, state) => const QuizResultsScreen(),
+        builder: (context, state) {
+          final lessonId = int.parse(state.pathParameters['lessonId']!);
+          return QuizResultsScreen(lessonId: lessonId);
+        },
       ),
       GoRoute(
         path: '/review/session',

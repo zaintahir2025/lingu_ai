@@ -8,11 +8,12 @@ import '../../../../core/widgets/mascot/lingu_mascot.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 
 class QuizResultsScreen extends ConsumerWidget {
-  const QuizResultsScreen({super.key});
+  final int lessonId;
+  const QuizResultsScreen({super.key, required this.lessonId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(quizControllerProvider);
+    final state = ref.watch(quizControllerProvider(lessonId));
     final bool isPassed = state.score >= 0.6; // 60% threshold
 
     return Scaffold(
@@ -83,15 +84,14 @@ class QuizResultsScreen extends ConsumerWidget {
                     text: 'Retry',
                     isSecondary: true,
                     onPressed: () {
-                      ref.read(quizControllerProvider.notifier).restartQuiz();
-                      context.go('/quiz');
+                      ref.read(quizControllerProvider(lessonId).notifier).restartQuiz();
+                      context.go('/quiz/$lessonId');
                     },
                   ),
                 ),
               PrimaryButton(
                 text: 'Continue',
                 onPressed: () {
-                  // This will unlock the next node implicitly because we go back to home.
                   context.go('/');
                 },
               ),

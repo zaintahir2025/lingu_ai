@@ -11,7 +11,8 @@ import '../../../../core/theme/app_constants.dart';
 import '../../domain/models/quiz_question.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
-  const QuizScreen({super.key});
+  final int lessonId;
+  const QuizScreen({super.key, required this.lessonId});
 
   @override
   ConsumerState<QuizScreen> createState() => _QuizScreenState();
@@ -43,11 +44,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   void _submitAnswer() {
     if (_currentAnswer.isEmpty || _isFeedbackShowing) return;
 
-    final question = ref.read(quizControllerProvider).currentQuestion;
+    final question = ref.read(quizControllerProvider(widget.lessonId)).currentQuestion;
     if (question == null) return;
 
     _isFeedbackShowing = true;
-    final isCorrect = ref.read(quizControllerProvider.notifier).submitAnswer(_currentAnswer);
+    final isCorrect = ref.read(quizControllerProvider(widget.lessonId).notifier).submitAnswer(_currentAnswer);
 
     FeedbackBottomSheet.show(
       context: context,
@@ -59,11 +60,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         setState(() {
           _currentAnswer = '';
         });
-        ref.read(quizControllerProvider.notifier).nextQuestion();
+        ref.read(quizControllerProvider(widget.lessonId).notifier).nextQuestion();
         
-        final isFinished = ref.read(quizControllerProvider).isFinished;
+        final isFinished = ref.read(quizControllerProvider(widget.lessonId)).isFinished;
         if (isFinished) {
-          context.go('/quiz/results');
+          context.go('/quiz/results/${widget.lessonId}');
         } else {
           _focusNode.requestFocus(); // Re-focus for next question
         }
@@ -80,7 +81,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         return KeyEventResult.handled;
       }
 
-      final question = ref.read(quizControllerProvider).currentQuestion;
+      final question = ref.read(quizControllerProvider(widget.lessonId)).currentQuestion;
       if (question?.type == QuestionType.multipleChoice && !_isFeedbackShowing) {
         if (event.logicalKey == LogicalKeyboardKey.digit1 || event.logicalKey == LogicalKeyboardKey.numpad1) {
           if (question!.options.isNotEmpty) _onAnswerChanged(question.options[0]);
@@ -102,7 +103,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(quizControllerProvider);
+    final state = ref.watch(quizControllerProvider(widget.lessonId));
     final question = state.currentQuestion;
 
     if (question == null) {

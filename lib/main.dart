@@ -54,17 +54,19 @@ class _LinguAiAppState extends ConsumerState<LinguAiApp> {
   Widget build(BuildContext context) {
     final goRouter = ref.watch(routerProvider);
 
-    return InAppNotificationBanner(
-      child: MaterialApp.router(
-        title: 'LinguAI',
-        scaffoldMessengerKey: rootScaffoldMessengerKey,
-        theme: AppTheme.lightTheme,
-        routerConfig: goRouter,
-        debugShowCheckedModeBanner: false,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: ref.watch(localeProvider),
-      ),
+    return MaterialApp.router(
+      title: 'LinguAI',
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
+      theme: AppTheme.lightTheme,
+      routerConfig: goRouter,
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: ref.watch(localeProvider),
+      builder: (context, child) {
+        if (child == null) return const SizedBox.shrink();
+        return InAppNotificationBanner(child: child);
+      },
     );
   }
 }

@@ -19,7 +19,28 @@ class NotificationService {
   NotificationService(this._dio);
 
   Future<void> init() async {
-    // Initialize Local Notifications
+    if (kIsWeb) {
+      try {
+        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          _showLocalNotification(
+            title: message.notification?.title ?? 'New Message',
+            body: message.notification?.body ?? '',
+            payload: message.data['route'],
+          );
+        });
+
+        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+          if (message.data.containsKey('route')) {
+            _handleNotificationClick(message.data['route'] as String);
+          }
+        });
+      } catch (e) {
+        debugPrint('FCM Web Init error: $e');
+      }
+      return;
+    }
+
+    // Initialize Local Notifications for Mobile and Desktop
     const initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initializationSettingsDarwin = DarwinInitializationSettings(
       requestAlertPermission: false,
@@ -35,23 +56,24 @@ class NotificationService {
       linux: initializationSettingsLinux,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse: (response) {
-        // Handle deep link from local notification
-        final payload = response.payload;
-        if (payload != null) {
-          _handleNotificationClick(payload);
-        }
-      },
-    );
+    try {
+      await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings,
+        onDidReceiveNotificationResponse: (response) {
+          // Handle deep link from local notification
+          final payload = response.payload;
+          if (payload != null) {
+            _handleNotificationClick(payload);
+          }
+        },
+      );
+    } catch (e) {
+      debugPrint('Local notifications init error: $e');
+    }
 
     // Setup Firebase Messaging handlers if mobile/web
-    if (kIsWeb || Platform.isAndroid || Platform.isIOS) {
+    if (Platform.isAndroid || Platform.isIOS) {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        // Handle foreground push messages
-        // Since we want a custom foreground banner, we can trigger an event or Provider update here.
-        // For now, we will let the UI listen to a provider or we can show a local notification
         _showLocalNotification(
           title: message.notification?.title ?? 'New Message',
           body: message.notification?.body ?? '',
@@ -74,6 +96,8 @@ class NotificationService {
   }
 
   Future<void> _showLocalNotification({required String title, required String body, String? payload}) async {
+    if (kIsWeb) return;
+    
     const androidDetails = AndroidNotificationDetails(
       'linguai_channel',
       'LinguAI Notifications',

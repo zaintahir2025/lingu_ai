@@ -61,7 +61,7 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
                       lesson: lesson,
                       isCurrent: isCurrent,
                       onTap: () {
-                        context.push('/quiz');
+                        context.push('/quiz/${lesson.id}');
                       },
                     ),
                     if (isCurrent && index % 2 == 0) 

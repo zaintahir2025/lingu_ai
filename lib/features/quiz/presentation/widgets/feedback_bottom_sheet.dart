@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/audio/sound_service.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_constants.dart';
 import '../../../../../core/widgets/mascot/lingu_mascot.dart';
@@ -60,10 +61,11 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
 
     if (widget.isCorrect) {
       HapticFeedback.lightImpact();
-      // Play sound here
+      SoundService.playCorrect();
     } else {
       HapticFeedback.heavyImpact();
       _shakeController.forward();
+      SoundService.playWrong();
     }
   }
 
