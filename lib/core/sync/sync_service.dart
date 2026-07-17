@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../main.dart';
 import '../../core/database/database.dart';
@@ -8,8 +10,9 @@ import '../network/connectivity_provider.dart';
 class SyncService {
   final AppDatabase _db;
   bool _isSyncing = false;
+  bool isTesting;
 
-  SyncService(this._db);
+  SyncService(this._db, {this.isTesting = false});
 
   Future<void> syncData() async {
     if (_isSyncing) return;
@@ -131,13 +134,53 @@ class SyncService {
   }
 
   Future<void> _sendToApi(int vocabWordId, int quality) async {
-    // Mock network request
-    await Future.delayed(const Duration(milliseconds: 200));
+    if (isTesting) {
+      await Future.delayed(const Duration(milliseconds: 50));
+      return;
+    }
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('review_logs')
+        .add({
+          'vocabWordId': vocabWordId,
+          'quality': quality,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
   }
 
   Future<void> _sendXpToApi(int amount, String reason) async {
-    // Mock network request
-    await Future.delayed(const Duration(milliseconds: 200));
+    if (isTesting) {
+      await Future.delayed(const Duration(milliseconds: 50));
+      return;
+    }
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(userId);
+    
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(userDoc);
+      
+      int currentXp = 0;
+      if (snapshot.exists) {
+        currentXp = snapshot.data()?['totalXp'] ?? 0;
+      }
+      
+      transaction.set(userDoc, {
+        'totalXp': currentXp + amount,
+        'lastActivity': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      transaction.set(userDoc.collection('xp_logs').doc(), {
+        'amount': amount,
+        'reason': reason,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    });
   }
 }
 

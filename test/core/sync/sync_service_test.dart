@@ -9,7 +9,7 @@ void main() {
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
-    syncService = SyncService(db);
+    syncService = SyncService(db, isTesting: true);
   });
 
   tearDown(() async {

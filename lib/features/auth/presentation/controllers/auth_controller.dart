@@ -73,6 +73,11 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    try {
+      await _repository.logout();
+    } catch (e) {
+      // Ignore firebase logout errors
+    }
     await _tokenStorage.clearTokens();
     state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
   }

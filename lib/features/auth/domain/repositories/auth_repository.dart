@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class User {
@@ -12,33 +13,60 @@ abstract class AuthRepository {
   Future<User> register(String email, String password, String name);
   Future<void> forgotPassword(String email);
   Future<void> resetPassword(String token, String newPassword);
+  Future<void> logout();
 }
 
-class MockAuthRepository implements AuthRepository {
+class FirebaseAuthRepository implements AuthRepository {
+  final fb.FirebaseAuth _auth = fb.FirebaseAuth.instance;
+
   @override
   Future<User> login(String email, String password) async {
-    await Future.delayed(const Duration(seconds: 1));
-    if (email == 'error@test.com') throw Exception('Invalid credentials');
-    return User(id: '1', email: email, name: 'Test User');
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final firebaseUser = credential.user!;
+    return User(
+      id: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      name: firebaseUser.displayName ?? '',
+    );
   }
 
   @override
   Future<User> register(String email, String password, String name) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return User(id: '1', email: email, name: name);
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final firebaseUser = credential.user!;
+    
+    // Update display name inside Firebase
+    await firebaseUser.updateDisplayName(name);
+    
+    return User(
+      id: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      name: name,
+    );
   }
 
   @override
   Future<void> forgotPassword(String email) async {
-    await Future.delayed(const Duration(seconds: 1));
+    await _auth.sendPasswordResetEmail(email: email.trim());
   }
 
   @override
   Future<void> resetPassword(String token, String newPassword) async {
-    await Future.delayed(const Duration(seconds: 1));
+    await _auth.confirmPasswordReset(code: token, newPassword: newPassword);
+  }
+
+  @override
+  Future<void> logout() async {
+    await _auth.signOut();
   }
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return MockAuthRepository();
+  return FirebaseAuthRepository();
 });
