@@ -16,10 +16,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -33,37 +30,44 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'mock-api-key-for-web',
-    appId: '1:1234567890:web:mock-app-id',
-    messagingSenderId: '1234567890',
-    projectId: 'lingu-ai-mock',
-    authDomain: 'lingu-ai-mock.firebaseapp.com',
-    storageBucket: 'lingu-ai-mock.appspot.com',
+    apiKey: 'AIzaSyD6dIlZN2rRJTJ-CNHbyMg-IXsJ5N2jTVI',
+    appId: '1:1064127857792:web:3a7bc52f70c48cb692d265',
+    messagingSenderId: '1064127857792',
+    projectId: 'linguai-app-2026',
+    authDomain: 'linguai-app-2026.firebaseapp.com',
+    storageBucket: 'linguai-app-2026.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'mock-api-key-for-android',
-    appId: '1:1234567890:android:mock-app-id',
-    messagingSenderId: '1234567890',
-    projectId: 'lingu-ai-mock',
-    storageBucket: 'lingu-ai-mock.appspot.com',
+    apiKey: 'AIzaSyAtxpT1uQ0P5Qb_ujWLZBEXzpt_jpAMq74',
+    appId: '1:1064127857792:android:3b83a0918b5f31f392d265',
+    messagingSenderId: '1064127857792',
+    projectId: 'linguai-app-2026',
+    storageBucket: 'linguai-app-2026.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'mock-api-key-for-ios',
-    appId: '1:1234567890:ios:mock-app-id',
-    messagingSenderId: '1234567890',
-    projectId: 'lingu-ai-mock',
-    storageBucket: 'lingu-ai-mock.appspot.com',
-    iosBundleId: 'com.example.linguai',
+    apiKey: 'AIzaSyD8WTrPSCRYfnxENG6N_VXrCsFCKE8rUwo',
+    appId: '1:1064127857792:ios:6747ae0bb62424c192d265',
+    messagingSenderId: '1064127857792',
+    projectId: 'linguai-app-2026',
+    storageBucket: 'linguai-app-2026.firebasestorage.app',
+    iosBundleId: 'com.example.linguAi',
+  );
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyD8WTrPSCRYfnxENG6N_VXrCsFCKE8rUwo',
+    appId: '1:1064127857792:ios:6747ae0bb62424c192d265',
+    messagingSenderId: '1064127857792',
+    projectId: 'linguai-app-2026',
+    storageBucket: 'linguai-app-2026.firebasestorage.app',
+    iosBundleId: 'com.example.linguAi',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'mock-api-key-for-macos',
-    appId: '1:1234567890:ios:mock-app-id',
-    messagingSenderId: '1234567890',
-    projectId: 'lingu-ai-mock',
-    storageBucket: 'lingu-ai-mock.appspot.com',
-    iosBundleId: 'com.example.linguai',
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyD6dIlZN2rRJTJ-CNHbyMg-IXsJ5N2jTVI',
+    appId: '1:1064127857792:web:102691e74a9b490a92d265',
+    messagingSenderId: '1064127857792',
+    projectId: 'linguai-app-2026',
+    authDomain: 'linguai-app-2026.firebaseapp.com',
+    storageBucket: 'linguai-app-2026.firebasestorage.app',
   );
 }

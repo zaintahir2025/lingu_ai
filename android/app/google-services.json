@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1064127857792",
+    "project_id": "linguai-app-2026",
+    "storage_bucket": "linguai-app-2026.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064127857792:android:3b83a0918b5f31f392d265",
+        "android_client_info": {
+          "package_name": "com.example.lingu_ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtxpT1uQ0P5Qb_ujWLZBEXzpt_jpAMq74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064127857792:android:4b65f4d9e041c00992d265",
+        "android_client_info": {
+          "package_name": "com.linguai.linguai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtxpT1uQ0P5Qb_ujWLZBEXzpt_jpAMq74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
