@@ -18,10 +18,10 @@ class UserRepositoryImpl implements UserRepository {
   Future<User> updateProfile({String? username, String? avatarId, DateTime? dob, String? targetLanguage}) async {
     try {
       final response = await _dio.put('/api/user/profile', data: {
-        if (username != null) 'username': username,
-        if (avatarId != null) 'avatarId': avatarId,
-        if (dob != null) 'dob': dob.toIso8601String(),
-        if (targetLanguage != null) 'targetLanguage': targetLanguage,
+        'username': ?username,
+        'avatarId': ?avatarId,
+        'dob': ?dob?.toIso8601String(),
+        'targetLanguage': ?targetLanguage,
       });
       return User.fromJson(response.data['user']);
     } on DioException catch (e) {
@@ -43,9 +43,9 @@ class UserRepositoryImpl implements UserRepository {
   Future<User> submitSurvey({String? knowledgeLevel, int? fluencyScore, String? targetLanguage}) async {
     try {
       final response = await _dio.post('/api/user/survey', data: {
-        if (knowledgeLevel != null) 'knowledgeLevel': knowledgeLevel,
-        if (fluencyScore != null) 'fluencyScore': fluencyScore,
-        if (targetLanguage != null) 'targetLanguage': targetLanguage,
+        'knowledgeLevel': ?knowledgeLevel,
+        'fluencyScore': ?fluencyScore,
+        'targetLanguage': ?targetLanguage,
       });
       return User.fromJson(response.data['user']);
     } on DioException catch (e) {
