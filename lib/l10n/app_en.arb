@@ -144,5 +144,6 @@
   "upgradeToPro": "Upgrade to Pro",
   "notificationFallbackTitle": "Notification",
   "offlineTitleDefault": "You are Offline",
-  "offlineMessageDefault": "Please reconnect to the internet to use this feature."
+  "offlineMessageDefault": "Please reconnect to the internet to use this feature.",
+  "logOut": "Log Out"
 }

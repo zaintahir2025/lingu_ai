@@ -24,14 +24,13 @@ class AuthInterceptor extends Interceptor {
         try {
           // Use a new Dio instance to avoid interceptor loops
           final refreshDio = Dio(BaseOptions(baseUrl: _originalDio.options.baseUrl));
-          final response = await refreshDio.post('/auth/refresh', data: {
-            'refresh_token': refreshToken,
+          final response = await refreshDio.post('/auth/refresh-token', data: {
+            'token': refreshToken,
           });
           
-          final newJwt = response.data['jwt'];
-          final newRefresh = response.data['refresh_token'];
+          final newJwt = response.data['token'];
           
-          await _tokenStorage.saveTokens(jwt: newJwt, refreshToken: newRefresh);
+          await _tokenStorage.saveTokens(jwt: newJwt, refreshToken: refreshToken);
           
           // Retry original request
           err.requestOptions.headers['Authorization'] = 'Bearer $newJwt';
@@ -49,3 +48,4 @@ class AuthInterceptor extends Interceptor {
     return handler.next(err);
   }
 }
+

@@ -781,6 +781,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please reconnect to the internet to use this feature.'**
   String get offlineMessageDefault;
+
+  /// No description provided for @logOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get logOut;
 }
 
 class _AppLocalizationsDelegate

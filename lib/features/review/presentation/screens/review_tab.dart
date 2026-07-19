@@ -103,26 +103,7 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
             ),
           ),
           
-          const SizedBox(height: AppConstants.space32),
-          
-          // Heatmap Placeholder
-          Text(
-            AppLocalizations.of(context)!.activityHeatmap,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: AppConstants.space16),
-          Container(
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppConstants.radius16),
-              border: Border.all(color: AppColors.divider, width: 2),
-            ),
-            alignment: Alignment.center,
-            child: Text(AppLocalizations.of(context)!.heatmapComingSoon),
-          ),
 
-          const SizedBox(height: AppConstants.space32),
 
           // Mastered Words Counter
           Container(

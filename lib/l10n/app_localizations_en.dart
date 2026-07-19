@@ -362,4 +362,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get offlineMessageDefault =>
       'Please reconnect to the internet to use this feature.';
+
+  @override
+  String get logOut => 'Log Out';
 }

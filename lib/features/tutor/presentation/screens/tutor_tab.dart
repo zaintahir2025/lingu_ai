@@ -5,10 +5,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/widgets/shared/offline_gate.dart';
 import '../../../../core/widgets/shared/mascot_widget.dart';
-import '../../../../core/widgets/shared/pro_gate.dart';
 import '../providers/tutor_controller.dart';
 import '../../domain/models/chat_message.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
+import 'paywall_screen.dart';
 
 class TutorTab extends ConsumerStatefulWidget {
   const TutorTab({super.key});
@@ -56,6 +56,17 @@ class _TutorTabState extends ConsumerState<TutorTab> {
       if (previous?.messages.length != next.messages.length) {
         Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
       }
+      
+      if (next.requiresPremium && (previous?.requiresPremium != true)) {
+        // Show paywall dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Dialog.fullscreen(
+            child: const PaywallScreen(),
+          ),
+        );
+      }
     });
 
 
@@ -63,23 +74,21 @@ class _TutorTabState extends ConsumerState<TutorTab> {
     return OfflineGate(
       title: AppLocalizations.of(context)!.tutorSleepingTitle,
       message: AppLocalizations.of(context)!.tutorSleepingMessage,
-      child: ProGate(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(AppConstants.space16),
-                itemCount: tutorState.messages.length,
-                itemBuilder: (context, index) {
-                  final message = tutorState.messages[index];
-                  return _buildMessageBubble(message);
-                },
-              ),
+      child: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(AppConstants.space16),
+              itemCount: tutorState.messages.length,
+              itemBuilder: (context, index) {
+                final message = tutorState.messages[index];
+                return _buildMessageBubble(message);
+              },
             ),
-            _buildInputArea(context, tutorState.isStreaming),
-          ],
-        ),
+          ),
+          _buildInputArea(context, tutorState.isStreaming),
+        ],
       ),
     );
   }

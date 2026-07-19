@@ -11,6 +11,7 @@ class FeedbackBottomSheet extends StatefulWidget {
   final String correctAnswer;
   final String explanation;
   final VoidCallback onContinue;
+  final VoidCallback? onAskTutor;
 
   const FeedbackBottomSheet({
     super.key,
@@ -18,6 +19,7 @@ class FeedbackBottomSheet extends StatefulWidget {
     required this.correctAnswer,
     required this.explanation,
     required this.onContinue,
+    this.onAskTutor,
   });
 
   static Future<void> show({
@@ -26,6 +28,7 @@ class FeedbackBottomSheet extends StatefulWidget {
     required String correctAnswer,
     required String explanation,
     required VoidCallback onContinue,
+    VoidCallback? onAskTutor,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -39,6 +42,7 @@ class FeedbackBottomSheet extends StatefulWidget {
         correctAnswer: correctAnswer,
         explanation: explanation,
         onContinue: onContinue,
+        onAskTutor: onAskTutor,
       ),
     );
   }
@@ -143,6 +147,20 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
                 },
               ),
             ),
+            if (widget.onAskTutor != null && !widget.isCorrect) ...[
+              const SizedBox(height: AppConstants.space12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('Ask Tutor Why'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: textColor,
+                  ),
+                  onPressed: widget.onAskTutor,
+                ),
+              ),
+            ],
           ],
         ),
       ),

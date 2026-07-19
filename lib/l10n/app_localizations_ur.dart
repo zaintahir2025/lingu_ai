@@ -412,4 +412,7 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get offlineMessageDefault =>
       '[NEEDS NATIVE SPEAKER REVIEW] براہ کرم اس خصوصیت کو استعمال کرنے کے لیے انٹرنیٹ سے دوبارہ جڑیں۔';
+
+  @override
+  String get logOut => '[NEEDS NATIVE SPEAKER REVIEW] لاگ آؤٹ';
 }

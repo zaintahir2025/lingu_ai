@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  passwordHash    String
+  isEmailVerified Boolean  @default(false)
+  dob             DateTime? // Needed for Age Check (<13 COPPA policy)
+  role            String   @default("user") // admin, user
+  targetLanguage  String   @default("es")
+  username        String?
+  avatarId        String?
+  knowledgeLevel  String?  // beginner, intermediate, advanced
+  fluencyScore    Int?     // 1-100
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  refreshTokens   RefreshToken[]
+  progress        UserProgress?
+  dailyXp         DailyXp[]
+  aiUsage         AiUsage?
+  vocab           UserVocab[]
+  lessons         UserLesson[]
+  subscriptions   Subscription[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device    String?  // for identifying which device
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Subscription {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playStoreToken   String   @unique
+  status           String   // active, canceled, expired
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model AiUsage {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokensUsed Int      @default(0)
+  lastReset  DateTime @default(now())
+}
+
+// Global Library Content
+model Lesson {
+  id          Int      @id @default(autoincrement())
+  topic       String
+  cefrLevel   String
+  orderIndex  Int
+  vocabWords  VocabWord[]
+  userLessons UserLesson[]
+}
+
+model VocabWord {
+  id          Int      @id @default(autoincrement())
+  lessonId    Int
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  word        String
+  translation String
+  audioUrl    String?
+
+  userVocabs  UserVocab[]
+}
+
+// User-Specific Progress
+model UserLesson {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    Int
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  isLocked    Boolean  @default(true)
+  isCompleted Boolean  @default(false)
+
+  @@unique([userId, lessonId])
+}
+
+model UserVocab {
+  id             Int       @id @default(autoincrement())
+  userId         Int
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabWordId    Int
+  vocabWord      VocabWord @relation(fields: [vocabWordId], references: [id], onDelete: Cascade)
+  status         String    @default("new")
+  nextReviewDate DateTime?
+  repetitions    Int       @default(0)
+  easinessFactor Float     @default(2.5)
+  interval       Int       @default(0)
+
+  @@unique([userId, vocabWordId])
+}
+
+model UserProgress {
+  id               Int       @id @default(autoincrement())
+  userId           Int       @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalXp          Int       @default(0)
+  level            Int       @default(1)
+  currentStreak    Int       @default(0)
+  lastActivityDate DateTime?
+  streakFreezes    Int       @default(0)
+}
+
+model DailyXp {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  xpEarned  Int      @default(0)
+
+  @@unique([userId, date])
+}
+
+model VerificationToken {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

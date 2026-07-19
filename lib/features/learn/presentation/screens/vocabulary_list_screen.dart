@@ -5,6 +5,7 @@ import '../../../../core/database/database.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
+import 'package:shimmer/shimmer.dart';
 
 final vocabularyListProvider = FutureProvider<List<VocabWord>>((ref) async {
   final db = ref.read(databaseProvider);
@@ -59,7 +60,24 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> wit
       body: vocabAsync.when(
         data: (words) {
           if (words.isEmpty) {
-            return Center(child: Text(AppLocalizations.of(context)!.noVocabFound));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.menu_book, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: AppConstants.space16),
+                  Text(
+                    AppLocalizations.of(context)!.noVocabFound,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: AppConstants.space8),
+                  Text(
+                    'Complete lessons to unlock vocabulary.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
           }
           return TabBarView(
             controller: _tabController,
@@ -70,7 +88,24 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> wit
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => ListView.builder(
+          padding: const EdgeInsets.all(AppConstants.space16),
+          itemCount: 10,
+          itemBuilder: (context, index) => Padding(
+            padding: const EdgeInsets.only(bottom: AppConstants.space8),
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Container(
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppConstants.radius12),
+                ),
+              ),
+            ),
+          ),
+        ),
         error: (e, s) => Center(child: Text('Error: $e')),
       ),
     );

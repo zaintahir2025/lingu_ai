@@ -54,11 +54,13 @@ dependencies:
   connectivity_plus: ^7.2.0
   confetti: ^0.8.0
   fl_chart: ^1.2.0
-  firebase_core: ^4.12.1
-  firebase_messaging: ^16.4.3
-  firebase_auth: any
-  cloud_firestore: any
   flutter_local_notifications: ^22.0.1
+  webview_flutter: ^4.14.1
+  in_app_purchase: ^3.3.0
+  flutter_tts: ^4.2.5
+  encrypt: ^5.0.3
+  crypto: ^3.0.7
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

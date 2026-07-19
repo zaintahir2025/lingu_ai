@@ -1,18 +1,18 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/home/presentation/home_screen.dart';
-import '../../features/quiz/presentation/screens/quiz_screen.dart';
-import '../../features/quiz/presentation/screens/quiz_results_screen.dart';
+import '../../features/learn/presentation/screens/module_flow_screen.dart';
 import '../../features/review/presentation/screens/review_session_screen.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../storage/onboarding_storage.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/onboarding/presentation/screens/lang_picker_screen.dart';
-import '../../features/onboarding/presentation/screens/placement_screen.dart';
-import '../../features/onboarding/presentation/screens/results_screen.dart';
 import '../../features/onboarding/presentation/screens/tour_screen.dart';
-import '../../features/learn/presentation/screens/flashcard_screen.dart';
+import '../../features/onboarding/presentation/screens/profile_setup_screen.dart';
+import '../../features/onboarding/presentation/screens/experience_choice_screen.dart';
+import '../../features/onboarding/presentation/screens/survey_screen.dart';
 import '../../features/learn/presentation/screens/vocabulary_list_screen.dart';
 import '../../features/tutor/presentation/screens/persistent_errors_screen.dart';
 
@@ -28,28 +28,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       final hasCompletedOnboarding = onboardingStorage.hasCompletedOnboarding;
       
       final goingToAuth = state.matchedLocation.startsWith('/auth');
-      final goingToOnboarding = state.matchedLocation.startsWith('/onboarding');
 
       if (isInitial) {
         return null;
       }
 
-      // Save onboarding route if we are navigating inside it
-      if (goingToOnboarding) {
-        onboardingStorage.setLastOnboardingRoute(state.matchedLocation);
-      }
-
       if (!isAuth) {
         if (!hasCompletedOnboarding) {
-          if (!goingToOnboarding) {
-            final resumeRoute = onboardingStorage.lastOnboardingRoute ?? '/onboarding/lang';
-            return resumeRoute;
+          if (state.matchedLocation != '/onboarding/tour' && !goingToAuth) {
+             return '/onboarding/tour'; // Start with Tour
           }
         } else {
           if (!goingToAuth) return '/auth/login';
         }
       } else {
-        if (goingToAuth || goingToOnboarding) return '/';
+        final user = authState.user;
+        if (user != null) {
+          if (user.username == null) {
+            if (state.matchedLocation != '/profile-setup') return '/profile-setup';
+          } else if (user.targetLanguage == null) {
+            if (state.matchedLocation != '/onboarding/lang') return '/onboarding/lang';
+          } else if (user.knowledgeLevel == null) {
+            if (state.matchedLocation != '/experience-choice' && state.matchedLocation != '/survey') return '/experience-choice';
+          } else {
+            if (goingToAuth || state.matchedLocation.startsWith('/onboarding') || state.matchedLocation == '/profile-setup' || state.matchedLocation == '/experience-choice' || state.matchedLocation == '/survey') {
+              return '/';
+            }
+          }
+        }
       }
 
       return null;
@@ -58,76 +64,138 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         name: 'home',
-        builder: (context, state) => const HomeScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
       GoRoute(
-        path: '/quiz/:lessonId',
-        name: 'quiz',
-        builder: (context, state) {
+        path: '/module/:lessonId',
+        name: 'module',
+        pageBuilder: (context, state) {
           final lessonId = int.parse(state.pathParameters['lessonId']!);
-          return QuizScreen(lessonId: lessonId);
-        },
-      ),
-      GoRoute(
-        path: '/quiz/results/:lessonId',
-        name: 'quiz_results',
-        builder: (context, state) {
-          final lessonId = int.parse(state.pathParameters['lessonId']!);
-          return QuizResultsScreen(lessonId: lessonId);
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: ModuleFlowScreen(lessonId: lessonId),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
         },
       ),
       GoRoute(
         path: '/review/session',
         name: 'review_session',
-        builder: (context, state) => const ReviewSessionScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ReviewSessionScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
       GoRoute(
         path: '/auth/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const LoginScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
       GoRoute(
         path: '/auth/register',
         name: 'register',
-        builder: (context, state) => const RegisterScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const RegisterScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
       GoRoute(
         path: '/onboarding/lang',
         name: 'lang_picker',
-        builder: (context, state) => const LangPickerScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const LangPickerScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
-      GoRoute(
-        path: '/onboarding/placement',
-        name: 'placement',
-        builder: (context, state) => const PlacementScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/results',
-        name: 'results',
-        builder: (context, state) => const ResultsScreen(),
-      ),
+
       GoRoute(
         path: '/onboarding/tour',
         name: 'tour',
-        builder: (context, state) => const TourScreen(),
-      ),
-      GoRoute(
-        path: '/learn/flashcards/:lessonId',
-        name: 'flashcards',
-        builder: (context, state) {
-          final lessonId = int.parse(state.pathParameters['lessonId']!);
-          return FlashcardScreen(lessonId: lessonId);
-        },
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const TourScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
       GoRoute(
         path: '/learn/vocabulary',
         name: 'vocabulary',
-        builder: (context, state) => const VocabularyListScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const VocabularyListScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
       GoRoute(
         path: '/tutor/errors',
         name: 'tutor_errors',
-        builder: (context, state) => const PersistentErrorsScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PersistentErrorsScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/profile-setup',
+        name: 'profile_setup',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ProfileSetupScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/experience-choice',
+        name: 'experience_choice',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ExperienceChoiceScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/survey',
+        name: 'survey',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SurveyScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
     ],
   );

@@ -1,39 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import '../../theme/app_colors.dart';
 
-import 'package:lingu_ai/l10n/app_localizations.dart';
+enum NotificationType { success, error, info }
 
-class InAppNotificationBanner extends ConsumerStatefulWidget {
+final GlobalKey<InAppNotificationBannerState> inAppBannerKey = GlobalKey<InAppNotificationBannerState>();
+
+class InAppNotificationBanner extends StatefulWidget {
   final Widget child;
 
   const InAppNotificationBanner({super.key, required this.child});
 
+  static void show({
+    required BuildContext context,
+    required String title,
+    required String message,
+    NotificationType type = NotificationType.info,
+  }) {
+    inAppBannerKey.currentState?.showBanner(title, message, type);
+  }
+
   @override
-  ConsumerState<InAppNotificationBanner> createState() => _InAppNotificationBannerState();
+  State<InAppNotificationBanner> createState() => InAppNotificationBannerState();
 }
 
-class _InAppNotificationBannerState extends ConsumerState<InAppNotificationBanner> {
-  RemoteMessage? _currentMessage;
+class InAppNotificationBannerState extends State<InAppNotificationBanner> {
+  String? _notificationTitle;
+  String? _notificationBody;
+  NotificationType _notificationType = NotificationType.info;
 
   @override
   void initState() {
     super.initState();
-    // Listen for foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  }
+
+  void showBanner(String title, String body, NotificationType type) {
+    setState(() {
+      _notificationTitle = title;
+      _notificationBody = body;
+      _notificationType = type;
+    });
+
+    Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
         setState(() {
-          _currentMessage = message;
-        });
-
-        // Hide banner after 4 seconds
-        Future.delayed(const Duration(seconds: 4), () {
-          if (mounted && _currentMessage == message) {
-            setState(() {
-              _currentMessage = null;
-            });
-          }
+          _notificationTitle = null;
+          _notificationBody = null;
         });
       }
     });
@@ -44,7 +54,7 @@ class _InAppNotificationBannerState extends ConsumerState<InAppNotificationBanne
     return Stack(
       children: [
         widget.child,
-        if (_currentMessage != null)
+        if (_notificationTitle != null)
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
@@ -54,39 +64,43 @@ class _InAppNotificationBannerState extends ConsumerState<InAppNotificationBanne
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    )
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
                   ],
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.notifications, color: Colors.white, size: 24),
+                    Icon(
+                      _notificationType == NotificationType.error
+                          ? Icons.error_outline
+                          : _notificationType == NotificationType.success
+                              ? Icons.check_circle_outline
+                              : Icons.notifications_active,
+                      color: _notificationType == NotificationType.error
+                          ? Colors.redAccent
+                          : _notificationType == NotificationType.success
+                              ? Colors.green
+                              : Colors.blueAccent,
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _currentMessage!.notification?.title ?? AppLocalizations.of(context)!.notificationFallbackTitle,
+                            _notificationTitle!,
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
-                          if (_currentMessage!.notification?.body != null)
+                          if (_notificationBody != null)
                             Text(
-                              _currentMessage!.notification!.body!,
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              _notificationBody!,
+                              style: const TextStyle(color: Colors.black54),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -94,11 +108,11 @@ class _InAppNotificationBannerState extends ConsumerState<InAppNotificationBanne
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.textSecondary),
-                      tooltip: 'Dismiss notification',
+                      icon: const Icon(Icons.close, color: Colors.black54),
                       onPressed: () {
                         setState(() {
-                          _currentMessage = null;
+                          _notificationTitle = null;
+                          _notificationBody = null;
                         });
                       },
                     ),

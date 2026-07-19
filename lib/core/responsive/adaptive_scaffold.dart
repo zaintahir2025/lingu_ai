@@ -34,7 +34,7 @@ class AdaptiveScaffold extends ConsumerWidget {
 
     final actions = [
       Padding(
-        padding: const EdgeInsets.only(right: 16.0),
+        padding: const EdgeInsetsDirectional.only(end: 16.0),
         child: Row(
           children: [
             Icon(

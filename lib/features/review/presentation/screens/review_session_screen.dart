@@ -66,7 +66,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
         repetitions: result.repetitions,
         easinessFactor: result.easinessFactor,
         interval: result.interval,
-        nextReviewDate: Value(nextDate), // Wait, nextReviewDate is Value<DateTime?> or DateTime? Let's use Value() only if needed, but error says Value<String> to String?, so it's all raw types!
+        nextReviewDate: Value<DateTime?>(nextDate),
         status: 'review', // Ensure status is review or mastered
       ),
     );
@@ -112,7 +112,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
               Text(AppLocalizations.of(context)!.sessionCompleteHeadline, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: AppConstants.space24),
               ElevatedButton(
-                onPressed: () => context.pop(),
+                onPressed: () => context.go('/'),
                 child: Text(AppLocalizations.of(context)!.backToHome),
               )
             ],
@@ -135,7 +135,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                   IconButton(
                     icon: const Icon(Icons.close),
                     tooltip: 'Close review session',
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.go('/'),
                   ),
                   Expanded(
                     child: ProgressBar(progress: progress),
@@ -185,11 +185,6 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: AppColors.primaryGreen,
                             ),
-                          ),
-                          const SizedBox(height: AppConstants.space16),
-                          Text(
-                            'Debug: EF=${currentWord.easinessFactor}, int=${currentWord.interval}, reps=${currentWord.repetitions}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
                           ),
                         ],
                       ],

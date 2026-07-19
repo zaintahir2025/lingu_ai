@@ -6,6 +6,8 @@ import '../../../../core/widgets/shared/app_card.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
+import '../widgets/turnstile_widget.dart';
+import '../../../../core/widgets/shared/in_app_notification_banner.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -15,16 +17,22 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
+  final _confirmPasswordFocus = FocusNode();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   bool _hasMinLength = false;
   bool _hasNumber = false;
   bool _hasSpecialChar = false;
+
+  String? _turnstileToken;
 
   @override
   void initState() {
@@ -43,20 +51,43 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
+    _confirmPasswordFocus.dispose();
     super.dispose();
   }
 
+
+
   void _register() {
     if (!_hasMinLength || !_hasNumber || !_hasSpecialChar) return;
+    
+    if (_turnstileToken == null) {
+      InAppNotificationBanner.show(
+        context: context,
+        title: 'Error',
+        message: 'Please complete the CAPTCHA.',
+        type: NotificationType.error,
+      );
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      InAppNotificationBanner.show(
+        context: context,
+        title: 'Error',
+        message: 'Passwords do not match.',
+        type: NotificationType.error,
+      );
+      return;
+    }
+
     ref.read(authControllerProvider.notifier).register(
       _emailController.text.trim(),
       _passwordController.text,
-      _nameController.text.trim(),
     );
   }
 
@@ -85,6 +116,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.status == AuthStatus.authenticating;
 
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (previous?.registerError != next.registerError && next.registerError != null) {
+        if (!context.mounted || ModalRoute.of(context)?.isCurrent != true) return;
+        InAppNotificationBanner.show(
+          context: context,
+          title: 'Message',
+          message: next.registerError!,
+          type: next.status == AuthStatus.authenticated ? NotificationType.success : NotificationType.error,
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
@@ -106,24 +149,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  if (authState.errorMessage != null) ...[
-                    Text(
-                      authState.errorMessage!,
-                      style: const TextStyle(color: AppColors.heartRed),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  TextField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.nameLabel,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_emailFocus),
-                  ),
-                  const SizedBox(height: 16),
+
                   TextField(
                     controller: _emailController,
                     focusNode: _emailFocus,
@@ -142,8 +168,42 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.passwordLabel,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_confirmPasswordFocus),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _confirmPasswordController,
+                    focusNode: _confirmPasswordFocus,
+                    decoration: InputDecoration(
+                      labelText: 'Confirm Password',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
+                    ),
+                    obscureText: _obscureConfirmPassword,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _register(),
                   ),
@@ -153,7 +213,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   _buildChecklistRow(AppLocalizations.of(context)!.passwordContainsNumber, _hasNumber),
                   const SizedBox(height: 4),
                   _buildChecklistRow(AppLocalizations.of(context)!.passwordContainsSpecialChar, _hasSpecialChar),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  TurnstileWidget(
+                    siteKey: '1x00000000000000000000AA', // Test site key
+                    onTokenReceived: (token) {
+                      setState(() {
+                        _turnstileToken = token;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   PrimaryButton(
                     text: isLoading ? AppLocalizations.of(context)!.registeringLabel : AppLocalizations.of(context)!.registerTitle,
                     onPressed: isLoading ? null : _register,

@@ -116,10 +116,18 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
 
     if (appliedDailyBonus) {
       amount += 5;
-      newTotalXp += 5;
-      newLevel = calculateLevel(newTotalXp);
-      leveledUp = newLevel > currentState.progress.level;
     }
+
+    // Apply streak multiplier (cap at x3, which is +200% bonus)
+    if (newStreak > 1) {
+      double multiplier = 1.0 + (newStreak * 0.1);
+      if (multiplier > 3.0) multiplier = 3.0; // max 3x
+      amount = (amount * multiplier).round();
+    }
+
+    newTotalXp += amount;
+    newLevel = calculateLevel(newTotalXp);
+    leveledUp = newLevel > currentState.progress.level;
 
     // Update DB
     final updated = currentState.progress.copyWith(
@@ -157,8 +165,71 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
       state = AsyncData(ProgressState(state.value!.progress, hasLevelUp: false, addedXp: 0));
     }
   }
+
+  Future<List<double>> getWeeklyXp() async {
+    final db = ref.read(databaseProvider);
+    final now = _clock();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    // We want the last 7 days including today.
+    // Index 6 = today, Index 5 = yesterday, ..., Index 0 = 6 days ago.
+    final List<double> weeklyXp = List.filled(7, 0.0);
+    
+    for (int i = 0; i < 7; i++) {
+      final targetDate = today.subtract(Duration(days: 6 - i));
+      final entry = await (db.select(db.dailyXp)..where((t) => t.date.equals(targetDate))).getSingleOrNull();
+      if (entry != null) {
+        weeklyXp[i] = entry.xpEarned.toDouble();
+      }
+    }
+    
+    return weeklyXp;
+  }
+
+  Future<int> getMasteredWordsCount() async {
+    final db = ref.read(databaseProvider);
+    final countExp = db.vocabWords.id.count();
+    final query = db.selectOnly(db.vocabWords)..addColumns([countExp])..where(db.vocabWords.status.equals('mastered'));
+    final result = await query.getSingle();
+    return result.read(countExp) ?? 0;
+  }
+
+  Future<int> getCompletedLessonsCount() async {
+    final db = ref.read(databaseProvider);
+    final countExp = db.lessons.id.count();
+    final query = db.selectOnly(db.lessons)..addColumns([countExp])..where(db.lessons.isCompleted.equals(true));
+    final result = await query.getSingle();
+    return result.read(countExp) ?? 0;
+  }
+
+  Future<int> getMinutesSpent() async {
+    // Estimating 1 minute per 10 XP earned total
+    final currentState = state.value;
+    if (currentState == null) return 0;
+    return (currentState.progress.totalXp / 10).floor();
+  }
 }
 
 final progressControllerProvider = AsyncNotifierProvider.autoDispose<ProgressController, ProgressState>(() {
   return ProgressController();
+});
+
+final weeklyXpProvider = FutureProvider.autoDispose<List<double>>((ref) async {
+  final controller = ref.read(progressControllerProvider.notifier);
+  return await controller.getWeeklyXp();
+});
+
+final masteredWordsCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  final controller = ref.read(progressControllerProvider.notifier);
+  return await controller.getMasteredWordsCount();
+});
+
+final completedLessonsCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  final controller = ref.read(progressControllerProvider.notifier);
+  return await controller.getCompletedLessonsCount();
+});
+
+final minutesSpentProvider = FutureProvider.autoDispose<int>((ref) async {
+  final controller = ref.read(progressControllerProvider.notifier);
+  return await controller.getMinutesSpent();
 });

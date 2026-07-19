@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../main.dart';
 import '../../core/database/database.dart';
 import '../network/connectivity_provider.dart';
+import '../network/api_config.dart';
 
 class SyncService {
   final AppDatabase _db;
+  final Dio _dio;
+  final FlutterSecureStorage _storage;
   bool _isSyncing = false;
   bool isTesting;
 
-  SyncService(this._db, {this.isTesting = false});
+  static String get baseUrl => '${ApiConfig.baseUrl}/sync';
+
+  SyncService(this._db, {this.isTesting = false})
+    : _dio = Dio(),
+      _storage = const FlutterSecureStorage();
 
   Future<void> syncData() async {
     if (_isSyncing) return;
@@ -21,15 +28,9 @@ class SyncService {
     try {
       debugPrint('SyncService: Starting Sync Sequence...');
 
-      // 1. PUSH Phase: Flush local queues to backend
       await _pushLocalData();
-
-      // 2. PULL Phase: Fetch baseline state from backend
       await _pullServerData();
-
-      // 3. RECONCILE Phase: Apply last-write-wins (handled implicitly by pushing first)
       
-      // 4. NOTIFY Phase: Let UI know we are caught up
       debugPrint('SyncService: All caught up!');
       _notifyUser();
     } catch (e) {
@@ -59,14 +60,30 @@ class SyncService {
     }
   }
 
+  Future<String?> _getToken() async {
+    return await _storage.read(key: 'jwt');
+  }
+
   Future<void> _pushLocalData() async {
+    final token = await _getToken();
+    if (token == null) return; // not logged in
+
     // Sync SM-2 Logs
     final logs = await _db.select(_db.offlineReviewLogs).get();
     if (logs.isNotEmpty) {
       debugPrint('SyncService: Pushing ${logs.length} SM-2 review logs...');
-      for (final log in logs) {
-        await _sendToApi(log.vocabWordId, log.quality);
-        await (_db.delete(_db.offlineReviewLogs)..where((t) => t.id.equals(log.id))).go();
+      try {
+        await _dio.post('$baseUrl/reviews', 
+          data: {
+            'logs': logs.map((l) => {'vocabWordId': l.vocabWordId, 'quality': l.quality}).toList(),
+          },
+          options: Options(headers: {'Authorization': 'Bearer $token'})
+        );
+        for (final log in logs) {
+          await (_db.delete(_db.offlineReviewLogs)..where((t) => t.id.equals(log.id))).go();
+        }
+      } catch (e) {
+        debugPrint('Failed to sync reviews: $e');
       }
     }
     
@@ -74,42 +91,38 @@ class SyncService {
     final xpLogs = await _db.select(_db.offlineXpLogs).get();
     if (xpLogs.isNotEmpty) {
       debugPrint('SyncService: Pushing ${xpLogs.length} XP logs...');
-      for (final log in xpLogs) {
-        await _sendXpToApi(log.xpAmount, log.reason);
-        await (_db.delete(_db.offlineXpLogs)..where((t) => t.id.equals(log.id))).go();
+      try {
+        await _dio.post('$baseUrl/xp', 
+          data: {
+            'logs': xpLogs.map((l) => {'amount': l.xpAmount, 'reason': l.reason}).toList(),
+          },
+          options: Options(headers: {'Authorization': 'Bearer $token'})
+        );
+        for (final log in xpLogs) {
+          await (_db.delete(_db.offlineXpLogs)..where((t) => t.id.equals(log.id))).go();
+        }
+      } catch (e) {
+        debugPrint('Failed to sync XP: $e');
       }
     }
   }
 
   Future<void> _pullServerData() async {
-    // Mock fetching fresh data from server
+    // Implement fetch latest stats/vocab from server here if needed.
     await Future.delayed(const Duration(milliseconds: 300));
-    debugPrint('SyncService: Pulled fresh server data.');
   }
 
   Future<void> logReview(int vocabWordId, int quality, bool isOnline) async {
+    await _queueOfflineReview(vocabWordId, quality);
     if (isOnline) {
-      try {
-        await _sendToApi(vocabWordId, quality);
-      } catch (e) {
-        debugPrint('Direct sync failed, queuing offline: $e');
-        await _queueOfflineReview(vocabWordId, quality);
-      }
-    } else {
-      await _queueOfflineReview(vocabWordId, quality);
+      await syncData();
     }
   }
 
   Future<void> logXp(int amount, String reason, bool isOnline) async {
+    await _queueOfflineXp(amount, reason);
     if (isOnline) {
-      try {
-        await _sendXpToApi(amount, reason);
-      } catch (e) {
-        debugPrint('Direct XP sync failed, queuing offline: $e');
-        await _queueOfflineXp(amount, reason);
-      }
-    } else {
-      await _queueOfflineXp(amount, reason);
+      await syncData();
     }
   }
 
@@ -132,56 +145,6 @@ class SyncService {
       ),
     );
   }
-
-  Future<void> _sendToApi(int vocabWordId, int quality) async {
-    if (isTesting) {
-      await Future.delayed(const Duration(milliseconds: 50));
-      return;
-    }
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('review_logs')
-        .add({
-          'vocabWordId': vocabWordId,
-          'quality': quality,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-  }
-
-  Future<void> _sendXpToApi(int amount, String reason) async {
-    if (isTesting) {
-      await Future.delayed(const Duration(milliseconds: 50));
-      return;
-    }
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
-
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(userId);
-    
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final snapshot = await transaction.get(userDoc);
-      
-      int currentXp = 0;
-      if (snapshot.exists) {
-        currentXp = snapshot.data()?['totalXp'] ?? 0;
-      }
-      
-      transaction.set(userDoc, {
-        'totalXp': currentXp + amount,
-        'lastActivity': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      
-      transaction.set(userDoc.collection('xp_logs').doc(), {
-        'amount': amount,
-        'reason': reason,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-    });
-  }
 }
 
 final syncServiceProvider = Provider<SyncService>((ref) {
@@ -189,7 +152,6 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   final service = SyncService(db);
   
   ref.listen(connectivityProvider, (previous, next) {
-    // Trigger sync when transitioning from offline/unknown to online
     if (next.value == true && (previous?.value == false || previous == null)) {
       service.syncData();
     }

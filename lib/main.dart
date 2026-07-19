@@ -5,8 +5,6 @@ import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/local_storage/local_storage_provider.dart';
 
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'core/widgets/shared/in_app_notification_banner.dart';
 import 'core/notifications/notification_service.dart';
 
@@ -15,9 +13,8 @@ final localeProvider = StateProvider<Locale>((ref) => const Locale('en'));
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize SQLite Drift Database
+  // await DatabaseHelper.instance.database;
   
   final box = await LocalStorageService.init();
 
@@ -65,7 +62,7 @@ class _LinguAiAppState extends ConsumerState<LinguAiApp> {
       locale: ref.watch(localeProvider),
       builder: (context, child) {
         if (child == null) return const SizedBox.shrink();
-        return InAppNotificationBanner(child: child);
+        return InAppNotificationBanner(key: inAppBannerKey, child: child);
       },
     );
   }

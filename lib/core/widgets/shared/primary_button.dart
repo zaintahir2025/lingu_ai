@@ -6,12 +6,14 @@ class PrimaryButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isSecondary;
+  final bool isLoading;
 
   const PrimaryButton({
     super.key,
     required this.text,
     this.onPressed,
     this.isSecondary = false,
+    this.isLoading = false,
   });
 
   @override
@@ -58,12 +60,18 @@ class _PrimaryButtonState extends State<PrimaryButton> {
           ),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           child: Center(
-            child: Text(
-              widget.text.toUpperCase(),
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: widget.onPressed == null ? AppColors.textSecondary : textColor,
-                  ),
-            ),
+            child: widget.isLoading 
+              ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                )
+              : Text(
+                  widget.text.toUpperCase(),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: widget.onPressed == null ? AppColors.textSecondary : textColor,
+                      ),
+                ),
           ),
         ),
       ),

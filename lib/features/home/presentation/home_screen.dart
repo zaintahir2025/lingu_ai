@@ -10,6 +10,7 @@ import '../../review/presentation/screens/review_tab.dart';
 import '../../progress/presentation/widgets/floating_xp.dart';
 import '../../progress/presentation/widgets/level_up_modal.dart';
 import '../../progress/presentation/providers/progress_controller.dart';
+import '../../progress/presentation/screens/progress_tab.dart';
 import '../../progress/presentation/screens/profile_tab.dart';
 import '../../tutor/presentation/screens/tutor_tab.dart';
 
@@ -81,7 +82,7 @@ class HomeScreen extends ConsumerWidget {
       case 2:
         return const TutorTab();
       case 3:
-        return Center(child: Text(AppLocalizations.of(context)!.progressTabComingSoon));
+        return const ProgressTab();
       case 4:
         return const ProfileTab();
       default:

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../domain/repositories/learn_repository.dart';
 import 'lesson_node.dart';
 import '../../../../core/widgets/mascot/lingu_mascot.dart';
+import 'package:shimmer/shimmer.dart';
 
 class LessonPathView extends ConsumerStatefulWidget {
   const LessonPathView({super.key});
@@ -29,11 +30,55 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
       stream: stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              final alignment = index % 2 == 0 ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd;
+              final padding = index % 2 == 0 ? const EdgeInsetsDirectional.only(start: 40) : const EdgeInsetsDirectional.only(end: 40);
+              return Align(
+                alignment: alignment,
+                child: Padding(
+                  padding: padding.copyWith(bottom: 40),
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
         }
         
         final lessons = snapshot.data ?? [];
-        if (lessons.isEmpty) return const Center(child: Text("No lessons available."));
+        if (lessons.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.map_outlined, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  "No lessons available yet.",
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Your learning path will appear here.",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
 
         return ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -61,7 +106,7 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
                       lesson: lesson,
                       isCurrent: isCurrent,
                       onTap: () {
-                        context.push('/quiz/${lesson.id}');
+                        context.push('/module/${lesson.id}');
                       },
                     ),
                     if (isCurrent && index % 2 == 0) 

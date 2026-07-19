@@ -6,6 +6,7 @@ import '../../../../core/widgets/shared/app_card.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
+import '../../../../core/widgets/shared/in_app_notification_banner.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordFocus = FocusNode();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -38,6 +40,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.status == AuthStatus.authenticating;
+
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (previous?.loginError != next.loginError && next.loginError != null) {
+        if (!context.mounted || ModalRoute.of(context)?.isCurrent != true) return;
+        InAppNotificationBanner.show(
+          context: context,
+          title: 'Login Error',
+          message: next.loginError!,
+          type: NotificationType.error,
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -60,14 +74,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  if (authState.errorMessage != null) ...[
-                    Text(
-                      authState.errorMessage!,
-                      style: const TextStyle(color: AppColors.heartRed),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
                   TextField(
                     controller: _emailController,
                     decoration: InputDecoration(
@@ -85,8 +91,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.passwordLabel,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _login(),
                   ),

@@ -144,5 +144,6 @@
   "upgradeToPro": "[NEEDS NATIVE SPEAKER REVIEW] پرو میں اپ گریڈ کریں",
   "notificationFallbackTitle": "[NEEDS NATIVE SPEAKER REVIEW] اطلاع",
   "offlineTitleDefault": "[NEEDS NATIVE SPEAKER REVIEW] آپ آف لائن ہیں",
-  "offlineMessageDefault": "[NEEDS NATIVE SPEAKER REVIEW] براہ کرم اس خصوصیت کو استعمال کرنے کے لیے انٹرنیٹ سے دوبارہ جڑیں۔"
+  "offlineMessageDefault": "[NEEDS NATIVE SPEAKER REVIEW] براہ کرم اس خصوصیت کو استعمال کرنے کے لیے انٹرنیٹ سے دوبارہ جڑیں۔",
+  "logOut": "[NEEDS NATIVE SPEAKER REVIEW] لاگ آؤٹ"
 }

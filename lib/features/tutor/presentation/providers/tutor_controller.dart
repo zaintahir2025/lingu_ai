@@ -6,19 +6,23 @@ import '../../data/repositories/tutor_repository.dart';
 class TutorState {
   final List<ChatMessage> messages;
   final bool isStreaming;
+  final bool requiresPremium;
 
   const TutorState({
     required this.messages,
     this.isStreaming = false,
+    this.requiresPremium = false,
   });
 
   TutorState copyWith({
     List<ChatMessage>? messages,
     bool? isStreaming,
+    bool? requiresPremium,
   }) {
     return TutorState(
       messages: messages ?? this.messages,
       isStreaming: isStreaming ?? this.isStreaming,
+      requiresPremium: requiresPremium ?? this.requiresPremium,
     );
   }
 }
@@ -69,7 +73,7 @@ class TutorController extends Notifier<TutorState> {
       final contextWords = recentMistakes.map((e) => e.word).toList();
 
       // 2. Start Streaming
-      final stream = repo.mockStreamTutorMessage(userMessage.content, contextWords);
+      final stream = repo.streamTutorMessage(userMessage.content, contextWords);
 
       await for (final token in stream) {
         // Update the last message
@@ -87,11 +91,18 @@ class TutorController extends Notifier<TutorState> {
       final messages = List<ChatMessage>.from(state.messages);
       final lastIndex = messages.length - 1;
       
-      messages[lastIndex] = messages[lastIndex].copyWith(
-        content: 'Sorry, I encountered an error. Please try again.',
-        isStreaming: false,
-      );
-      state = state.copyWith(messages: messages);
+      if (e.toString().contains('PREMIUM_REQUIRED')) {
+        // Remove the initial bot message
+        messages.removeLast();
+        state = state.copyWith(messages: messages, requiresPremium: true, isStreaming: false);
+        return;
+      } else {
+        messages[lastIndex] = messages[lastIndex].copyWith(
+          content: 'Sorry, I encountered an error. Please try again.',
+          isStreaming: false,
+        );
+        state = state.copyWith(messages: messages);
+      }
     } finally {
       final messages = List<ChatMessage>.from(state.messages);
       final lastIndex = messages.length - 1;

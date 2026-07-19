@@ -1,24 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../providers/quiz_controller.dart';
-import '../widgets/question_views.dart';
-import '../widgets/feedback_bottom_sheet.dart';
+import 'question_views.dart';
+import 'feedback_bottom_sheet.dart';
 import '../../../../core/widgets/shared/progress_bar.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../domain/models/quiz_question.dart';
+import 'package:go_router/go_router.dart';
+import '../../../tutor/presentation/providers/tutor_controller.dart';
+import '../../../home/presentation/home_screen.dart';
 
-class QuizScreen extends ConsumerStatefulWidget {
+class QuizView extends ConsumerStatefulWidget {
   final int lessonId;
-  const QuizScreen({super.key, required this.lessonId});
+  final bool isPractice;
+  final Function(double score) onComplete;
+
+  const QuizView({
+    super.key, 
+    required this.lessonId,
+    this.isPractice = false,
+    required this.onComplete,
+  });
 
   @override
-  ConsumerState<QuizScreen> createState() => _QuizScreenState();
+  ConsumerState<QuizView> createState() => _QuizViewState();
 }
 
-class _QuizScreenState extends ConsumerState<QuizScreen> {
+class _QuizViewState extends ConsumerState<QuizView> {
   String _currentAnswer = '';
   final FocusNode _focusNode = FocusNode();
   bool _isFeedbackShowing = false;
@@ -55,6 +65,19 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
       isCorrect: isCorrect,
       correctAnswer: question.correctAnswer,
       explanation: question.explanation,
+      onAskTutor: () {
+        // Send prompt to tutor and navigate to tutor tab
+        final prompt = 'I just answered "$_currentAnswer" but the correct answer is "${question.correctAnswer}" for the question: "${question.prompt}". Can you explain why I was wrong?';
+        ref.read(tutorControllerProvider.notifier).sendMessage(prompt);
+        
+        // Close bottom sheet
+        Navigator.of(context).pop();
+
+        // Set home tab to Tutor (index 2)
+        ref.read(homeTabProvider.notifier).state = 2;
+        // Go back to home
+        context.go('/');
+      },
       onContinue: () {
         _isFeedbackShowing = false;
         setState(() {
@@ -62,9 +85,9 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         });
         ref.read(quizControllerProvider(widget.lessonId).notifier).nextQuestion();
         
-        final isFinished = ref.read(quizControllerProvider(widget.lessonId)).isFinished;
-        if (isFinished) {
-          context.go('/quiz/results/${widget.lessonId}');
+        final state = ref.read(quizControllerProvider(widget.lessonId));
+        if (state.isFinished) {
+          widget.onComplete(state.score);
         } else {
           _focusNode.requestFocus(); // Re-focus for next question
         }
@@ -107,7 +130,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     final question = state.currentQuestion;
 
     if (question == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Center(child: CircularProgressIndicator());
     }
 
     Widget content = const SizedBox.shrink();
@@ -145,46 +168,40 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         break;
     }
 
-    return Scaffold(
-      body: SafeArea(
-        child: Focus(
-          focusNode: _focusNode,
-          onKeyEvent: _handleKeyEvent,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.space16, vertical: AppConstants.space24),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => context.go('/'),
-                    ),
-                    Expanded(
-                      child: ProgressBar(progress: state.progress),
-                    ),
-                  ],
-                ),
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: _handleKeyEvent,
+      child: Column(
+        children: [
+          if (widget.isPractice)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppConstants.space16, vertical: AppConstants.space8),
+              child: Text(
+                'Practice Quiz',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.space24),
-                  child: content,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(AppConstants.space24),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: PrimaryButton(
-                    text: 'Check',
-                    onPressed: _currentAnswer.isNotEmpty ? _submitAnswer : null,
-                  ),
-                ),
-              ),
-            ],
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppConstants.space16, vertical: AppConstants.space16),
+            child: ProgressBar(progress: state.progress),
           ),
-        ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppConstants.space24),
+              child: content,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppConstants.space24),
+            child: SizedBox(
+              width: double.infinity,
+              child: PrimaryButton(
+                text: 'Check',
+                onPressed: _currentAnswer.isNotEmpty ? _submitAnswer : null,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

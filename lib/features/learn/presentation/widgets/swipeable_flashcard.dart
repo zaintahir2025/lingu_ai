@@ -1,10 +1,14 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/storage/onboarding_storage.dart';
 
-class SwipeableFlashcard extends StatefulWidget {
+class SwipeableFlashcard extends ConsumerStatefulWidget {
   final VocabWord word;
   final VoidCallback onSwipeLeft;
   final VoidCallback onSwipeRight;
@@ -19,12 +23,14 @@ class SwipeableFlashcard extends StatefulWidget {
   });
 
   @override
-  State<SwipeableFlashcard> createState() => SwipeableFlashcardState();
+  ConsumerState<SwipeableFlashcard> createState() => SwipeableFlashcardState();
 }
 
-class SwipeableFlashcardState extends State<SwipeableFlashcard> with SingleTickerProviderStateMixin {
+class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with SingleTickerProviderStateMixin {
   late AnimationController _flipController;
   late AudioPlayer _audioPlayer;
+  late FlutterTts _flutterTts;
+  late FocusNode _focusNode;
   bool _isFront = true;
   Offset _dragOffset = Offset.zero;
 
@@ -36,12 +42,34 @@ class SwipeableFlashcardState extends State<SwipeableFlashcard> with SingleTicke
       duration: const Duration(milliseconds: 300),
     );
     _audioPlayer = AudioPlayer();
+    _flutterTts = FlutterTts();
+    _focusNode = FocusNode();
+    if (widget.canUseKeyboard) {
+      _focusNode.requestFocus();
+    }
+  }
+
+  Future<void> _speak(String text) async {
+    final languageCode = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+    
+    String ttsCode = 'es-ES';
+    switch (languageCode) {
+      case 'es': ttsCode = 'es-ES'; break;
+      case 'fr': ttsCode = 'fr-FR'; break;
+      case 'ja': ttsCode = 'ja-JP'; break;
+      default: ttsCode = 'es-ES';
+    }
+
+    await _flutterTts.setLanguage(ttsCode);
+    await _flutterTts.speak(text);
   }
 
   @override
   void dispose() {
     _flipController.dispose();
     _audioPlayer.dispose();
+    _flutterTts.stop();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -50,6 +78,8 @@ class SwipeableFlashcardState extends State<SwipeableFlashcard> with SingleTicke
       _flipController.forward();
       if (widget.word.audioUrl != null) {
         _audioPlayer.play(UrlSource(widget.word.audioUrl!));
+      } else {
+        _speak(widget.word.word);
       }
     } else {
       _flipController.reverse();
@@ -84,11 +114,30 @@ class SwipeableFlashcardState extends State<SwipeableFlashcard> with SingleTicke
           ? 'Flashcard: ${widget.word.word}. Tap to reveal translation.'
           : 'Flashcard: ${widget.word.translation}. Swipe right if correct, left if incorrect.',
       hint: _isFront ? 'Double tap to flip' : 'Double tap to flip back',
-      child: GestureDetector(
-        onTap: flipCard,
-        onPanUpdate: _onPanUpdate,
-        onPanEnd: _onPanEnd,
-        child: AnimatedBuilder(
+      child: Focus(
+        focusNode: _focusNode,
+        autofocus: widget.canUseKeyboard,
+        onKeyEvent: (node, event) {
+          if (!widget.canUseKeyboard) return KeyEventResult.ignored;
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+              widget.onSwipeLeft();
+              return KeyEventResult.handled;
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+              widget.onSwipeRight();
+              return KeyEventResult.handled;
+            } else if (event.logicalKey == LogicalKeyboardKey.space || event.logicalKey == LogicalKeyboardKey.enter) {
+              flipCard();
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: GestureDetector(
+          onTap: flipCard,
+          onPanUpdate: _onPanUpdate,
+          onPanEnd: _onPanEnd,
+          child: AnimatedBuilder(
           animation: _flipController,
           builder: (context, child) {
             final angle = _flipController.value * pi;
@@ -107,19 +156,33 @@ class SwipeableFlashcardState extends State<SwipeableFlashcard> with SingleTicke
               ),
             );
           },
-        ),
-      ),
-    );
+        ), // AnimatedBuilder
+      ), // GestureDetector
+    ), // Focus
+    ); // Semantics
   }
 
   Widget _buildFront() {
     return _buildCardContent(
       color: Colors.white,
-      child: Center(
-        child: Text(
-          widget.word.word,
-          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-        ),
+      child: Stack(
+        children: [
+          Center(
+            child: Text(
+              widget.word.word,
+              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: IconButton(
+              icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
+              tooltip: 'Play pronunciation',
+              onPressed: () => _speak(widget.word.word),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -138,16 +201,21 @@ class SwipeableFlashcardState extends State<SwipeableFlashcard> with SingleTicke
                 style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
               ),
             ),
-            if (widget.word.audioUrl != null)
-              Positioned(
-                bottom: 20,
-                right: 20,
-                child: IconButton(
-                  icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
-                  tooltip: 'Play pronunciation',
-                  onPressed: () => _audioPlayer.play(UrlSource(widget.word.audioUrl!)),
-                ),
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
+                tooltip: 'Play pronunciation',
+                onPressed: () {
+                  if (widget.word.audioUrl != null) {
+                    _audioPlayer.play(UrlSource(widget.word.audioUrl!));
+                  } else {
+                    _speak(widget.word.word);
+                  }
+                },
               ),
+            ),
           ],
         ),
       ),

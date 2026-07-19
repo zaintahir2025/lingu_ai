@@ -10,10 +10,11 @@ class AchievementOverlay {
 
     overlayEntry = OverlayEntry(
       builder: (context) {
-        return Positioned(
+        return Positioned.directional(
+          textDirection: Directionality.of(context),
           top: 50,
-          left: 16,
-          right: 16,
+          start: 16,
+          end: 16,
           child: Material(
             color: Colors.transparent,
             child: Container(
