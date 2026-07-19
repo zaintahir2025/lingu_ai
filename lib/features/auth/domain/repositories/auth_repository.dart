@@ -75,6 +75,19 @@ class NodeAuthRepository implements AuthRepository {
     } on DioException catch (e) {
       debugPrint('Login API Error [${e.response?.statusCode}]: ${e.response?.data}');
       debugPrint('DioException Details: message=${e.message}, type=${e.type}, error=${e.error}');
+      
+      // GitHub Pages Demo Fallback
+      if (kIsWeb && kReleaseMode) {
+        debugPrint('Fallback: Simulating login for GitHub Pages demo.');
+        await _storage.saveTokens(jwt: 'demo-token', refreshToken: 'demo-refresh-token');
+        return User(
+          id: 'demo_user_123',
+          email: email.trim(),
+          name: 'Demo User',
+          username: 'DemoUser',
+        );
+      }
+
       throw Exception(e.response?.data['error'] ?? 'Login failed');
     }
   }
@@ -88,6 +101,13 @@ class NodeAuthRepository implements AuthRepository {
       });
     } on DioException catch (e) {
       debugPrint('Register API Error [${e.response?.statusCode}]: ${e.response?.data}');
+      
+      // GitHub Pages Demo Fallback
+      if (kIsWeb && kReleaseMode) {
+        debugPrint('Fallback: Simulating registration for GitHub Pages demo.');
+        return;
+      }
+
       throw Exception(e.response?.data['error'] ?? 'Registration failed');
     }
   }
