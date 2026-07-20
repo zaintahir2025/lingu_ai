@@ -1,4 +1,4 @@
-# LinguAI 🌍
+# LinguAI
 
 LinguAI is an intelligent, cross-platform language learning application built with **Flutter** and **Node.js**. It combines modern interactive learning techniques—like gamified lesson paths, swipeable flashcards, and spaced repetition—with an **AI-powered Tutor** (backed by Google Gemini) to provide a deeply personalized language learning experience.
 
@@ -8,40 +8,40 @@ LinguAI is an intelligent, cross-platform language learning application built wi
 
 ---
 
-## ✨ Features
+## Features
 
-### 🎓 Interactive Learning
+### Interactive Learning
 *   **Gamified Lesson Paths**: Navigate through a visual tree of modules and unlock new lessons as you progress.
 *   **Swipeable Flashcards**: Learn vocabulary through an intuitive, Tinder-style swipeable card interface.
 *   **Spaced Repetition Review**: Smart review sessions that bring back words you struggled with previously.
 
-### 🤖 AI-Powered Tutor
+### AI-Powered Tutor
 *   **Conversational Practice**: Chat with a friendly, intelligent language tutor powered by the **Google Gemini API**.
 *   **Context-Aware Corrections**: The AI knows your target language, current fluency score, and recently failed vocabulary to tailor its responses.
 *   *(Premium Feature)* Fully integrated into a paywall/subscription system for monetization.
 
-### 🎮 Gamification & Progress Tracking
+### Gamification & Progress Tracking
 *   **Achievements & Streaks**: Earn XP, build daily streaks, and unlock achievements to stay motivated.
 *   **Live Leaderboards**: Compete with other learners globally.
 *   **Detailed Analytics**: Track your fluency score and module completion rates from your Profile dashboard.
 
-### 🔐 Authentication & Onboarding
+### Authentication & Onboarding
 *   **Custom JWT Authentication**: Secure Email/Password registration and login powered by a Node.js backend.
 *   **GitHub Pages Demo Mode**: Automatically bypasses the backend on GitHub Pages deployments to allow seamless UI exploration for portfolio demonstrations!
 *   **Comprehensive Onboarding**: Guides new users through language selection, experience level assessment, and a personalized learning survey.
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 The project is split into two main parts:
 
-### 📱 Frontend (Flutter)
+### Frontend (Flutter)
 Built using the `flutter_riverpod` state management library and GoRouter for declarative routing.
 *   **`lib/features/`**: Feature-first architecture containing Auth, Home, Learn, Onboarding, Progress, Quiz, Review, Tutor, and User domains.
 *   **`lib/core/`**: Shared utilities, network configuration (Dio interceptors), theme definitions, and storage management.
 
-### ⚙️ Backend (Node.js / Express)
+### Backend (Node.js / Express)
 A robust REST API providing authentication, AI integration, and user state management.
 *   **Prisma ORM**: Type-safe database access (configured for SQLite in development).
 *   **Controllers**: Modular routing for `/auth`, `/user`, and `/ai`.
@@ -50,7 +50,7 @@ A robust REST API providing authentication, AI integration, and user state manag
 
 ---
 
-## 🚀 Running Locally
+## Running Locally
 
 ### Prerequisites
 *   [Flutter SDK](https://docs.flutter.dev/get-started/install) (Stable)
@@ -78,7 +78,7 @@ flutter run -d chrome
 
 ---
 
-## 🌐 Deployment (GitHub Pages)
+## Deployment (GitHub Pages)
 
 This repository includes a fully automated **GitHub Actions** CI/CD pipeline (`.github/workflows/gh-pages.yml`).
 
@@ -94,7 +94,7 @@ Access the live version of the app at:
 
 ---
 
-## 🛠 Tech Stack Summary
+## Tech Stack Summary
 *   **Framework**: Flutter (Dart)
 *   **State Management**: Riverpod (`flutter_riverpod`)
 *   **Routing**: `go_router`
