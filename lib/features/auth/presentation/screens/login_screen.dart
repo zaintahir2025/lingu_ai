@@ -5,6 +5,7 @@ import '../controllers/auth_controller.dart';
 import '../../../../core/widgets/shared/app_card.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
 
@@ -65,6 +66,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  SvgPicture.asset(
+                    'assets/images/svgs/mascot.svg',
+                    height: 120,
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     AppLocalizations.of(context)!.loginTitle,
                     textAlign: TextAlign.center,

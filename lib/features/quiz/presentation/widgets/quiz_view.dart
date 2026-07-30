@@ -6,11 +6,14 @@ import 'question_views.dart';
 import 'feedback_bottom_sheet.dart';
 import '../../../../core/widgets/shared/progress_bar.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../domain/models/quiz_question.dart';
 import 'package:go_router/go_router.dart';
 import '../../../tutor/presentation/providers/tutor_controller.dart';
 import '../../../home/presentation/home_screen.dart';
+
+import '../../../../core/game_state/game_state_provider.dart';
 
 class QuizView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -54,6 +57,12 @@ class _QuizViewState extends ConsumerState<QuizView> {
   void _submitAnswer() {
     if (_currentAnswer.isEmpty || _isFeedbackShowing) return;
 
+    final hearts = ref.read(gameStateProvider).hearts;
+    if (hearts <= 0) {
+      _showOutOfHeartsDialog();
+      return;
+    }
+
     final question = ref.read(quizControllerProvider(widget.lessonId)).currentQuestion;
     if (question == null) return;
 
@@ -66,17 +75,45 @@ class _QuizViewState extends ConsumerState<QuizView> {
       correctAnswer: question.correctAnswer,
       explanation: question.explanation,
       onAskTutor: () {
-        // Send prompt to tutor and navigate to tutor tab
-        final prompt = 'I just answered "$_currentAnswer" but the correct answer is "${question.correctAnswer}" for the question: "${question.prompt}". Can you explain why I was wrong?';
-        ref.read(tutorControllerProvider.notifier).sendMessage(prompt);
-        
-        // Close bottom sheet
-        Navigator.of(context).pop();
-
-        // Set home tab to Tutor (index 2)
-        ref.read(homeTabProvider.notifier).state = 2;
-        // Go back to home
-        context.go('/');
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                const Icon(Icons.workspace_premium_rounded, color: AppColors.xpGold, size: 28),
+                const SizedBox(width: 10),
+                const Text('AI Tutor (Premium) 👑', style: TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: const Text(
+              'Personalized AI Tutor explanations are a Premium feature!\n\nDuring testing, tap Upgrade to launch AI Tutor with your question.',
+              style: TextStyle(fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).pop(); // Close feedback sheet
+                  final prompt = 'I answered "$_currentAnswer" but the correct answer is "${question.correctAnswer}" for the question: "${question.prompt}". Can you explain why I was wrong?';
+                  ref.read(tutorControllerProvider.notifier).sendMessage(prompt);
+                  ref.read(homeTabProvider.notifier).state = 2;
+                  context.go('/');
+                },
+                child: const Text('Upgrade & Ask AI Tutor', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
       },
       onContinue: () {
         _isFeedbackShowing = false;
@@ -200,6 +237,53 @@ class _QuizViewState extends ConsumerState<QuizView> {
                 onPressed: _currentAnswer.isNotEmpty ? _submitAnswer : null,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showOutOfHeartsDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.favorite_rounded, color: AppColors.heartRed, size: 28),
+            SizedBox(width: 10),
+            Text('Out of Hearts! 💔', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'You ran out of hearts from wrong answers.\n\nRefill your hearts now to continue learning or try again later!',
+          style: TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/');
+            },
+            child: const Text('Exit Quiz', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            icon: const Icon(Icons.favorite_rounded, color: Colors.white, size: 18),
+            label: const Text('Refill Hearts (5 ❤️)', style: TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: () {
+              ref.read(gameStateProvider.notifier).refillHearts();
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Hearts Refilled! ❤️❤️❤️❤️❤️')),
+              );
+            },
           ),
         ],
       ),

@@ -103,7 +103,7 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
             ),
           ),
           
-
+          const SizedBox(height: AppConstants.space24),
 
           // Mastered Words Counter
           Container(

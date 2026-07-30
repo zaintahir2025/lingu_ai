@@ -7,9 +7,11 @@ import '../../../quiz/presentation/widgets/module_scoreboard_view.dart';
 import '../../../quiz/presentation/providers/quiz_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 
+import '../../../quiz/presentation/widgets/word_matching_exercise_view.dart';
+
 enum ModuleStage {
   flashcards,
-  practiceQuiz,
+  wordMatching,
   finalQuiz,
   scoreboard,
 }
@@ -30,7 +32,6 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize the quiz controller for this lesson
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(quizControllerProvider(widget.lessonId).notifier).restartQuiz();
     });
@@ -40,38 +41,19 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
     setState(() {
       switch (_currentStage) {
         case ModuleStage.flashcards:
-          _currentStage = ModuleStage.practiceQuiz;
+          _currentStage = ModuleStage.wordMatching;
           break;
-        case ModuleStage.practiceQuiz:
+        case ModuleStage.wordMatching:
           _currentStage = ModuleStage.finalQuiz;
-          // restart quiz for the final mock version
           ref.read(quizControllerProvider(widget.lessonId).notifier).restartQuiz();
           break;
         case ModuleStage.finalQuiz:
           _currentStage = ModuleStage.scoreboard;
           break;
         case ModuleStage.scoreboard:
-          // Should not hit this via advanceStage
           break;
       }
     });
-  }
-
-  void _onPracticeQuizComplete(double score) {
-    if (score < 0.6) {
-      // Dynamic branching: user struggled. Send them back to flashcards with a toast/snackbar.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Looks like you need a bit more practice. Let\'s review the flashcards again!'),
-          backgroundColor: AppColors.streakOrange,
-        ),
-      );
-      setState(() {
-        _currentStage = ModuleStage.flashcards;
-      });
-    } else {
-      _advanceStage();
-    }
   }
 
   void _onFinalQuizComplete(double score) {
@@ -80,11 +62,9 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
   }
 
   void _onRetry() {
-    // Restart from final quiz, or from the beginning?
-    // Let's restart from the final quiz
     ref.read(quizControllerProvider(widget.lessonId).notifier).restartQuiz();
     setState(() {
-      _currentStage = ModuleStage.finalQuiz;
+      _currentStage = ModuleStage.wordMatching;
       _finalScore = 0.0;
     });
   }
@@ -104,11 +84,10 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
           onComplete: _advanceStage,
         );
         break;
-      case ModuleStage.practiceQuiz:
-        content = QuizView(
+      case ModuleStage.wordMatching:
+        content = WordMatchingExerciseView(
           lessonId: widget.lessonId,
-          isPractice: true,
-          onComplete: _onPracticeQuizComplete,
+          onComplete: _advanceStage,
         );
         break;
       case ModuleStage.finalQuiz:
@@ -144,7 +123,7 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
               ),
               centerTitle: true,
             )
-          : null, // Hide app bar on scoreboard
+          : null,
       body: SafeArea(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -157,11 +136,11 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
   String _getStageTitle() {
     switch (_currentStage) {
       case ModuleStage.flashcards:
-        return 'Learn Vocabulary';
-      case ModuleStage.practiceQuiz:
-        return 'Practice Quiz';
+        return 'Stage 1: Vocabulary';
+      case ModuleStage.wordMatching:
+        return 'Stage 2: Word Matching';
       case ModuleStage.finalQuiz:
-        return 'Final Module Quiz';
+        return 'Stage 3: Lesson Quiz';
       case ModuleStage.scoreboard:
         return 'Results';
     }

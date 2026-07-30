@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/quiz_question.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_constants.dart';
+import '../../../../../core/audio/tts_service.dart';
 
-class MultipleChoiceView extends StatelessWidget {
+class MultipleChoiceView extends ConsumerWidget {
   final QuizQuestion question;
   final String? selectedOption;
   final ValueChanged<String> onSelect;
@@ -16,13 +18,26 @@ class MultipleChoiceView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tts = ref.watch(ttsServiceProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          question.prompt,
-          style: Theme.of(context).textTheme.headlineMedium,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                question.prompt,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.volume_up_rounded, color: AppColors.primaryGreen, size: 28),
+              tooltip: 'Listen to question',
+              onPressed: () => tts.speak(question.prompt),
+            ),
+          ],
         ),
         const SizedBox(height: AppConstants.space24),
         ...question.options.asMap().entries.map((entry) {
@@ -33,7 +48,10 @@ class MultipleChoiceView extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: AppConstants.space12),
             child: InkWell(
-              onTap: () => onSelect(option),
+              onTap: () {
+                tts.speak(option);
+                onSelect(option);
+              },
               borderRadius: BorderRadius.circular(AppConstants.radius16),
               child: Container(
                 padding: const EdgeInsets.all(AppConstants.space16),
@@ -72,6 +90,10 @@ class MultipleChoiceView extends StatelessWidget {
                             ),
                       ),
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.volume_up_outlined, size: 20, color: AppColors.textSecondary),
+                      onPressed: () => tts.speak(option),
+                    ),
                   ],
                 ),
               ),
@@ -83,7 +105,7 @@ class MultipleChoiceView extends StatelessWidget {
   }
 }
 
-class FillBlankView extends StatelessWidget {
+class FillBlankView extends ConsumerWidget {
   final QuizQuestion question;
   final String answer;
   final ValueChanged<String> onChanged;
@@ -98,7 +120,9 @@ class FillBlankView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tts = ref.watch(ttsServiceProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -107,9 +131,19 @@ class FillBlankView extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: AppConstants.space24),
-        Text(
-          question.prompt,
-          style: Theme.of(context).textTheme.displaySmall,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                question.prompt,
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.volume_up_rounded, color: AppColors.primaryGreen, size: 32),
+              onPressed: () => tts.speak(question.prompt),
+            ),
+          ],
         ),
         const SizedBox(height: AppConstants.space24),
         TextField(
@@ -133,7 +167,7 @@ class FillBlankView extends StatelessWidget {
   }
 }
 
-class TranslationView extends StatelessWidget {
+class TranslationView extends ConsumerWidget {
   final QuizQuestion question;
   final String answer;
   final ValueChanged<String> onChanged;
@@ -148,17 +182,17 @@ class TranslationView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return FillBlankView(
       question: question,
       answer: answer,
       onChanged: onChanged,
       onSubmit: onSubmit,
-    ); // Similar layout for MVP
+    );
   }
 }
 
-class ListeningView extends StatelessWidget {
+class ListeningView extends ConsumerStatefulWidget {
   final QuizQuestion question;
   final String answer;
   final ValueChanged<String> onChanged;
@@ -173,6 +207,23 @@ class ListeningView extends StatelessWidget {
   });
 
   @override
+  ConsumerState<ListeningView> createState() => _ListeningViewState();
+}
+
+class _ListeningViewState extends ConsumerState<ListeningView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _playAudio();
+    });
+  }
+
+  void _playAudio() {
+    ref.read(ttsServiceProvider).speak(widget.question.prompt);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -183,16 +234,20 @@ class ListeningView extends StatelessWidget {
         ),
         const SizedBox(height: AppConstants.space24),
         Center(
-          child: Container(
-            padding: const EdgeInsets.all(AppConstants.space24),
-            decoration: const BoxDecoration(
-              color: AppColors.primaryGreen,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.volume_up_rounded,
-              color: Colors.white,
-              size: 48,
+          child: InkWell(
+            onTap: _playAudio,
+            borderRadius: BorderRadius.circular(60),
+            child: Container(
+              padding: const EdgeInsets.all(AppConstants.space24),
+              decoration: const BoxDecoration(
+                color: AppColors.primaryGreen,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.volume_up_rounded,
+                color: Colors.white,
+                size: 48,
+              ),
             ),
           ),
         ),
@@ -210,8 +265,8 @@ class ListeningView extends StatelessWidget {
               borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
             ),
           ),
-          onChanged: onChanged,
-          onSubmitted: (_) => onSubmit(),
+          onChanged: widget.onChanged,
+          onSubmitted: (_) => widget.onSubmit(),
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -28,11 +29,14 @@ class _LeaderboardListState extends State<LeaderboardList> {
   }
 
   Future<void> _fetchLeaderboard() async {
+    final baseUrl = kIsWeb || Theme.of(context).platform != TargetPlatform.android
+        ? 'http://localhost:3000'
+        : 'http://10.0.2.2:3000';
+
     try {
       final token = await _storage.read(key: 'jwt');
-      // Assume Node.js backend handles this at /api/leaderboard
       final response = await _dio.get(
-        'http://10.0.2.2:3000/api/leaderboard',
+        '$baseUrl/api/leaderboard',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       
@@ -49,12 +53,16 @@ class _LeaderboardListState extends State<LeaderboardList> {
         setState(() {
           _isLoading = false;
           
-          // MOCK DATA since backend route is not ready yet:
-          _leaderboard = [
-            {'id': '1', 'name': 'Ahmed', 'xp': 1500, 'trend': 1, 'isMe': false},
-            {'id': '2', 'name': 'Sara', 'xp': 1200, 'trend': -1, 'isMe': false},
+          final List<Map<String, dynamic>> mockData = [
+            {'id': '1', 'name': 'Master Learner 👑', 'xp': 2500, 'trend': 1, 'isMe': false},
+            {'id': '2', 'name': 'Ahmed', 'xp': 1500, 'trend': 1, 'isMe': false},
+            {'id': '3', 'name': 'Sara', 'xp': 1200, 'trend': -1, 'isMe': false},
             {'id': 'me', 'name': 'You', 'xp': widget.currentXp, 'trend': 0, 'isMe': true},
+            {'id': '5', 'name': 'John', 'xp': 300, 'trend': 0, 'isMe': false},
+            {'id': '6', 'name': 'Emma', 'xp': 150, 'trend': -1, 'isMe': false},
           ];
+          mockData.sort((a, b) => (b['xp'] as int).compareTo(a['xp'] as int));
+          _leaderboard = mockData;
         });
       }
       _scrollToMe();

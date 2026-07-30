@@ -2,18 +2,32 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/dio_client.dart';
 import 'package:dio/dio.dart';
+import '../../presentation/screens/ai_settings_screen.dart';
 
 class TutorRepository {
   final Dio _dio;
+  final AiSettingsStorage _aiSettingsStorage;
 
-  TutorRepository(this._dio);
+  TutorRepository(this._dio, this._aiSettingsStorage);
 
   Stream<String> streamTutorMessage(String message, List<String> contextWords) async* {
     try {
-      final response = await _dio.post('/api/ai/tutor', data: {
-        'prompt': message,
-        'contextWords': contextWords,
-      });
+      final customKey = _aiSettingsStorage.customKey;
+      final provider = _aiSettingsStorage.provider;
+
+      final response = await _dio.post(
+        '/api/ai/tutor',
+        data: {
+          'prompt': message,
+          'contextWords': contextWords,
+        },
+        options: Options(
+          headers: {
+            if (customKey.isNotEmpty) 'x-custom-ai-key': customKey,
+            'x-ai-provider': provider,
+          },
+        ),
+      );
 
       final String fullText = response.data['response'];
       final tokens = fullText.split(RegExp(r'(?<= )'));
@@ -32,5 +46,9 @@ class TutorRepository {
 }
 
 final tutorRepositoryProvider = Provider<TutorRepository>((ref) {
-  return TutorRepository(ref.watch(dioProvider));
+  return TutorRepository(
+    ref.watch(dioProvider),
+    ref.watch(aiSettingsStorageProvider),
+  );
 });
+

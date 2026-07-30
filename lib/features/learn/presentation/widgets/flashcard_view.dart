@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/repositories/learn_repository.dart';
+import 'package:drift/drift.dart' show Value;
 import '../../../../core/database/database.dart';
 import '../widgets/swipeable_flashcard.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'package:lingu_ai/l10n/app_localizations.dart';
 
 class FlashcardView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -23,6 +23,7 @@ class FlashcardView extends ConsumerStatefulWidget {
 
 class _FlashcardViewState extends ConsumerState<FlashcardView> {
   List<VocabWord> _words = [];
+  int _totalDeckCount = 0;
   bool _isLoading = true;
   final GlobalKey<SwipeableFlashcardState> _cardKey = GlobalKey();
 
@@ -35,28 +36,96 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
   Future<void> _loadWords() async {
     final words = await ref.read(learnRepositoryProvider).getVocabForLesson(widget.lessonId);
     setState(() {
-      _words = words;
+      _words = List.from(words);
+      _totalDeckCount = words.length;
       _isLoading = false;
     });
   }
 
-  void _nextCard() {
-    if (_words.isNotEmpty) {
-      setState(() {
-        _words.removeAt(0);
-      });
-    }
+  void _markDone() {
+    if (_words.isEmpty) return;
+    setState(() {
+      _words.removeAt(0);
+    });
+
     if (_words.isEmpty) {
-      widget.onComplete();
+      _showQuizPromptDialog();
     }
+  }
+
+  void _markNotDone() {
+    if (_words.isEmpty) return;
+    final currentWord = _words.removeAt(0);
+    
+    // Log persistent mistake/weak word into DB for SRS Daily Review
+    try {
+      final db = ref.read(databaseProvider);
+      db.into(db.vocabWords).insertOnConflictUpdate(
+        VocabWordsCompanion.insert(
+          id: Value(currentWord.id),
+          lessonId: currentWord.lessonId,
+          word: currentWord.word,
+          translation: currentWord.translation,
+          easinessFactor: const Value(1.5), // Lower easiness factor for SRS
+        ),
+      );
+    } catch (_) {}
+
+    setState(() {
+      // Re-queue card to end of deck
+      _words.add(currentWord);
+    });
+  }
+
+  void _showQuizPromptDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: AppColors.primaryGreen, size: 28),
+            SizedBox(width: 10),
+            Text('Deck Completed! 🎉', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'You have reviewed all vocabulary flashcards in this deck.\n\nAre you ready to test your knowledge in the Quiz?',
+          style: TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _loadWords(); // Reset deck for extra review
+            },
+            child: const Text('Review Again', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onComplete();
+            },
+            child: const Text('Start Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        _nextCard(); 
+        _markDone(); 
       } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        _nextCard(); 
+        _markNotDone(); 
       } else if (event.logicalKey == LogicalKeyboardKey.space || event.logicalKey == LogicalKeyboardKey.arrowUp) {
         _cardKey.currentState?.flipCard();
       }
@@ -74,11 +143,21 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(AppLocalizations.of(context)!.noVocabForLesson),
+            const Icon(Icons.stars_rounded, size: 64, color: AppColors.primaryGreen),
+            const SizedBox(height: 16),
+            const Text(
+              'All Flashcards Done!',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              ),
               onPressed: widget.onComplete,
-              child: const Text('Continue'),
+              child: const Text('Proceed to Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -92,9 +171,29 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(
-              AppLocalizations.of(context)!.wordsLeft(_words.length),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Cards Remaining: ${_words.length}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryGreenDark,
+                      ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Text(
+                    'Deck Total: $_totalDeckCount',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -104,38 +203,50 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
                 child: SwipeableFlashcard(
                   key: ValueKey(_words.first.id),
                   word: _words.first,
-                  onSwipeLeft: _nextCard, 
-                  onSwipeRight: _nextCard, 
+                  onSwipeLeft: _markNotDone, 
+                  onSwipeRight: _markDone, 
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ElevatedButton(
+              ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red[100],
-                  foregroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  backgroundColor: Colors.red[50],
+                  foregroundColor: Colors.red[700],
+                  side: const BorderSide(color: Colors.red, width: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                onPressed: _nextCard,
-                child: Text(AppLocalizations.of(context)!.stillLearningLeft),
+                icon: const Icon(Icons.refresh_rounded, color: Colors.red),
+                label: const Text(
+                  'Not Done',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                onPressed: _markNotDone,
               ),
               const SizedBox(width: 24),
-              ElevatedButton(
+              ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 2,
                 ),
-                onPressed: _nextCard,
-                child: Text(AppLocalizations.of(context)!.gotItRight),
+                icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                label: const Text(
+                  'Done',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                onPressed: _markDone,
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );

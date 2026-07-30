@@ -6,13 +6,13 @@ import '../widgets/lesson_path_view.dart';
 import '../../../../core/widgets/shared/streak_flame.dart';
 import '../../../../core/widgets/shared/xp_badge.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
+import '../../../progress/presentation/providers/progress_controller.dart';
 
 class LearnTab extends ConsumerWidget {
   const LearnTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Check constraints to show sidebar on wide screens
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 800) {
@@ -21,22 +21,34 @@ class LearnTab extends ConsumerWidget {
             children: [
               Expanded(
                 flex: 2,
-                child: _buildMainContent(context),
+                child: _buildMainContent(context, ref),
               ),
               Container(width: 1, color: AppColors.divider),
               Expanded(
                 flex: 1,
-                child: _buildSidebar(context),
+                child: _buildSidebar(context, ref),
               ),
             ],
           );
         }
-        return _buildMainContent(context);
+        return _buildMainContent(context, ref);
       },
     );
   }
 
-  Widget _buildMainContent(BuildContext context) {
+  Widget _buildMainContent(BuildContext context, WidgetRef ref) {
+    final completedCount = ref.watch(completedLessonsCountProvider).value ?? 0;
+    final nextLessonId = completedCount + 1;
+    final isNewUser = completedCount == 0;
+
+    final bannerTitle = isNewUser
+        ? 'Welcome to LinguAI! 👋'
+        : 'Continue Learning 🚀';
+    final bannerSubtitle = isNewUser
+        ? 'Let\'s get started with your very first lecture!'
+        : 'Pick up right where you left off: Lesson $nextLessonId';
+    final buttonText = isNewUser ? 'Get Started' : 'Continue';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -61,34 +73,35 @@ class LearnTab extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.auto_awesome, color: Colors.white, size: 40),
+                const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 44),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'AI Recommended Practice',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      Text(
+                        bannerTitle,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Targeting your persistent errors in verb conjugations.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      Text(
+                        bannerSubtitle,
+                        style: const TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                     ],
                   ),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    context.push('/review/session');
+                    context.push('/module/$nextLessonId');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppColors.primaryGreen,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
-                  child: const Text('Start', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(buttonText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
               ],
             ),
@@ -99,7 +112,12 @@ class LearnTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSidebar(BuildContext context) {
+  Widget _buildSidebar(BuildContext context, WidgetRef ref) {
+    final progressState = ref.watch(progressControllerProvider);
+    final totalXp = progressState.value?.progress.totalXp ?? 0;
+    final streakDays = progressState.value?.progress.currentStreak ?? 0;
+    final completedCount = ref.watch(completedLessonsCountProvider).value ?? 0;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -107,9 +125,9 @@ class LearnTab extends ConsumerWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: const [
-              StreakFlame(streakDays: 12),
-              XpBadge(amount: 450),
+            children: [
+              StreakFlame(streakDays: streakDays),
+              XpBadge(amount: totalXp),
             ],
           ),
           const SizedBox(height: 32),
@@ -127,9 +145,9 @@ class LearnTab extends ConsumerWidget {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                _buildQuestItem(AppLocalizations.of(context)!.earn50Xp, 0.8),
+                _buildQuestItem(AppLocalizations.of(context)!.earn50Xp, (totalXp % 50) / 50.0),
                 const SizedBox(height: 12),
-                _buildQuestItem(AppLocalizations.of(context)!.complete2Lessons, 0.5),
+                _buildQuestItem(AppLocalizations.of(context)!.complete2Lessons, (completedCount / 2.0).clamp(0.0, 1.0)),
               ],
             ),
           ),
@@ -160,7 +178,7 @@ class LearnTab extends ConsumerWidget {
         Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const SizedBox(height: 8),
         LinearProgressIndicator(
-          value: progress,
+          value: progress.clamp(0.0, 1.0),
           backgroundColor: AppColors.divider,
           valueColor: const AlwaysStoppedAnimation(AppColors.primaryGreen),
           minHeight: 12,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/responsive/adaptive_scaffold.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../learn/presentation/screens/learn_tab.dart';
 import '../../review/presentation/screens/review_tab.dart';
@@ -44,28 +45,28 @@ class HomeScreen extends ConsumerWidget {
       },
       destinations: [
         NavigationDestination(
-          icon: const Icon(Icons.school_outlined),
-          selectedIcon: const Icon(Icons.school),
+          icon: SvgPicture.asset('assets/images/svgs/learn.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
+          selectedIcon: SvgPicture.asset('assets/images/svgs/learn.svg', height: 28),
           label: AppLocalizations.of(context)!.learnTab,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.menu_book_outlined),
-          selectedIcon: const Icon(Icons.menu_book),
+          icon: SvgPicture.asset('assets/images/svgs/quests.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
+          selectedIcon: SvgPicture.asset('assets/images/svgs/quests.svg', height: 28),
           label: AppLocalizations.of(context)!.reviewTab,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.chat_bubble_outline),
-          selectedIcon: const Icon(Icons.chat_bubble),
+          icon: SvgPicture.asset('assets/images/svgs/mascot.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
+          selectedIcon: SvgPicture.asset('assets/images/svgs/mascot.svg', height: 28),
           label: AppLocalizations.of(context)!.tutorTab,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.bar_chart_outlined),
-          selectedIcon: const Icon(Icons.bar_chart),
+          icon: SvgPicture.asset('assets/images/svgs/leaderboard.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
+          selectedIcon: SvgPicture.asset('assets/images/svgs/leaderboard.svg', height: 28),
           label: AppLocalizations.of(context)!.progressTab,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.person_outline),
-          selectedIcon: const Icon(Icons.person),
+          icon: SvgPicture.asset('assets/images/svgs/boy.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
+          selectedIcon: SvgPicture.asset('assets/images/svgs/boy.svg', height: 28),
           label: AppLocalizations.of(context)!.profileTab,
         ),
       ],

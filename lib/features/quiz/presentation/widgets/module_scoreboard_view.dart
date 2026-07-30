@@ -4,8 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/widgets/mascot/lingu_mascot.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
-import '../../../progress/presentation/providers/progress_controller.dart';
-import '../../../learn/domain/repositories/learn_repository.dart';
 
 class ModuleScoreboardView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -38,15 +36,8 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
     if (_processedResult) return;
     _processedResult = true;
 
-    final isPassed = widget.score >= 0.8;
-    if (isPassed) {
-      // Mark lesson as completed and unlock next
-      await ref.read(learnRepositoryProvider).completeLesson(widget.lessonId);
-      
-      // Award XP
-      final xpEarned = (widget.score * 50).toInt(); // up to 50 XP
-      ref.read(progressControllerProvider.notifier).addXp(xpEarned);
-    }
+    // XP awarding and lesson completion are handled in QuizController.nextQuestion()
+    // This view is display-only — no duplicate awards needed.
   }
 
   @override

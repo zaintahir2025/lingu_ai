@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'screen_size.dart';
 import '../theme/app_colors.dart';
-import '../../features/progress/presentation/providers/progress_controller.dart';
+
 import '../network/connectivity_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../game_state/game_state_provider.dart';
 
 class AdaptiveScaffold extends ConsumerWidget {
   final Widget body;
@@ -25,29 +27,39 @@ class AdaptiveScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final screenSize = ScreenSizeHelper.getSize(context);
-    final progressState = ref.watch(progressControllerProvider);
-
-    int currentStreak = 0;
-    if (progressState is AsyncData && progressState.value != null) {
-      currentStreak = progressState.value!.progress.currentStreak;
-    }
+    final gameState = ref.watch(gameStateProvider);
 
     final actions = [
       Padding(
-        padding: const EdgeInsetsDirectional.only(end: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.local_fire_department,
-              color: currentStreak > 0 ? AppColors.streakOrange : Colors.grey,
-            ).animate(target: currentStreak > 0 ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 1.seconds, curve: Curves.easeInOut).then().scale(begin: const Offset(1.2, 1.2), end: const Offset(1, 1), duration: 1.seconds, curve: Curves.easeInOut),
+            SvgPicture.asset('assets/images/svgs/points.svg', height: 24),
             const SizedBox(width: 4),
             Text(
-              currentStreak.toString(),
+              gameState.xp.toString(),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent),
+            ),
+            const SizedBox(width: 16),
+            Icon(
+              Icons.local_fire_department,
+              color: gameState.streak > 0 ? AppColors.streakOrange : Colors.grey,
+            ).animate(target: gameState.streak > 0 ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 1.seconds, curve: Curves.easeInOut).then().scale(begin: const Offset(1.2, 1.2), end: const Offset(1, 1), duration: 1.seconds, curve: Curves.easeInOut),
+            const SizedBox(width: 4),
+            Text(
+              gameState.streak.toString(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: currentStreak > 0 ? AppColors.streakOrange : Colors.grey,
+                color: gameState.streak > 0 ? AppColors.streakOrange : Colors.grey,
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(width: 16),
+            SvgPicture.asset('assets/images/svgs/heart.svg', height: 24),
+            const SizedBox(width: 4),
+            Text(
+              gameState.hearts.toString(),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent),
             ),
           ],
         ),

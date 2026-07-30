@@ -62,9 +62,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
 
 
+  bool _isAbove13 = true;
+
   void _register() {
     if (!_hasMinLength || !_hasNumber || !_hasSpecialChar) return;
     
+    if (!_isAbove13) {
+      InAppNotificationBanner.show(
+        context: context,
+        title: 'Age Requirement',
+        message: 'Users under 13 require parental consent per Play Store policy.',
+        type: NotificationType.error,
+      );
+      return;
+    }
+
     if (_turnstileToken == null) {
       InAppNotificationBanner.show(
         context: context,
@@ -213,7 +225,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   _buildChecklistRow(AppLocalizations.of(context)!.passwordContainsNumber, _hasNumber),
                   const SizedBox(height: 4),
                   _buildChecklistRow(AppLocalizations.of(context)!.passwordContainsSpecialChar, _hasSpecialChar),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _isAbove13,
+                        activeColor: AppColors.primaryGreen,
+                        onChanged: (val) {
+                          setState(() {
+                            _isAbove13 = val ?? true;
+                          });
+                        },
+                      ),
+                      Expanded(
+                        child: Text(
+                          'I confirm I am 13 years of age or older',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _isAbove13 ? AppColors.textPrimary : AppColors.heartRed,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   TurnstileWidget(
                     siteKey: '1x00000000000000000000AA', // Test site key
                     onTokenReceived: (token) {

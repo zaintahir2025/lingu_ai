@@ -1,12 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/audio/tts_service.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/storage/onboarding_storage.dart';
 
 class SwipeableFlashcard extends ConsumerStatefulWidget {
   final VocabWord word;
@@ -28,8 +26,6 @@ class SwipeableFlashcard extends ConsumerStatefulWidget {
 
 class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with SingleTickerProviderStateMixin {
   late AnimationController _flipController;
-  late AudioPlayer _audioPlayer;
-  late FlutterTts _flutterTts;
   late FocusNode _focusNode;
   bool _isFront = true;
   Offset _dragOffset = Offset.zero;
@@ -41,34 +37,19 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _audioPlayer = AudioPlayer();
-    _flutterTts = FlutterTts();
     _focusNode = FocusNode();
     if (widget.canUseKeyboard) {
       _focusNode.requestFocus();
     }
   }
 
-  Future<void> _speak(String text) async {
-    final languageCode = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
-    
-    String ttsCode = 'es-ES';
-    switch (languageCode) {
-      case 'es': ttsCode = 'es-ES'; break;
-      case 'fr': ttsCode = 'fr-FR'; break;
-      case 'ja': ttsCode = 'ja-JP'; break;
-      default: ttsCode = 'es-ES';
-    }
-
-    await _flutterTts.setLanguage(ttsCode);
-    await _flutterTts.speak(text);
+  void _speak(String text) {
+    ref.read(ttsServiceProvider).speak(text);
   }
 
   @override
   void dispose() {
     _flipController.dispose();
-    _audioPlayer.dispose();
-    _flutterTts.stop();
     _focusNode.dispose();
     super.dispose();
   }
@@ -76,11 +57,7 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
   void flipCard() {
     if (_isFront) {
       _flipController.forward();
-      if (widget.word.audioUrl != null) {
-        _audioPlayer.play(UrlSource(widget.word.audioUrl!));
-      } else {
-        _speak(widget.word.word);
-      }
+      _speak(widget.word.word);
     } else {
       _flipController.reverse();
     }
@@ -175,6 +152,29 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
           ),
           Positioned(
             bottom: 20,
+            left: 20,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.flip_camera_android_rounded, size: 16, color: AppColors.primaryGreen),
+                  SizedBox(width: 6),
+                  Text(
+                    'Tap card to reveal meaning',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 20,
             right: 20,
             child: IconButton(
               icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
@@ -203,17 +203,33 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
             ),
             Positioned(
               bottom: 20,
+              left: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.touch_app_rounded, size: 16, color: AppColors.primaryGreenDark),
+                    SizedBox(width: 6),
+                    Text(
+                      'Tap to flip back',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 20,
               right: 20,
               child: IconButton(
                 icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
                 tooltip: 'Play pronunciation',
-                onPressed: () {
-                  if (widget.word.audioUrl != null) {
-                    _audioPlayer.play(UrlSource(widget.word.audioUrl!));
-                  } else {
-                    _speak(widget.word.word);
-                  }
-                },
+                onPressed: () => _speak(widget.word.word),
               ),
             ),
           ],

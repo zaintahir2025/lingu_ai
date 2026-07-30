@@ -4,7 +4,10 @@ import '../../domain/models/quiz_question.dart';
 import '../../domain/models/wrong_answer_log.dart';
 import '../../../../core/local_storage/local_storage_provider.dart';
 import '../../../learn/domain/repositories/learn_repository.dart';
+import 'package:drift/drift.dart' hide Column;
+import '../../../../core/database/database.dart';
 import '../../../progress/presentation/providers/progress_controller.dart';
+import '../../../../core/game_state/game_state_provider.dart';
 
 class QuizState {
   final List<QuizQuestion> queue;
@@ -373,10 +376,82 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
 
   @override
   QuizState build(int arg) {
-    final questions = _curriculumQuestions[arg] ?? _curriculumQuestions[1]!;
+    final baseQuestions = _curriculumQuestions[arg] ?? _curriculumQuestions[1]!;
+    final List<QuizQuestion> expandedPool = List.from(baseQuestions);
+
+    // Expand pool up to 25-30 questions using variations per REQ #5
+    for (int i = 0; i < baseQuestions.length; i++) {
+      final q = baseQuestions[i];
+      // Variation 1: Reverse Question
+      expandedPool.add(
+        QuizQuestion(
+          id: '${q.id}_rev',
+          type: QuestionType.multipleChoice,
+          prompt: 'Translate: "${q.correctAnswer}"',
+          options: q.options.reversed.toList(),
+          correctAnswer: q.options.firstWhere((opt) => opt != q.correctAnswer, orElse: () => q.correctAnswer),
+          explanation: q.explanation,
+        ),
+      );
+      // Variation 2: Listening Question
+      expandedPool.add(
+        QuizQuestion(
+          id: '${q.id}_listen',
+          type: QuestionType.listening,
+          prompt: 'Audio: "${q.correctAnswer}"',
+          correctAnswer: q.correctAnswer,
+          explanation: 'Listen carefully: ${q.explanation}',
+        ),
+      );
+      // Variation 3: Fill blank
+      expandedPool.add(
+        QuizQuestion(
+          id: '${q.id}_fill',
+          type: QuestionType.fillBlank,
+          prompt: 'Complete: "_____ ${q.correctAnswer}"',
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+        ),
+      );
+      // Variation 4: Word Identification
+      expandedPool.add(
+        QuizQuestion(
+          id: '${q.id}_word',
+          type: QuestionType.multipleChoice,
+          prompt: 'Identify the word matching "${q.prompt}"',
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+        ),
+      );
+      // Variation 5: Translation Pick
+      expandedPool.add(
+        QuizQuestion(
+          id: '${q.id}_trans',
+          type: QuestionType.translation,
+          prompt: '${q.prompt} (Select translation)',
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+        ),
+      );
+      // Variation 6: Quick Check
+      expandedPool.add(
+        QuizQuestion(
+          id: '${q.id}_check',
+          type: QuestionType.multipleChoice,
+          prompt: 'Vocabulary check: "${q.correctAnswer}"',
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+        ),
+      );
+    }
+
+    final finalQueue = expandedPool.take(28).toList();
+
     return QuizState(
-      queue: List.from(questions),
-      totalQuestions: questions.length,
+      queue: finalQueue,
+      totalQuestions: finalQueue.length,
     );
   }
 
@@ -390,6 +465,9 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
     if (isCorrect) {
       state = state.copyWith(correctCount: state.correctCount + 1);
     } else {
+      // Deduct a heart on wrong answer
+      ref.read(gameStateProvider.notifier).reduceHeart();
+
       // Re-queue the wrong answer to the end of the list.
       final newQueue = List<QuizQuestion>.from(state.queue);
       newQueue.add(question);
@@ -406,13 +484,15 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
     if (state.currentIndex + 1 >= state.queue.length) {
       state = state.copyWith(isFinished: true);
       
-      // Check pass threshold (60%)
-      if (state.score >= 0.6) {
+      // Check pass threshold (80% requirement)
+      if (state.score >= 0.8) {
         final repo = ref.read(learnRepositoryProvider);
         repo.completeLesson(arg);
         
-        // Award XP via ProgressController
+        // Award XP via ProgressController & sync GameState
         ref.read(progressControllerProvider.notifier).addXp(30);
+        ref.read(gameStateProvider.notifier).addXp(30);
+        ref.read(gameStateProvider.notifier).incrementStreak();
       }
     } else {
       state = state.copyWith(currentIndex: state.currentIndex + 1);
@@ -437,6 +517,22 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
       final logs = box.get('wrong_answers', defaultValue: []) as List;
       logs.add(log.toJson());
       await box.put('wrong_answers', logs);
+
+      // Log weak word into VocabWords DB for SRS Daily Review
+      final db = ref.read(databaseProvider);
+      final wordMatch = await (db.select(db.vocabWords)
+            ..where((t) => t.word.equals(correctAnswer) | t.translation.equals(correctAnswer)))
+          .getSingleOrNull();
+
+      if (wordMatch != null) {
+        await db.update(db.vocabWords).replace(
+          wordMatch.copyWith(
+            easinessFactor: 1.5, // Lower ease factor for SRS
+            nextReviewDate: Value(DateTime.now()), // Due immediately for review
+            status: 'learning',
+          ),
+        );
+      }
     } catch (e) {
       debugPrint('Failed to log wrong answer: $e');
     }

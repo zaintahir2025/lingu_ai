@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
+import '../../../../core/widgets/shared/duolingo_streak_widget.dart';
 import '../providers/progress_controller.dart';
 import '../widgets/leaderboard_list.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
@@ -34,6 +35,13 @@ class ProgressTab extends ConsumerWidget {
               ),
               const SizedBox(height: AppConstants.space24),
               
+              // Duolingo-style Streak Widget
+              DuolingoStreakWidget(
+                streakCount: streak,
+                hasStreakFreeze: true,
+              ),
+              const SizedBox(height: AppConstants.space24),
+
               // Weekly XP Chart
               _buildWeeklyXpChart(context, ref),
               const SizedBox(height: AppConstants.space32),

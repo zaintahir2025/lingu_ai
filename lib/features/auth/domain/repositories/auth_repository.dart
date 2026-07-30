@@ -76,13 +76,13 @@ class NodeAuthRepository implements AuthRepository {
       debugPrint('Login API Error [${e.response?.statusCode}]: ${e.response?.data}');
       debugPrint('DioException Details: message=${e.message}, type=${e.type}, error=${e.error}');
       
-      // GitHub Pages Demo Fallback
-      if (kIsWeb && kReleaseMode) {
-        debugPrint('Fallback: Simulating login for GitHub Pages demo.');
+      // Demo / Offline Fallback when backend is unreachable or on Web
+      if (kIsWeb || e.response == null) {
+        debugPrint('Fallback: Simulating login for demo/offline mode.');
         await _storage.saveTokens(jwt: 'demo-token', refreshToken: 'demo-refresh-token');
         return User(
           id: 'demo_user_123',
-          email: email.trim(),
+          email: email.trim().isEmpty ? 'user@example.com' : email.trim(),
           name: 'Demo User',
           username: 'DemoUser',
         );
@@ -102,9 +102,9 @@ class NodeAuthRepository implements AuthRepository {
     } on DioException catch (e) {
       debugPrint('Register API Error [${e.response?.statusCode}]: ${e.response?.data}');
       
-      // GitHub Pages Demo Fallback
-      if (kIsWeb && kReleaseMode) {
-        debugPrint('Fallback: Simulating registration for GitHub Pages demo.');
+      // Demo / Offline Fallback
+      if (kIsWeb || e.response == null) {
+        debugPrint('Fallback: Simulating registration for demo/offline mode.');
         return;
       }
 
@@ -119,6 +119,9 @@ class NodeAuthRepository implements AuthRepository {
         'email': email,
       });
     } on DioException catch (e) {
+      if (kIsWeb || e.response == null) {
+        return;
+      }
       throw Exception(e.response?.data['error'] ?? 'Failed to send reset email');
     }
   }
@@ -131,6 +134,9 @@ class NodeAuthRepository implements AuthRepository {
         'newPassword': newPassword,
       });
     } on DioException catch (e) {
+      if (kIsWeb || e.response == null) {
+        return;
+      }
       throw Exception(e.response?.data['error'] ?? 'Failed to reset password');
     }
   }

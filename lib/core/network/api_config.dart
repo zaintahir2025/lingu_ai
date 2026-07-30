@@ -4,7 +4,6 @@ class ApiConfig {
   static String get baseUrl {
     const envUrl = String.fromEnvironment('API_URL');
     if (envUrl.isNotEmpty) {
-      // Force HTTPS in production even if env was misconfigured
       if (kReleaseMode && envUrl.startsWith('http://')) {
         return envUrl.replaceFirst('http://', 'https://');
       }
@@ -12,12 +11,12 @@ class ApiConfig {
     }
     
     if (kReleaseMode) {
-      // Secure default for production builds
-      return 'https://api.linguai.com/api';
+      // Production default URL on Render
+      return 'https://lingu-ai-backend.onrender.com/api/v1';
     }
 
-    if (kIsWeb) return 'http://localhost:3000/api';
-    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:3000/api';
-    return 'http://localhost:3000/api';
+    if (kIsWeb) return 'http://localhost:3000/api/v1';
+    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:3000/api/v1';
+    return 'http://localhost:3000/api/v1';
   }
 }

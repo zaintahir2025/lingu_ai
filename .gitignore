@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Temporary & Backend Node dependencies
+duolingo_temp/
+node_modules/
+server/node_modules/
+server/dist/
+.env
+

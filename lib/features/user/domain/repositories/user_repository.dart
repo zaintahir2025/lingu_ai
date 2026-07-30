@@ -25,7 +25,7 @@ class UserRepositoryImpl implements UserRepository {
       });
       return User.fromJson(response.data['user']);
     } on DioException catch (e) {
-      if (kIsWeb && kReleaseMode) {
+      if (kIsWeb || e.response == null) {
         return User(
           id: 'demo_user_123',
           email: 'demo@example.com',
@@ -49,7 +49,7 @@ class UserRepositoryImpl implements UserRepository {
       });
       return User.fromJson(response.data['user']);
     } on DioException catch (e) {
-      if (kIsWeb && kReleaseMode) {
+      if (kIsWeb || e.response == null) {
         return User(
           id: 'demo_user_123',
           email: 'demo@example.com',

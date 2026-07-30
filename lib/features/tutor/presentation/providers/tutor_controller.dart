@@ -68,8 +68,22 @@ class TutorController extends Notifier<TutorState> {
     );
 
     try {
+      // Tiered Context Window per REQ #6
+      final isPro = state.requiresPremium == false;
+      final maxContextMistakes = isPro ? 10 : 3;
+      final maxMessageHistory = isPro ? 20 : 3;
+
+      // Check context history limit for Free tier
+      if (!isPro && state.messages.length > maxMessageHistory * 2) {
+        state = state.copyWith(
+          requiresPremium: true,
+          isStreaming: false,
+        );
+        return;
+      }
+
       // 1. Fetch Context
-      final recentMistakes = await db.getRecentMistakes(limit: 5);
+      final recentMistakes = await db.getRecentMistakes(limit: maxContextMistakes);
       final contextWords = recentMistakes.map((e) => e.word).toList();
 
       // 2. Start Streaming

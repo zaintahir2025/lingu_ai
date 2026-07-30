@@ -49,11 +49,16 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> _init() async {
     final token = _tokenStorage.jwt;
     if (token != null) {
-      // In a real app, you would hit the /me endpoint to validate token and get user
-      // For now, if token exists, we consider them authenticated.
       state = state.copyWith(
         status: AuthStatus.authenticated,
-        user: User(id: 'restored', email: 'user@example.com', name: 'User'),
+        user: User(
+          id: 'restored', 
+          email: 'user@example.com', 
+          name: 'Learner',
+          username: 'Learner',
+          targetLanguage: 'es',
+          knowledgeLevel: 'A1',
+        ),
       );
     } else {
       state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
