@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/responsive/adaptive_scaffold.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -65,8 +66,8 @@ class HomeScreen extends ConsumerWidget {
           label: AppLocalizations.of(context)!.progressTab,
         ),
         NavigationDestination(
-          icon: SvgPicture.asset('assets/images/svgs/boy.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
-          selectedIcon: SvgPicture.asset('assets/images/svgs/boy.svg', height: 28),
+          icon: const Icon(Icons.person_outline_rounded, size: 26, color: Colors.grey),
+          selectedIcon: Icon(Icons.person_rounded, size: 28, color: AppColors.primaryGreen),
           label: AppLocalizations.of(context)!.profileTab,
         ),
       ],

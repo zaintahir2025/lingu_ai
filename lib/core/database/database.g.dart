@@ -465,6 +465,28 @@ class $VocabWordsTable extends VocabWords
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _exampleSentenceMeta = const VerificationMeta(
+    'exampleSentence',
+  );
+  @override
+  late final GeneratedColumn<String> exampleSentence = GeneratedColumn<String>(
+    'example_sentence',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _exampleTranslationMeta =
+      const VerificationMeta('exampleTranslation');
+  @override
+  late final GeneratedColumn<String> exampleTranslation =
+      GeneratedColumn<String>(
+        'example_translation',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -530,6 +552,8 @@ class $VocabWordsTable extends VocabWords
     word,
     translation,
     audioUrl,
+    exampleSentence,
+    exampleTranslation,
     status,
     nextReviewDate,
     repetitions,
@@ -582,6 +606,24 @@ class $VocabWordsTable extends VocabWords
       context.handle(
         _audioUrlMeta,
         audioUrl.isAcceptableOrUnknown(data['audio_url']!, _audioUrlMeta),
+      );
+    }
+    if (data.containsKey('example_sentence')) {
+      context.handle(
+        _exampleSentenceMeta,
+        exampleSentence.isAcceptableOrUnknown(
+          data['example_sentence']!,
+          _exampleSentenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('example_translation')) {
+      context.handle(
+        _exampleTranslationMeta,
+        exampleTranslation.isAcceptableOrUnknown(
+          data['example_translation']!,
+          _exampleTranslationMeta,
+        ),
       );
     }
     if (data.containsKey('status')) {
@@ -652,6 +694,14 @@ class $VocabWordsTable extends VocabWords
         DriftSqlType.string,
         data['${effectivePrefix}audio_url'],
       ),
+      exampleSentence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}example_sentence'],
+      ),
+      exampleTranslation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}example_translation'],
+      ),
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
@@ -687,6 +737,8 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
   final String word;
   final String translation;
   final String? audioUrl;
+  final String? exampleSentence;
+  final String? exampleTranslation;
   final String status;
   final DateTime? nextReviewDate;
   final int repetitions;
@@ -698,6 +750,8 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
     required this.word,
     required this.translation,
     this.audioUrl,
+    this.exampleSentence,
+    this.exampleTranslation,
     required this.status,
     this.nextReviewDate,
     required this.repetitions,
@@ -713,6 +767,12 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
     map['translation'] = Variable<String>(translation);
     if (!nullToAbsent || audioUrl != null) {
       map['audio_url'] = Variable<String>(audioUrl);
+    }
+    if (!nullToAbsent || exampleSentence != null) {
+      map['example_sentence'] = Variable<String>(exampleSentence);
+    }
+    if (!nullToAbsent || exampleTranslation != null) {
+      map['example_translation'] = Variable<String>(exampleTranslation);
     }
     map['status'] = Variable<String>(status);
     if (!nullToAbsent || nextReviewDate != null) {
@@ -733,6 +793,12 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
       audioUrl: audioUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(audioUrl),
+      exampleSentence: exampleSentence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exampleSentence),
+      exampleTranslation: exampleTranslation == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exampleTranslation),
       status: Value(status),
       nextReviewDate: nextReviewDate == null && nullToAbsent
           ? const Value.absent()
@@ -754,6 +820,10 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
       word: serializer.fromJson<String>(json['word']),
       translation: serializer.fromJson<String>(json['translation']),
       audioUrl: serializer.fromJson<String?>(json['audioUrl']),
+      exampleSentence: serializer.fromJson<String?>(json['exampleSentence']),
+      exampleTranslation: serializer.fromJson<String?>(
+        json['exampleTranslation'],
+      ),
       status: serializer.fromJson<String>(json['status']),
       nextReviewDate: serializer.fromJson<DateTime?>(json['nextReviewDate']),
       repetitions: serializer.fromJson<int>(json['repetitions']),
@@ -770,6 +840,8 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
       'word': serializer.toJson<String>(word),
       'translation': serializer.toJson<String>(translation),
       'audioUrl': serializer.toJson<String?>(audioUrl),
+      'exampleSentence': serializer.toJson<String?>(exampleSentence),
+      'exampleTranslation': serializer.toJson<String?>(exampleTranslation),
       'status': serializer.toJson<String>(status),
       'nextReviewDate': serializer.toJson<DateTime?>(nextReviewDate),
       'repetitions': serializer.toJson<int>(repetitions),
@@ -784,6 +856,8 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
     String? word,
     String? translation,
     Value<String?> audioUrl = const Value.absent(),
+    Value<String?> exampleSentence = const Value.absent(),
+    Value<String?> exampleTranslation = const Value.absent(),
     String? status,
     Value<DateTime?> nextReviewDate = const Value.absent(),
     int? repetitions,
@@ -795,6 +869,12 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
     word: word ?? this.word,
     translation: translation ?? this.translation,
     audioUrl: audioUrl.present ? audioUrl.value : this.audioUrl,
+    exampleSentence: exampleSentence.present
+        ? exampleSentence.value
+        : this.exampleSentence,
+    exampleTranslation: exampleTranslation.present
+        ? exampleTranslation.value
+        : this.exampleTranslation,
     status: status ?? this.status,
     nextReviewDate: nextReviewDate.present
         ? nextReviewDate.value
@@ -812,6 +892,12 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
           ? data.translation.value
           : this.translation,
       audioUrl: data.audioUrl.present ? data.audioUrl.value : this.audioUrl,
+      exampleSentence: data.exampleSentence.present
+          ? data.exampleSentence.value
+          : this.exampleSentence,
+      exampleTranslation: data.exampleTranslation.present
+          ? data.exampleTranslation.value
+          : this.exampleTranslation,
       status: data.status.present ? data.status.value : this.status,
       nextReviewDate: data.nextReviewDate.present
           ? data.nextReviewDate.value
@@ -834,6 +920,8 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
           ..write('word: $word, ')
           ..write('translation: $translation, ')
           ..write('audioUrl: $audioUrl, ')
+          ..write('exampleSentence: $exampleSentence, ')
+          ..write('exampleTranslation: $exampleTranslation, ')
           ..write('status: $status, ')
           ..write('nextReviewDate: $nextReviewDate, ')
           ..write('repetitions: $repetitions, ')
@@ -850,6 +938,8 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
     word,
     translation,
     audioUrl,
+    exampleSentence,
+    exampleTranslation,
     status,
     nextReviewDate,
     repetitions,
@@ -865,6 +955,8 @@ class VocabWord extends DataClass implements Insertable<VocabWord> {
           other.word == this.word &&
           other.translation == this.translation &&
           other.audioUrl == this.audioUrl &&
+          other.exampleSentence == this.exampleSentence &&
+          other.exampleTranslation == this.exampleTranslation &&
           other.status == this.status &&
           other.nextReviewDate == this.nextReviewDate &&
           other.repetitions == this.repetitions &&
@@ -878,6 +970,8 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
   final Value<String> word;
   final Value<String> translation;
   final Value<String?> audioUrl;
+  final Value<String?> exampleSentence;
+  final Value<String?> exampleTranslation;
   final Value<String> status;
   final Value<DateTime?> nextReviewDate;
   final Value<int> repetitions;
@@ -889,6 +983,8 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
     this.word = const Value.absent(),
     this.translation = const Value.absent(),
     this.audioUrl = const Value.absent(),
+    this.exampleSentence = const Value.absent(),
+    this.exampleTranslation = const Value.absent(),
     this.status = const Value.absent(),
     this.nextReviewDate = const Value.absent(),
     this.repetitions = const Value.absent(),
@@ -901,6 +997,8 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
     required String word,
     required String translation,
     this.audioUrl = const Value.absent(),
+    this.exampleSentence = const Value.absent(),
+    this.exampleTranslation = const Value.absent(),
     this.status = const Value.absent(),
     this.nextReviewDate = const Value.absent(),
     this.repetitions = const Value.absent(),
@@ -915,6 +1013,8 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
     Expression<String>? word,
     Expression<String>? translation,
     Expression<String>? audioUrl,
+    Expression<String>? exampleSentence,
+    Expression<String>? exampleTranslation,
     Expression<String>? status,
     Expression<DateTime>? nextReviewDate,
     Expression<int>? repetitions,
@@ -927,6 +1027,8 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
       if (word != null) 'word': word,
       if (translation != null) 'translation': translation,
       if (audioUrl != null) 'audio_url': audioUrl,
+      if (exampleSentence != null) 'example_sentence': exampleSentence,
+      if (exampleTranslation != null) 'example_translation': exampleTranslation,
       if (status != null) 'status': status,
       if (nextReviewDate != null) 'next_review_date': nextReviewDate,
       if (repetitions != null) 'repetitions': repetitions,
@@ -941,6 +1043,8 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
     Value<String>? word,
     Value<String>? translation,
     Value<String?>? audioUrl,
+    Value<String?>? exampleSentence,
+    Value<String?>? exampleTranslation,
     Value<String>? status,
     Value<DateTime?>? nextReviewDate,
     Value<int>? repetitions,
@@ -953,6 +1057,8 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
       word: word ?? this.word,
       translation: translation ?? this.translation,
       audioUrl: audioUrl ?? this.audioUrl,
+      exampleSentence: exampleSentence ?? this.exampleSentence,
+      exampleTranslation: exampleTranslation ?? this.exampleTranslation,
       status: status ?? this.status,
       nextReviewDate: nextReviewDate ?? this.nextReviewDate,
       repetitions: repetitions ?? this.repetitions,
@@ -978,6 +1084,12 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
     }
     if (audioUrl.present) {
       map['audio_url'] = Variable<String>(audioUrl.value);
+    }
+    if (exampleSentence.present) {
+      map['example_sentence'] = Variable<String>(exampleSentence.value);
+    }
+    if (exampleTranslation.present) {
+      map['example_translation'] = Variable<String>(exampleTranslation.value);
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
@@ -1005,6 +1117,8 @@ class VocabWordsCompanion extends UpdateCompanion<VocabWord> {
           ..write('word: $word, ')
           ..write('translation: $translation, ')
           ..write('audioUrl: $audioUrl, ')
+          ..write('exampleSentence: $exampleSentence, ')
+          ..write('exampleTranslation: $exampleTranslation, ')
           ..write('status: $status, ')
           ..write('nextReviewDate: $nextReviewDate, ')
           ..write('repetitions: $repetitions, ')
@@ -1401,6 +1515,16 @@ class $UserProgressTable extends UserProgress
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _heartsMeta = const VerificationMeta('hearts');
+  @override
+  late final GeneratedColumn<int> hearts = GeneratedColumn<int>(
+    'hearts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(5),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1409,6 +1533,7 @@ class $UserProgressTable extends UserProgress
     currentStreak,
     lastActivityDate,
     streakFreezes,
+    hearts,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1464,6 +1589,12 @@ class $UserProgressTable extends UserProgress
         ),
       );
     }
+    if (data.containsKey('hearts')) {
+      context.handle(
+        _heartsMeta,
+        hearts.isAcceptableOrUnknown(data['hearts']!, _heartsMeta),
+      );
+    }
     return context;
   }
 
@@ -1497,6 +1628,10 @@ class $UserProgressTable extends UserProgress
         DriftSqlType.int,
         data['${effectivePrefix}streak_freezes'],
       )!,
+      hearts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}hearts'],
+      )!,
     );
   }
 
@@ -1514,6 +1649,7 @@ class UserProgressEntry extends DataClass
   final int currentStreak;
   final DateTime? lastActivityDate;
   final int streakFreezes;
+  final int hearts;
   const UserProgressEntry({
     required this.id,
     required this.totalXp,
@@ -1521,6 +1657,7 @@ class UserProgressEntry extends DataClass
     required this.currentStreak,
     this.lastActivityDate,
     required this.streakFreezes,
+    required this.hearts,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1533,6 +1670,7 @@ class UserProgressEntry extends DataClass
       map['last_activity_date'] = Variable<DateTime>(lastActivityDate);
     }
     map['streak_freezes'] = Variable<int>(streakFreezes);
+    map['hearts'] = Variable<int>(hearts);
     return map;
   }
 
@@ -1546,6 +1684,7 @@ class UserProgressEntry extends DataClass
           ? const Value.absent()
           : Value(lastActivityDate),
       streakFreezes: Value(streakFreezes),
+      hearts: Value(hearts),
     );
   }
 
@@ -1563,6 +1702,7 @@ class UserProgressEntry extends DataClass
         json['lastActivityDate'],
       ),
       streakFreezes: serializer.fromJson<int>(json['streakFreezes']),
+      hearts: serializer.fromJson<int>(json['hearts']),
     );
   }
   @override
@@ -1575,6 +1715,7 @@ class UserProgressEntry extends DataClass
       'currentStreak': serializer.toJson<int>(currentStreak),
       'lastActivityDate': serializer.toJson<DateTime?>(lastActivityDate),
       'streakFreezes': serializer.toJson<int>(streakFreezes),
+      'hearts': serializer.toJson<int>(hearts),
     };
   }
 
@@ -1585,6 +1726,7 @@ class UserProgressEntry extends DataClass
     int? currentStreak,
     Value<DateTime?> lastActivityDate = const Value.absent(),
     int? streakFreezes,
+    int? hearts,
   }) => UserProgressEntry(
     id: id ?? this.id,
     totalXp: totalXp ?? this.totalXp,
@@ -1594,6 +1736,7 @@ class UserProgressEntry extends DataClass
         ? lastActivityDate.value
         : this.lastActivityDate,
     streakFreezes: streakFreezes ?? this.streakFreezes,
+    hearts: hearts ?? this.hearts,
   );
   UserProgressEntry copyWithCompanion(UserProgressCompanion data) {
     return UserProgressEntry(
@@ -1609,6 +1752,7 @@ class UserProgressEntry extends DataClass
       streakFreezes: data.streakFreezes.present
           ? data.streakFreezes.value
           : this.streakFreezes,
+      hearts: data.hearts.present ? data.hearts.value : this.hearts,
     );
   }
 
@@ -1620,7 +1764,8 @@ class UserProgressEntry extends DataClass
           ..write('level: $level, ')
           ..write('currentStreak: $currentStreak, ')
           ..write('lastActivityDate: $lastActivityDate, ')
-          ..write('streakFreezes: $streakFreezes')
+          ..write('streakFreezes: $streakFreezes, ')
+          ..write('hearts: $hearts')
           ..write(')'))
         .toString();
   }
@@ -1633,6 +1778,7 @@ class UserProgressEntry extends DataClass
     currentStreak,
     lastActivityDate,
     streakFreezes,
+    hearts,
   );
   @override
   bool operator ==(Object other) =>
@@ -1643,7 +1789,8 @@ class UserProgressEntry extends DataClass
           other.level == this.level &&
           other.currentStreak == this.currentStreak &&
           other.lastActivityDate == this.lastActivityDate &&
-          other.streakFreezes == this.streakFreezes);
+          other.streakFreezes == this.streakFreezes &&
+          other.hearts == this.hearts);
 }
 
 class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
@@ -1653,6 +1800,7 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
   final Value<int> currentStreak;
   final Value<DateTime?> lastActivityDate;
   final Value<int> streakFreezes;
+  final Value<int> hearts;
   const UserProgressCompanion({
     this.id = const Value.absent(),
     this.totalXp = const Value.absent(),
@@ -1660,6 +1808,7 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
     this.currentStreak = const Value.absent(),
     this.lastActivityDate = const Value.absent(),
     this.streakFreezes = const Value.absent(),
+    this.hearts = const Value.absent(),
   });
   UserProgressCompanion.insert({
     this.id = const Value.absent(),
@@ -1668,6 +1817,7 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
     this.currentStreak = const Value.absent(),
     this.lastActivityDate = const Value.absent(),
     this.streakFreezes = const Value.absent(),
+    this.hearts = const Value.absent(),
   });
   static Insertable<UserProgressEntry> custom({
     Expression<int>? id,
@@ -1676,6 +1826,7 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
     Expression<int>? currentStreak,
     Expression<DateTime>? lastActivityDate,
     Expression<int>? streakFreezes,
+    Expression<int>? hearts,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1684,6 +1835,7 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
       if (currentStreak != null) 'current_streak': currentStreak,
       if (lastActivityDate != null) 'last_activity_date': lastActivityDate,
       if (streakFreezes != null) 'streak_freezes': streakFreezes,
+      if (hearts != null) 'hearts': hearts,
     });
   }
 
@@ -1694,6 +1846,7 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
     Value<int>? currentStreak,
     Value<DateTime?>? lastActivityDate,
     Value<int>? streakFreezes,
+    Value<int>? hearts,
   }) {
     return UserProgressCompanion(
       id: id ?? this.id,
@@ -1702,6 +1855,7 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
       currentStreak: currentStreak ?? this.currentStreak,
       lastActivityDate: lastActivityDate ?? this.lastActivityDate,
       streakFreezes: streakFreezes ?? this.streakFreezes,
+      hearts: hearts ?? this.hearts,
     );
   }
 
@@ -1726,6 +1880,9 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
     if (streakFreezes.present) {
       map['streak_freezes'] = Variable<int>(streakFreezes.value);
     }
+    if (hearts.present) {
+      map['hearts'] = Variable<int>(hearts.value);
+    }
     return map;
   }
 
@@ -1737,7 +1894,8 @@ class UserProgressCompanion extends UpdateCompanion<UserProgressEntry> {
           ..write('level: $level, ')
           ..write('currentStreak: $currentStreak, ')
           ..write('lastActivityDate: $lastActivityDate, ')
-          ..write('streakFreezes: $streakFreezes')
+          ..write('streakFreezes: $streakFreezes, ')
+          ..write('hearts: $hearts')
           ..write(')'))
         .toString();
   }
@@ -2632,6 +2790,8 @@ typedef $$VocabWordsTableCreateCompanionBuilder =
       required String word,
       required String translation,
       Value<String?> audioUrl,
+      Value<String?> exampleSentence,
+      Value<String?> exampleTranslation,
       Value<String> status,
       Value<DateTime?> nextReviewDate,
       Value<int> repetitions,
@@ -2645,6 +2805,8 @@ typedef $$VocabWordsTableUpdateCompanionBuilder =
       Value<String> word,
       Value<String> translation,
       Value<String?> audioUrl,
+      Value<String?> exampleSentence,
+      Value<String?> exampleTranslation,
       Value<String> status,
       Value<DateTime?> nextReviewDate,
       Value<int> repetitions,
@@ -2721,6 +2883,16 @@ class $$VocabWordsTableFilterComposer
 
   ColumnFilters<String> get audioUrl => $composableBuilder(
     column: $table.audioUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exampleSentence => $composableBuilder(
+    column: $table.exampleSentence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exampleTranslation => $composableBuilder(
+    column: $table.exampleTranslation,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2827,6 +2999,16 @@ class $$VocabWordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get exampleSentence => $composableBuilder(
+    column: $table.exampleSentence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exampleTranslation => $composableBuilder(
+    column: $table.exampleTranslation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
@@ -2898,6 +3080,16 @@ class $$VocabWordsTableAnnotationComposer
 
   GeneratedColumn<String> get audioUrl =>
       $composableBuilder(column: $table.audioUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get exampleSentence => $composableBuilder(
+    column: $table.exampleSentence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get exampleTranslation => $composableBuilder(
+    column: $table.exampleTranslation,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
@@ -3003,6 +3195,8 @@ class $$VocabWordsTableTableManager
                 Value<String> word = const Value.absent(),
                 Value<String> translation = const Value.absent(),
                 Value<String?> audioUrl = const Value.absent(),
+                Value<String?> exampleSentence = const Value.absent(),
+                Value<String?> exampleTranslation = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime?> nextReviewDate = const Value.absent(),
                 Value<int> repetitions = const Value.absent(),
@@ -3014,6 +3208,8 @@ class $$VocabWordsTableTableManager
                 word: word,
                 translation: translation,
                 audioUrl: audioUrl,
+                exampleSentence: exampleSentence,
+                exampleTranslation: exampleTranslation,
                 status: status,
                 nextReviewDate: nextReviewDate,
                 repetitions: repetitions,
@@ -3027,6 +3223,8 @@ class $$VocabWordsTableTableManager
                 required String word,
                 required String translation,
                 Value<String?> audioUrl = const Value.absent(),
+                Value<String?> exampleSentence = const Value.absent(),
+                Value<String?> exampleTranslation = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime?> nextReviewDate = const Value.absent(),
                 Value<int> repetitions = const Value.absent(),
@@ -3038,6 +3236,8 @@ class $$VocabWordsTableTableManager
                 word: word,
                 translation: translation,
                 audioUrl: audioUrl,
+                exampleSentence: exampleSentence,
+                exampleTranslation: exampleTranslation,
                 status: status,
                 nextReviewDate: nextReviewDate,
                 repetitions: repetitions,
@@ -3453,6 +3653,7 @@ typedef $$UserProgressTableCreateCompanionBuilder =
       Value<int> currentStreak,
       Value<DateTime?> lastActivityDate,
       Value<int> streakFreezes,
+      Value<int> hearts,
     });
 typedef $$UserProgressTableUpdateCompanionBuilder =
     UserProgressCompanion Function({
@@ -3462,6 +3663,7 @@ typedef $$UserProgressTableUpdateCompanionBuilder =
       Value<int> currentStreak,
       Value<DateTime?> lastActivityDate,
       Value<int> streakFreezes,
+      Value<int> hearts,
     });
 
 class $$UserProgressTableFilterComposer
@@ -3500,6 +3702,11 @@ class $$UserProgressTableFilterComposer
 
   ColumnFilters<int> get streakFreezes => $composableBuilder(
     column: $table.streakFreezes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get hearts => $composableBuilder(
+    column: $table.hearts,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3542,6 +3749,11 @@ class $$UserProgressTableOrderingComposer
     column: $table.streakFreezes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get hearts => $composableBuilder(
+    column: $table.hearts,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$UserProgressTableAnnotationComposer
@@ -3576,6 +3788,9 @@ class $$UserProgressTableAnnotationComposer
     column: $table.streakFreezes,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get hearts =>
+      $composableBuilder(column: $table.hearts, builder: (column) => column);
 }
 
 class $$UserProgressTableTableManager
@@ -3619,6 +3834,7 @@ class $$UserProgressTableTableManager
                 Value<int> currentStreak = const Value.absent(),
                 Value<DateTime?> lastActivityDate = const Value.absent(),
                 Value<int> streakFreezes = const Value.absent(),
+                Value<int> hearts = const Value.absent(),
               }) => UserProgressCompanion(
                 id: id,
                 totalXp: totalXp,
@@ -3626,6 +3842,7 @@ class $$UserProgressTableTableManager
                 currentStreak: currentStreak,
                 lastActivityDate: lastActivityDate,
                 streakFreezes: streakFreezes,
+                hearts: hearts,
               ),
           createCompanionCallback:
               ({
@@ -3635,6 +3852,7 @@ class $$UserProgressTableTableManager
                 Value<int> currentStreak = const Value.absent(),
                 Value<DateTime?> lastActivityDate = const Value.absent(),
                 Value<int> streakFreezes = const Value.absent(),
+                Value<int> hearts = const Value.absent(),
               }) => UserProgressCompanion.insert(
                 id: id,
                 totalXp: totalXp,
@@ -3642,6 +3860,7 @@ class $$UserProgressTableTableManager
                 currentStreak: currentStreak,
                 lastActivityDate: lastActivityDate,
                 streakFreezes: streakFreezes,
+                hearts: hearts,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

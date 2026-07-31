@@ -20,6 +20,8 @@ class VocabWords extends Table {
   TextColumn get word => text()();
   TextColumn get translation => text()();
   TextColumn get audioUrl => text().nullable()();
+  TextColumn get exampleSentence => text().nullable()();
+  TextColumn get exampleTranslation => text().nullable()();
   
   // Basic SRS state
   TextColumn get status => text().withDefault(const Constant('new'))(); // new, learning, review, mastered
@@ -50,6 +52,7 @@ class UserProgress extends Table {
   IntColumn get currentStreak => integer().withDefault(const Constant(0))();
   DateTimeColumn get lastActivityDate => dateTime().nullable()();
   IntColumn get streakFreezes => integer().withDefault(const Constant(0))();
+  IntColumn get hearts => integer().withDefault(const Constant(5))();
 }
 
 @DataClassName('DailyXpEntry')

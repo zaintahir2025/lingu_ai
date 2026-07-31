@@ -10,6 +10,8 @@ import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'contact_us_screen.dart';
+import '../../../../core/storage/study_goal_storage.dart';
+import '../../../../core/game_state/heart_settings_storage.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -219,6 +221,10 @@ class ProfileTab extends ConsumerWidget {
               const SizedBox(height: AppConstants.space16),
               _buildLanguageSettings(context, ref),
               const SizedBox(height: AppConstants.space16),
+              _buildStudyGoalsSettings(context, ref),
+              const SizedBox(height: AppConstants.space16),
+              _buildHeartsModeSettings(context, ref),
+              const SizedBox(height: AppConstants.space16),
               
               // Contact Us Button
               Container(
@@ -413,6 +419,157 @@ class ProfileTab extends ConsumerWidget {
               DropdownMenuItem(value: 'en', child: Text('English')),
               DropdownMenuItem(value: 'ur', child: Text('Urdu')),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudyGoalsSettings(BuildContext context, WidgetRef ref) {
+    final goalStorage = ref.watch(studyGoalStorageProvider);
+    final daily = goalStorage.dailyGoalMinutes;
+    final weekly = goalStorage.weeklyGoalHours;
+    final monthly = goalStorage.monthlyGoalHours;
+
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.space16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppConstants.radius16),
+        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.timer_rounded, color: AppColors.primaryGreen),
+              SizedBox(width: 8),
+              Text(
+                'Study Duration Goals 🎯',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Select how much duration you plan to dedicate to learning:',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+
+          // Daily Goal
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Daily Goal:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              DropdownButton<int>(
+                value: daily,
+                onChanged: (val) async {
+                  if (val != null) {
+                    await goalStorage.setDailyGoalMinutes(val);
+                    ref.invalidate(studyGoalStorageProvider);
+                  }
+                },
+                items: const [
+                  DropdownMenuItem(value: 10, child: Text('10 mins / day (Casual)')),
+                  DropdownMenuItem(value: 15, child: Text('15 mins / day (Regular)')),
+                  DropdownMenuItem(value: 30, child: Text('30 mins / day (Serious)')),
+                  DropdownMenuItem(value: 45, child: Text('45 mins / day (Intensive)')),
+                ],
+              ),
+            ],
+          ),
+          const Divider(height: 16),
+
+          // Weekly Goal
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Weekly Target:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              DropdownButton<int>(
+                value: weekly,
+                onChanged: (val) async {
+                  if (val != null) {
+                    await goalStorage.setWeeklyGoalHours(val);
+                    ref.invalidate(studyGoalStorageProvider);
+                  }
+                },
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text('1 Hour / week')),
+                  DropdownMenuItem(value: 2, child: Text('2 Hours / week')),
+                  DropdownMenuItem(value: 4, child: Text('4 Hours / week')),
+                  DropdownMenuItem(value: 7, child: Text('7 Hours / week')),
+                ],
+              ),
+            ],
+          ),
+          const Divider(height: 16),
+
+          // Monthly Goal
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Monthly Target:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              DropdownButton<int>(
+                value: monthly,
+                onChanged: (val) async {
+                  if (val != null) {
+                    await goalStorage.setMonthlyGoalHours(val);
+                    ref.invalidate(studyGoalStorageProvider);
+                  }
+                },
+                items: const [
+                  DropdownMenuItem(value: 5, child: Text('5 Hours / month')),
+                  DropdownMenuItem(value: 10, child: Text('10 Hours / month')),
+                  DropdownMenuItem(value: 20, child: Text('20 Hours / month')),
+                  DropdownMenuItem(value: 30, child: Text('30 Hours / month')),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeartsModeSettings(BuildContext context, WidgetRef ref) {
+    final heartStorage = ref.watch(heartSettingsStorageProvider);
+    final isUnlimited = heartStorage.isUnlimitedMode;
+
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.space16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppConstants.radius16),
+        border: Border.all(color: AppColors.surface),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Unlimited Hearts Mode ❤️',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Recommended for beginners. Learn without app blocking on mistakes.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: isUnlimited,
+            onChanged: (val) async {
+              await heartStorage.setHeartsMode(val ? 'unlimited' : 'challenge');
+              ref.invalidate(heartSettingsStorageProvider);
+            },
+            activeThumbColor: AppColors.primaryGreen,
           ),
         ],
       ),

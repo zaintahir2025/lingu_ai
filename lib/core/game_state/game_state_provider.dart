@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart';
 import '../database/database.dart';
 import '../local_storage/local_storage_provider.dart';
 
@@ -28,25 +29,22 @@ class GameState {
 
 class GameStateNotifier extends StateNotifier<GameState> {
   final Ref _ref;
-  static const String _heartsKey = 'user_hearts';
 
   GameStateNotifier(this._ref) : super(const GameState()) {
     _loadState();
   }
 
-  /// Load persisted values from Hive (hearts) and Drift DB (XP, streak) on init
   Future<void> _loadState() async {
     try {
-      final box = _ref.read(localStorageProvider);
-      final savedHearts = box.get(_heartsKey, defaultValue: 5) as int;
-
       final db = _ref.read(databaseProvider);
       final rows = await db.select(db.userProgress).get();
       int xp = 0;
       int streak = 0;
+      int savedHearts = 5;
       if (rows.isNotEmpty) {
         xp = rows.first.totalXp;
         streak = rows.first.currentStreak;
+        savedHearts = rows.first.hearts;
       }
 
       state = GameState(
@@ -85,11 +83,24 @@ class GameStateNotifier extends StateNotifier<GameState> {
     state = state.copyWith(xp: totalXp, streak: streak);
   }
 
-  /// Persist hearts to Hive storage
+  /// Persist hearts to DB
   Future<void> _persistHearts(int hearts) async {
     try {
-      final box = _ref.read(localStorageProvider);
-      await box.put(_heartsKey, hearts);
+      final db = _ref.read(databaseProvider);
+      final rows = await db.select(db.userProgress).get();
+      if (rows.isNotEmpty) {
+        final progress = rows.first;
+        await db.update(db.userProgress).replace(
+          progress.copyWith(hearts: hearts),
+        );
+      } else {
+        // Create an entry if it doesn't exist
+        await db.into(db.userProgress).insert(
+          UserProgressCompanion.insert(
+            hearts: Value(hearts),
+          ),
+        );
+      }
     } catch (_) {}
   }
 }

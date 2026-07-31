@@ -489,9 +489,14 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
         final repo = ref.read(learnRepositoryProvider);
         repo.completeLesson(arg);
         
-        // Award XP via ProgressController & sync GameState
-        ref.read(progressControllerProvider.notifier).addXp(30);
-        ref.read(gameStateProvider.notifier).addXp(30);
+        // Award XP via ProgressController & sync GameState (+50 Bonus for Perfect Score)
+        final isPerfectScore = state.correctCount == state.totalQuestions;
+        final basePoints = 30;
+        final bonusPoints = isPerfectScore ? 50 : 0;
+        final totalAwarded = basePoints + bonusPoints;
+
+        ref.read(progressControllerProvider.notifier).addXp(totalAwarded);
+        ref.read(gameStateProvider.notifier).addXp(totalAwarded);
         ref.read(gameStateProvider.notifier).incrementStreak();
       }
     } else {

@@ -4,7 +4,7 @@ import 'package:lingu_ai/core/database/database.dart';
 void main() {
   group('Gamification Logic Tests', () {
     test('XP award table thresholds', () {
-      final progress = UserProgressEntry(id: 1, totalXp: 0, level: 1, currentStreak: 0, streakFreezes: 0);
+      final progress = UserProgressEntry(id: 1, totalXp: 0, level: 1, currentStreak: 0, streakFreezes: 0, hearts: 5);
       
       // Calculate level thresholds based on 50 * (N^1.5)
       // Wait, let's just use simple manual thresholds for the test to ensure math matches expected.

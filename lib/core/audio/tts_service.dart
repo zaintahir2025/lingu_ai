@@ -18,6 +18,7 @@ class TtsService {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isInitialized = false;
   String _currentLanguage = 'es-ES';
+  String _activeLanguageTag = '';
   double _speechRate = 0.45; // Tuned for clear, fluent language learning speech
 
   bool get isInitialized => _isInitialized;
@@ -33,10 +34,9 @@ class TtsService {
       await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0);
 
-      // Platform specific audio session setup
-      if (!kIsWeb) {
-        await _flutterTts.awaitSpeakCompletion(true);
-      }
+      // Disable awaitSpeakCompletion to prevent UI main thread lag/freezing
+      await _flutterTts.awaitSpeakCompletion(false);
+
       _isInitialized = true;
     } catch (e) {
       debugPrint('Error initializing TtsService: $e');
@@ -92,18 +92,13 @@ class TtsService {
     }
   }
 
-  /// Configures default language for the session
+  /// Configures default target language for the learning session
   Future<void> initLanguage(String langCode) async {
     _currentLanguage = getBcp47LanguageTag(langCode);
-    try {
-      await _flutterTts.setLanguage(_currentLanguage);
-    } catch (e) {
-      debugPrint('Error setting TTS language $_currentLanguage: $e');
-    }
   }
 
   /// Sanitizes text for TTS so formatting symbols (like **, *, _, "Audio: ")
-  /// are stripped and the text is spoken fluently according to language grammar.
+  /// are stripped and the text is spoken fluently.
   String cleanTextForSpeech(String text) {
     String cleaned = text;
 
@@ -120,25 +115,63 @@ class TtsService {
     return cleaned.trim();
   }
 
+  /// Returns true if [text] is predominantly English text
+  bool isEnglishText(String text) {
+    if (text.isEmpty) return false;
+    final clean = cleanTextForSpeech(text);
+    // If it contains non-Latin scripts (Japanese/Urdu/Arabic/Hindi/Chinese), it's not English
+    final nonLatinRegex = RegExp(r'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\u0600-\u06ff\u0900-\u097f\uac00-\ud7af]');
+    if (nonLatinRegex.hasMatch(clean)) return false;
+
+    // Check if common English words are present or plain ASCII
+    final englishWords = RegExp(r'\b(the|is|you|are|hello|good|what|where|how|this|that|yes|no|please|thank|goodbye|morning|night|see|water|bread|friend|house|time|food|book)\b', caseSensitive: false);
+    return englishWords.hasMatch(clean);
+  }
+
+  /// Explicitly speaks English text using English voice engine
+  Future<void> speakEnglish(String text, {double? rate}) async {
+    await speak(text, targetLanguage: 'en-US', rate: rate, forceEnglish: true);
+  }
+
+  /// Explicitly speaks Target Language text (Spanish, French, Japanese, etc.)
+  Future<void> speakTarget(String text, {String? targetLanguage, double? rate}) async {
+    await speak(text, targetLanguage: targetLanguage ?? _currentLanguage, rate: rate, forceEnglish: false);
+  }
+
   /// Speaks the given [text] fluently using the configured TTS voiceover engine.
-  Future<void> speak(String text, {String? targetLanguage, double? rate}) async {
+  /// Automatically handles language selection based on text context and caller instructions.
+  Future<void> speak(String text, {String? targetLanguage, double? rate, bool forceEnglish = false}) async {
     if (text.trim().isEmpty) return;
 
     final sanitized = cleanTextForSpeech(text);
     if (sanitized.isEmpty) return;
 
     try {
-      final langTag = targetLanguage != null
-          ? getBcp47LanguageTag(targetLanguage)
-          : _currentLanguage;
+      String langTag;
+      if (forceEnglish) {
+        langTag = 'en-US';
+      } else if (targetLanguage != null) {
+        langTag = getBcp47LanguageTag(targetLanguage);
+      } else if (isEnglishText(sanitized)) {
+        langTag = 'en-US';
+      } else {
+        langTag = _currentLanguage;
+      }
 
-      await _flutterTts.setLanguage(langTag);
+      // Fast non-blocking speech stop & parameter application
+      await _flutterTts.stop();
+
+      if (_activeLanguageTag != langTag) {
+        await _flutterTts.setLanguage(langTag);
+        _activeLanguageTag = langTag;
+      }
+
       await _flutterTts.setSpeechRate(rate ?? _speechRate);
       await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0);
 
-      await _flutterTts.stop();
-      await _flutterTts.speak(sanitized);
+      // Unawaited speak to avoid blocking UI thread lag
+      _flutterTts.speak(sanitized);
     } catch (e) {
       debugPrint('Error in TtsService speak: $e');
     }

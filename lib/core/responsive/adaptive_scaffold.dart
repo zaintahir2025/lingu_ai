@@ -117,7 +117,7 @@ class AdaptiveScaffold extends ConsumerWidget {
             NavigationRail(
               selectedIndex: selectedIndex,
               onDestinationSelected: onNavigationIndexChanged,
-              labelType: NavigationRailLabelType.none,
+              labelType: screenSize.isDesktop ? null : NavigationRailLabelType.all,
               destinations: destinations.map((d) {
                 return NavigationRailDestination(
                   icon: d.icon,

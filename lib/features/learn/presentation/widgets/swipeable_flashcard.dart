@@ -43,8 +43,12 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
     }
   }
 
-  void _speak(String text) {
-    ref.read(ttsServiceProvider).speak(text);
+  void _speakTarget(String text) {
+    ref.read(ttsServiceProvider).speakTarget(text);
+  }
+
+  void _speakEnglish(String text) {
+    ref.read(ttsServiceProvider).speakEnglish(text);
   }
 
   @override
@@ -57,7 +61,7 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
   void flipCard() {
     if (_isFront) {
       _flipController.forward();
-      _speak(widget.word.word);
+      _speakTarget(widget.word.word);
     } else {
       _flipController.reverse();
     }
@@ -145,9 +149,26 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
       child: Stack(
         children: [
           Center(
-            child: Text(
-              widget.word.word,
-              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.word.word,
+                  style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                if (widget.word.exampleSentence != null) ...[
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      widget.word.exampleSentence!,
+                      style: const TextStyle(fontSize: 20, fontStyle: FontStyle.italic, color: Colors.black54),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           Positioned(
@@ -179,7 +200,7 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
             child: IconButton(
               icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
               tooltip: 'Play pronunciation',
-              onPressed: () => _speak(widget.word.word),
+              onPressed: () => _speakTarget(widget.word.word),
             ),
           ),
         ],
@@ -196,9 +217,26 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
         child: Stack(
           children: [
             Center(
-              child: Text(
-                widget.word.translation,
-                style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.word.translation,
+                    style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (widget.word.exampleTranslation != null) ...[
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        widget.word.exampleTranslation!,
+                        style: const TextStyle(fontSize: 20, fontStyle: FontStyle.italic, color: Colors.black54),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             Positioned(
@@ -228,8 +266,8 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
               right: 20,
               child: IconButton(
                 icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
-                tooltip: 'Play pronunciation',
-                onPressed: () => _speak(widget.word.word),
+                tooltip: 'Play English pronunciation',
+                onPressed: () => _speakEnglish(widget.word.translation),
               ),
             ),
           ],

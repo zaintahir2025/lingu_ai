@@ -14,6 +14,7 @@ import '../../../tutor/presentation/providers/tutor_controller.dart';
 import '../../../home/presentation/home_screen.dart';
 
 import '../../../../core/game_state/game_state_provider.dart';
+import '../../../../core/game_state/heart_settings_storage.dart';
 
 class QuizView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -57,8 +58,9 @@ class _QuizViewState extends ConsumerState<QuizView> {
   void _submitAnswer() {
     if (_currentAnswer.isEmpty || _isFeedbackShowing) return;
 
+    final isUnlimited = ref.read(heartSettingsStorageProvider).isUnlimitedMode;
     final hearts = ref.read(gameStateProvider).hearts;
-    if (hearts <= 0) {
+    if (!isUnlimited && hearts <= 0) {
       _showOutOfHeartsDialog();
       return;
     }

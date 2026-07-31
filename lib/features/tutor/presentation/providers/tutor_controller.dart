@@ -1,28 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../domain/models/chat_message.dart';
+import '../../domain/models/character_model.dart';
 import '../../data/repositories/tutor_repository.dart';
 
 class TutorState {
   final List<ChatMessage> messages;
   final bool isStreaming;
   final bool requiresPremium;
+  final CharacterModel activeCharacter;
 
   const TutorState({
     required this.messages,
     this.isStreaming = false,
     this.requiresPremium = false,
+    required this.activeCharacter,
   });
 
   TutorState copyWith({
     List<ChatMessage>? messages,
     bool? isStreaming,
     bool? requiresPremium,
+    CharacterModel? activeCharacter,
   }) {
     return TutorState(
       messages: messages ?? this.messages,
       isStreaming: isStreaming ?? this.isStreaming,
       requiresPremium: requiresPremium ?? this.requiresPremium,
+      activeCharacter: activeCharacter ?? this.activeCharacter,
     );
   }
 }
@@ -30,11 +35,27 @@ class TutorState {
 class TutorController extends Notifier<TutorState> {
   @override
   TutorState build() {
-    return const TutorState(
+    final defaultChar = CharacterModel.allCharacters.first;
+    return TutorState(
+      activeCharacter: defaultChar,
       messages: [
         ChatMessage(
           id: '0',
-          content: 'Hello! I am your AI language tutor. How can I help you today?',
+          content: defaultChar.greetingMessage,
+          isUser: false,
+        ),
+      ],
+    );
+  }
+
+  void selectCharacter(CharacterModel character) {
+    if (state.activeCharacter.id == character.id) return;
+    state = state.copyWith(
+      activeCharacter: character,
+      messages: [
+        ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          content: character.greetingMessage,
           isUser: false,
         ),
       ],
@@ -86,8 +107,12 @@ class TutorController extends Notifier<TutorState> {
       final recentMistakes = await db.getRecentMistakes(limit: maxContextMistakes);
       final contextWords = recentMistakes.map((e) => e.word).toList();
 
-      // 2. Start Streaming
-      final stream = repo.streamTutorMessage(userMessage.content, contextWords);
+      // 2. Start Streaming with active character
+      final stream = repo.streamTutorMessage(
+        userMessage.content,
+        contextWords,
+        character: state.activeCharacter,
+      );
 
       await for (final token in stream) {
         // Update the last message

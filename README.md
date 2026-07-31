@@ -1,4 +1,4 @@
-# LinguAI 🚀
+# LinguAI
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?style=for-the-badge&logo=github)](https://zaintahir2025.github.io/lingu_ai/)
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
@@ -6,158 +6,120 @@
 [![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**LinguAI** is a premium, feature-rich, cross-platform language learning application built with **Flutter**, **Riverpod**, **Drift (SQLite)**, and **Node.js**. It combines proven gamification mechanics—such as Duolingo-style learning paths, swipeable flashcard queues, spaced repetition (SM-2 algorithm), and heart/streak multipliers—with a **Multi-Brain AI Tutor** (Gemini, OpenAI GPT-4o, Claude, Groq) to deliver a 5-star language learning experience.
+**LinguAI** is a comprehensive, production-ready, cross-platform language learning application engineered with **Flutter**, **Riverpod**, **Drift (SQLite)**, and **Node.js**. Designed specifically for absolute beginners to achieve professional language fluency, LinguAI combines structured CEFR-aligned learning modules, swipeable flashcards, spaced repetition memory algorithms, and a Multi-Brain AI Tutor supporting interactive character companions.
 
-🌐 **Live Demo**: [https://zaintahir2025.github.io/lingu_ai/](https://zaintahir2025.github.io/lingu_ai/)  
-📦 **GitHub Repository**: [https://github.com/zaintahir2025/lingu_ai](https://github.com/zaintahir2025/lingu_ai)
-
----
-
-## 🌟 Comprehensive Feature Overview
-
-### 📚 1. Gamified Learning Path
-- **15 CEFR-Aligned Modules**: Structured curriculum spanning Beginner (`A1`), Elementary (`A2`), Intermediate (`B1`), and Upper-Intermediate (`B2`).
-- **Zig-Zag Tree Map**: Duolingo-inspired path with dynamic node states (Completed, Current/Active, Locked).
-- **Interactive Mascot**: Animated Lingu mascot accompanying learners along the progression path.
-- **Dynamic Header Counters**: Real-time persisted tracking of Hearts (❤️), Streak Flames (🔥), and XP Badges (⚡).
+- **Live Application Demo**: [https://zaintahir2025.github.io/lingu_ai/](https://zaintahir2025.github.io/lingu_ai/)
+- **Repository Link**: [https://github.com/zaintahir2025/lingu_ai](https://github.com/zaintahir2025/lingu_ai)
 
 ---
 
-### 🎴 2. 3-Stage Module Learning Flow
-Each lesson is organized into a progressive 3-stage mastery experience:
-1. **Stage 1: Flashcards Deck**:
-   - **20 Vocabulary Cards** per lesson.
-   - **Queue Mechanics**: Tap `Done` to clear a card, or `Not Done` (red button / left swipe) to re-queue difficult words to the back of the deck until fully mastered.
-   - **Keyboard Shortcuts**: Arrow keys (Right = Done, Left = Not Done, Space/Up = Flip card).
-2. **Stage 2: Word Matching Exercise**:
-   - Tap-to-pair target words with their exact meanings before quiz writing.
-   - Instant audio feedback and visual color coding.
-3. **Stage 3: Comprehensive Lesson Quiz**:
-   - Multiple Choice, Fill-in-the-Blanks, Sentence Order, and Audio Listening questions.
-   - **80% Passing Threshold**: Scoreboard circular progress indicator unlocks the next lesson only on achieving 80%+.
+## Technical Features & Core Capabilities
+
+### 1. Beginner-Friendly Curriculum & Flashcards
+- **15 CEFR-Aligned Modules**: Comprehensive curriculum spanning A1 (Beginner), A2 (Elementary), B1 (Intermediate), and B2 (Upper-Intermediate).
+- **330+ Contextual Flashcards**: Over 20 to 25 vocabulary cards per lesson containing target vocabulary words alongside practical, everyday conversational sentences with English translations.
+- **Swipeable Queue Mechanics**: Keyboard-supported flashcards allowing card flips and re-queueing of unmastered items to the back of the deck.
+
+### 2. Native Dual-Language Text-to-Speech (TTS)
+- **Zero-Lag Execution**: Asynchronous audio pipeline eliminating main-thread UI stuttering during voice playback.
+- **Contextual Language Routing**: English translations and prompts are spoken using native English (`en-US`), while target vocabulary words and sentences are rendered using proper target BCP-47 voice tags (`es-ES`, `fr-FR`, `ja-JP`, `ur-PK`, `de-DE`).
+
+### 3. Multi-Brain AI Tutor & Interactive Character Companions
+- **6 Fun Character Companions**: Switch between distinct AI companions:
+  - **Lingu Owl**: Master Language Coach
+  - **Professor Bear**: Linguistics & Grammar Guru
+  - **Viktor Robot**: Vocabulary Speedster
+  - **Zari Explorer**: Casual Conversation Buddy
+  - **Junior**: Beginner Helper
+  - **Detective Lucy**: Practical Scenario & Context Solver
+- **Multi-Provider BYOK (Bring Your Own Key)**: Connect custom API keys for Groq (Llama 3.3), Google Gemini, OpenAI GPT-4o, or Anthropic Claude.
+- **Built-in Smart Offline Engine**: Includes a resilient local AI engine ensuring uninterrupted conversations when offline or when API keys are unconfigured.
+
+### 4. Customizable Study Duration Goals & Hearts System
+- **Flexible Duration Goals**: Select Daily (10m, 15m, 30m, 45m), Weekly (1h, 2h, 4h, 7h), and Monthly (5h, 10h, 20h, 30h) study duration goals in Profile settings.
+- **Beginner Unlimited Hearts Mode**: Default mode allows learners to make mistakes continuously without app-blocking paywalls.
+- **Perfect Score Bonus**: Flawless quiz completions award a +50 Bonus XP multiplier.
+
+### 5. Spaced Repetition System (SRS) & Analytics
+- **SM-2 Memory Engine**: Algorithm calculating review intervals and easiness factors based on past recall performance.
+- **Weak Word Logging**: Automatically identifies weak vocabulary during quizzes and routes them into the Daily Review queue.
+- **Analytics & Leaderboard**: Weekly XP bar charts, streak tracking, and live ranking leaderboards.
 
 ---
 
-### ❤️ 3. Heart System & Game Mechanics
-- **5-Heart Maximum**: Wrong quiz answers deduct a heart in real time.
-- **Out of Hearts Enforcement**: When hearts hit 0, quiz interaction pauses with a modal allowing instant refill (5 ❤️) or exit.
-- **Streak & XP Multipliers**: Daily streaks apply up to a **3x XP multiplier** for continuous learning.
-
----
-
-### 🗣️ 4. Native Multilingual Text-To-Speech (TTS)
-- Clear BCP-47 voiceovers sanitized of markdown symbols:
-  - 🇪🇸 Spanish (`es-ES`)
-  - 🇫🇷 French (`fr-FR`)
-  - 🇩🇪 German (`de-DE`)
-  - 🇯🇵 Japanese (`ja-JP`)
-  - 🇵🇰 Urdu (`ur-PK`)
-  - 🇬🇧 English (`en-US`)
-
----
-
-### 🤖 5. Multi-Brain AI Tutor (BYOK)
-- **Bring Your Own Key (BYOK)**: Select your preferred AI Engine:
-  - **Google Gemini 1.5 Flash** (Default)
-  - **OpenAI GPT-4o**
-  - **Anthropic Claude 3.5 Sonnet**
-  - **Groq Llama 3**
-- **Context-Aware Assistance**: Automatically feeds weak vocabulary words and user progress into AI context for personalized grammar explanations.
-- **Direct "Ask Tutor Why"**: Tap from quiz answer feedback straight into an AI explanation session.
-
----
-
-### 🧠 6. Spaced Repetition System (SRS)
-- **SM-2 Algorithm**: Science-backed review engine calculating interval days, repetitions, and easiness factors.
-- **Quiz Weak Word Logging**: Wrong quiz answers automatically lower word ease factors and flag them for immediate review in the **Daily Review** tab.
-- **Review Session Ratings**: Rate recalled items (`Again`, `Hard`, `Good`, `Easy`) to dynamically reschedule next review dates.
-
----
-
-### 📊 7. Analytics & Leaderboards
-- **Weekly XP Bar Chart**: Visual bar chart tracking XP earned over the last 7 days.
-- **Live Leaderboard**: Cross-platform ranking list with dynamic XP sorting.
-- **Profile Dashboard**: User avatars, enrolled course management (switch/unenroll), dynamic CEFR badges, and notification toggles.
-
----
-
-### 🌐 8. Localization & Responsive Layout
-- **Full English & Urdu Support**: Seamless interface language toggle.
-- **Responsive Layout**: Adapts between desktop side-navigation rails and mobile bottom-bar navigation.
-
----
-
-### 📬 9. Contact Us & Support
-- Built-in feedback modal allowing users to submit bug reports, feature requests, and complaints.
-
----
-
-## 🏗️ Architecture & Codebase Structure
+## Project Architecture
 
 ```
 lib/
 ├── core/
-│   ├── audio/              # TTS service & sound effects
-│   ├── database/           # Drift SQLite database (tables, schema)
-│   ├── game_state/         # Persisted hearts, XP, and streak notifier
-│   ├── local_storage/      # Hive box storage provider
-│   ├── network/            # Dio client & API config
-│   ├── router/             # GoRouter navigation & auth redirects
-│   ├── srs/                # SM-2 Spaced Repetition algorithm
-│   ├── storage/            # Onboarding & token storage
-│   └── theme/              # Color palettes, typography & constants
-│
+│   ├── audio/              # TTS service & sound managers
+│   ├── database/           # Drift SQLite database schema & migrations
+│   ├── game_state/         # Heart settings & XP providers
+│   ├── network/            # Connectivity monitoring & Dio HTTP client
+│   ├── responsive/         # Adaptive desktop rail & mobile navigation
+│   └── storage/            # Local Hive storage providers
 ├── features/
-│   ├── auth/               # Login & Register controllers & screens
-│   ├── home/               # Navigation scaffold & shell
-│   ├── learn/              # Lesson path, flashcards, module flow
-│   ├── onboarding/         # Tour, language picker, placement test
-│   ├── progress/           # Profile, analytics, leaderboard, contact us
-│   ├── quiz/               # Quiz controller, question views, scoreboard
-│   ├── review/             # Daily review tab & SM-2 session
-│   ├── tutor/              # AI Tutor, BYOK settings & paywall
-│   └── user/               # User repository & data models
+│   ├── home/               # Primary layout & tab manager
+│   ├── learn/              # Curriculum path, 330+ flashcards, & module flow
+│   ├── onboarding/         # Setup, placement test, & duration goals
+│   ├── progress/           # Profile dashboard, XP charts, & settings
+│   ├── quiz/               # Interactive exercises & passing scoreboards
+│   ├── review/             # Spaced Repetition (SM-2) review queue
+│   ├── tutor/              # Character companions & Multi-Brain AI Tutor
+│   └── user/               # User state management
+└── main.dart               # Entry point
 ```
 
 ---
 
-## 💻 Running Locally
+## Local Setup & Installation Guide
 
 ### Prerequisites
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (v3.19+)
-- [Node.js](https://nodejs.org/) (v18+)
+- **Flutter SDK**: `^3.11.1` or newer
+- **Dart SDK**: Included with Flutter
+- **Node.js**: `^18.0.0` (for backend server)
 
-### 1. Run the Flutter App
+### 1. Clone Repository
 ```bash
-# Clone the repository
 git clone https://github.com/zaintahir2025/lingu_ai.git
 cd lingu_ai
-
-# Install dependencies
-flutter pub get
-
-# Run on Chrome Web, Desktop, or Mobile
-flutter run -d chrome
 ```
 
-### 2. (Optional) Run Backend Server
+### 2. Install Dependencies
 ```bash
-cd server
-npm install
-npx prisma db push
-npm run dev
+flutter pub get
+```
+
+### 3. Run Drift Build Runner (Database Generation)
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### 4. Run Application
+```bash
+# Web
+flutter run -d chrome
+
+# Windows Desktop
+flutter run -d windows
 ```
 
 ---
 
-## 🚀 CI/CD & Deployment
+## Web Deployment Guide (GitHub Pages)
 
-This project uses **GitHub Actions** (`.github/workflows/deploy.yml`) to automatically compile and deploy the Flutter Web release to **GitHub Pages** whenever changes are pushed to `main`.
+To build and publish the release bundle to GitHub Pages:
 
-Live URL: **[https://zaintahir2025.github.io/lingu_ai/](https://zaintahir2025.github.io/lingu_ai/)**
+```bash
+# 1. Build release web bundle with repository base-href
+flutter build web --release --base-href "/lingu_ai/"
+
+# 2. Deploy contents of build/web to gh-pages branch
+npx gh-pages -d build/web
+```
 
 ---
 
-## 📄 License
+## License
 
-Distributed under the MIT License. See `LICENSE` for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
