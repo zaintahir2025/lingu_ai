@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
@@ -6,8 +7,36 @@ import '../../presentation/screens/ai_settings_screen.dart';
 
 class TutorRepository {
   final AiSettingsStorage _aiSettingsStorage;
+  final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 15),
+  ));
 
   TutorRepository(this._aiSettingsStorage);
+
+  Future<bool> validateGeminiApiKey(String apiKey) async {
+    final key = apiKey.trim();
+    if (key.isEmpty) return false;
+    try {
+      final response = await _dio.post(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$key',
+        options: Options(headers: {'Content-Type': 'application/json'}),
+        data: {
+          'contents': [
+            {
+              'parts': [
+                {'text': 'Hi'}
+              ]
+            }
+          ]
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Gemini key validation failed: $e');
+      return false;
+    }
+  }
 
   Stream<String> streamTutorMessage(
     String message,
@@ -15,7 +44,7 @@ class TutorRepository {
   ) async* {
     final customKey = _aiSettingsStorage.customKey.trim();
 
-    // If Gemini API key is provided, call Google Gemini AI Studio
+    // If Gemini API key is provided, attempt online Google Gemini call
     if (customKey.isNotEmpty) {
       bool hasEmitted = false;
       try {
@@ -25,11 +54,13 @@ class TutorRepository {
         }
         if (hasEmitted) return;
       } catch (e) {
-        debugPrint('Gemini API Call failed ($e). Falling back to built-in smart AI tutor engine.');
+        debugPrint('Gemini API Call failed ($e). Displaying API Key guidance to user.');
+        yield '⚠️ Gemini API Key Error: The custom API key provided was rejected by Google AI Studio ($e).\n\nPlease verify your API key in settings (Key icon 🔑). Valid Google AI Studio Gemini API keys start with "AIzaSy...". Get a free key at https://aistudio.google.com';
+        return;
       }
     }
 
-    // Built-in Smart AI Engine (Works 100% offline & when API key is blank or fails)
+    // Built-in Smart AI Engine (Works 100% offline when API key is blank)
     yield* _smartOfflineTutor(message, contextWords);
   }
 
@@ -38,11 +69,6 @@ class TutorRepository {
     String message,
     List<String> contextWords,
   ) async* {
-    final model = GenerativeModel(
-      model: 'gemini-1.5-flash',
-      apiKey: apiKey,
-    );
-
     final prompt = '''
 You are LinguAI Tutor, a friendly, encouraging, and highly intelligent AI language learning tutor.
 Recent learned words context: ${contextWords.join(', ')}
@@ -52,12 +78,56 @@ User message: $message
 Respond helpfully as AI Language Tutor. Keep your response concise, clear, natural, and beginner friendly.
 ''';
 
-    final responseStream = model.generateContentStream([Content.text(prompt)]);
-    await for (final chunk in responseStream) {
-      if (chunk.text != null && chunk.text!.isNotEmpty) {
-        yield chunk.text!;
+    // 1. Primary Attempt: google_generative_ai SDK
+    try {
+      final model = GenerativeModel(
+        model: 'gemini-1.5-flash',
+        apiKey: apiKey,
+      );
+
+      final responseStream = model.generateContentStream([Content.text(prompt)]);
+      await for (final chunk in responseStream) {
+        if (chunk.text != null && chunk.text!.isNotEmpty) {
+          yield chunk.text!;
+        }
+      }
+      return;
+    } catch (sdkError) {
+      debugPrint('Google Generative AI SDK error: $sdkError. Trying direct REST API fallback...');
+    }
+
+    // 2. Fallback Attempt: Direct REST API via Dio
+    final url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey';
+    final response = await _dio.post(
+      url,
+      options: Options(headers: {'Content-Type': 'application/json'}),
+      data: {
+        'contents': [
+          {
+            'parts': [
+              {'text': prompt}
+            ]
+          }
+        ]
+      },
+    );
+
+    if (response.statusCode == 200 && response.data != null) {
+      final candidates = response.data['candidates'] as List?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List?;
+        if (parts != null && parts.isNotEmpty) {
+          final text = parts[0]['text'] as String?;
+          if (text != null) {
+            yield text;
+            return;
+          }
+        }
       }
     }
+
+    throw Exception('API response error code ${response.statusCode}');
   }
 
   /// Built-in Smart Tutor Engine that responds instantly without requiring API keys.
@@ -99,4 +169,5 @@ final tutorRepositoryProvider = Provider<TutorRepository>((ref) {
     ref.watch(aiSettingsStorageProvider),
   );
 });
+
 

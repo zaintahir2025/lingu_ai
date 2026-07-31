@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
+import '../../data/repositories/tutor_repository.dart';
 
 final aiSettingsStorageProvider = Provider<AiSettingsStorage>((ref) {
   final box = ref.watch(localStorageProvider);
@@ -47,6 +48,7 @@ class AiSettingsScreen extends ConsumerStatefulWidget {
 class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   late TextEditingController _keyController;
   bool _obscureKey = true;
+  bool _isValidating = false;
 
   @override
   void initState() {
@@ -61,20 +63,47 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     super.dispose();
   }
 
-  void _save() async {
+  void _saveAndTest() async {
+    final key = _keyController.text.trim();
     final storage = ref.read(aiSettingsStorageProvider);
     await storage.saveSettings(
       provider: 'Google Gemini API',
-      apiKey: _keyController.text.trim(),
+      apiKey: key,
     );
 
+    if (key.isEmpty) {
+      if (mounted) {
+        InAppNotificationBanner.show(
+          context: context,
+          title: 'Settings Saved',
+          message: 'Using built-in smart offline AI tutor engine.',
+          type: NotificationType.success,
+        );
+      }
+      return;
+    }
+
+    setState(() => _isValidating = true);
+    final repo = ref.read(tutorRepositoryProvider);
+    final isValid = await repo.validateGeminiApiKey(key);
+    setState(() => _isValidating = false);
+
     if (mounted) {
-      InAppNotificationBanner.show(
-        context: context,
-        title: 'Settings Saved',
-        message: 'Your Google Gemini API Key has been updated successfully!',
-        type: NotificationType.success,
-      );
+      if (isValid) {
+        InAppNotificationBanner.show(
+          context: context,
+          title: 'API Key Verified! ✅',
+          message: 'Your Google Gemini API Key is valid and active!',
+          type: NotificationType.success,
+        );
+      } else {
+        InAppNotificationBanner.show(
+          context: context,
+          title: 'Invalid API Key ⚠️',
+          message: 'Key rejected by Google AI Studio. Gemini keys usually start with "AIzaSy...". Saved settings anyway.',
+          type: NotificationType.error,
+        );
+      }
     }
   }
 
@@ -149,13 +178,13 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Get a free API key from Google AI Studio (aistudio.google.com). If left blank, the app will fall back to the built-in smart AI tutor engine.',
+              'Get a free API key from Google AI Studio (aistudio.google.com). Gemini keys start with "AIzaSy...". If left blank, the app will fall back to the built-in smart AI tutor engine.',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
             ),
             const SizedBox(height: AppConstants.space32),
             PrimaryButton(
-              text: 'Save Gemini API Key',
-              onPressed: _save,
+              text: _isValidating ? 'Validating Key...' : 'Save & Test Gemini API Key',
+              onPressed: _isValidating ? null : _saveAndTest,
             ),
           ],
         ),
@@ -163,4 +192,5 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     );
   }
 }
+
 
