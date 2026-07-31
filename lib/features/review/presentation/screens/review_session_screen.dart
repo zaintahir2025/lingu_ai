@@ -67,7 +67,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
         easinessFactor: result.easinessFactor,
         interval: result.interval,
         nextReviewDate: Value<DateTime?>(nextDate),
-        status: 'review', // Ensure status is review or mastered
+        status: (quality >= 4 || result.repetitions >= 2) ? 'mastered' : 'review',
       ),
     );
     

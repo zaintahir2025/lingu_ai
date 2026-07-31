@@ -18,26 +18,24 @@
 ### 1. Beginner-Friendly Curriculum & Flashcards
 - **15 CEFR-Aligned Modules**: Comprehensive curriculum spanning A1 (Beginner), A2 (Elementary), B1 (Intermediate), and B2 (Upper-Intermediate).
 - **330+ Contextual Flashcards**: Over 20 to 25 vocabulary cards per lesson containing target vocabulary words alongside practical, everyday conversational sentences with English translations.
-- **Swipeable Queue Mechanics**: Keyboard-supported flashcards allowing card flips and re-queueing of unmastered items to the back of the deck.
+- **Dual-Mode TTS & Sentence Audio**: Interactive audio buttons pronounced via native TTS engines for single words as well as full conversational sentences.
+- **Previous Card Deck Navigation**: Stack-based history navigation enabling learners to move backward and review previous cards in active decks.
 
-### 2. Native Dual-Language Text-to-Speech (TTS)
-- **Zero-Lag Execution**: Asynchronous audio pipeline eliminating main-thread UI stuttering during voice playback.
-- **Contextual Language Routing**: English translations and prompts are spoken using native English (`en-US`), while target vocabulary words and sentences are rendered using proper target BCP-47 voice tags (`es-ES`, `fr-FR`, `ja-JP`, `ur-PK`, `de-DE`).
+### 2. Multi-Brain AI Tutor & BYOK Templates
+- **BYOK Multi-Provider Engine**: Supports custom keys for **Google Gemini**, **Groq (Llama 3.3)**, **OpenAI (GPT-4o)**, and **Anthropic (Claude 3.5)** with step-by-step key format templates.
+- **Built-in Smart Offline Engine**: Local AI engine fallback providing uninterrupted practice even when offline or unconfigured.
 
-### 3. Google Gemini AI Language Tutor
-- **Powered by Google Gemini**: Advanced AI Language Tutor supporting interactive conversations, grammar explanations, and vocabulary expansion.
-- **Bring Your Own Key (BYOK)**: Connect custom Gemini API keys from Google AI Studio (`aistudio.google.com`) for unlimited online practice.
-- **Built-in Smart Offline Engine**: Includes a resilient local AI engine ensuring uninterrupted conversations when offline or when API keys are unconfigured.
+### 3. Duolingo-Style Streak Clone & Dynamic Gamification
+- **Animated Streak Flame**: Duolingo-style fire flame badge with a Mon-Sun weekly activity calendar and streak freeze shields.
+- **Dynamic XP & Hearts**: Live updating XP progress, customizable study goals, and unlimited hearts beginner mode.
 
-### 4. Customizable Study Duration Goals & Hearts System
-- **Flexible Duration Goals**: Select Daily (10m, 15m, 30m, 45m), Weekly (1h, 2h, 4h, 7h), and Monthly (5h, 10h, 20h, 30h) study duration goals in Profile settings.
-- **Beginner Unlimited Hearts Mode**: Default mode allows learners to make mistakes continuously without app-blocking paywalls.
-- **Perfect Score Bonus**: Flawless quiz completions award a +50 Bonus XP multiplier.
+### 4. Admin Panel • Google Ads & Banking Setup
+- **Monetization & AdMob Management**: Dedicated System Admin Panel to configure Google AdMob Banner Unit IDs, Interstitial IDs, and enable/disable ads.
+- **Banking Payout Setup**: Admin panel configuration for Bank Name, IBAN/Account Numbers, SWIFT codes, and monthly payout tracking.
 
-### 5. Spaced Repetition System (SRS) & Analytics
-- **SM-2 Memory Engine**: Algorithm calculating review intervals and easiness factors based on past recall performance.
-- **Weak Word Logging**: Automatically identifies weak vocabulary during quizzes and routes them into the Daily Review queue.
-- **Analytics & Leaderboard**: Weekly XP bar charts, streak tracking, and live ranking leaderboards.
+### 5. Multi-Language Support & Course Switching
+- **Native Multi-Language Decks**: Native vocabulary decks for Spanish 🇪🇸, French 🇫🇷, Japanese 🇯🇵, German 🇩🇪, and Urdu 🇵🇰.
+- **Course Switch Reset Warning**: Confirmation popup warning learners before switching courses and resetting module progress cleanly in SQLite database.
 
 ---
 

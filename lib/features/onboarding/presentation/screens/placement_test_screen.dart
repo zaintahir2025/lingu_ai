@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/audio/tts_service.dart';
+import '../../../../core/storage/onboarding_storage.dart';
 
 class PlacementQuestion {
   final String prompt;
@@ -178,8 +179,11 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
                 ),
                 const SizedBox(height: AppConstants.space32),
                 ElevatedButton(
-                  onPressed: () {
-                    context.go('/main');
+                  onPressed: () async {
+                    await ref.read(onboardingStorageProvider).setCompletedOnboarding();
+                    if (context.mounted) {
+                      context.go('/main');
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,

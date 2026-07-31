@@ -152,19 +152,45 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  widget.word.word,
-                  style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.word.word,
+                      style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.volume_up_rounded, size: 32, color: AppColors.primaryGreen),
+                      tooltip: 'Listen to word',
+                      onPressed: () => _speakTarget(widget.word.word),
+                    ),
+                  ],
                 ),
                 if (widget.word.exampleSentence != null) ...[
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      widget.word.exampleSentence!,
-                      style: const TextStyle(fontSize: 20, fontStyle: FontStyle.italic, color: Colors.black54),
-                      textAlign: TextAlign.center,
+                    child: InkWell(
+                      onTap: () => _speakTarget(widget.word.exampleSentence!),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.volume_up_outlined, size: 24, color: AppColors.primaryGreenDark),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                widget.word.exampleSentence!,
+                                style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic, color: Colors.black87),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -197,10 +223,23 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
           Positioned(
             bottom: 20,
             right: 20,
-            child: IconButton(
-              icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
-              tooltip: 'Play pronunciation',
-              onPressed: () => _speakTarget(widget.word.word),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.1),
+                foregroundColor: AppColors.primaryGreenDark,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              icon: const Icon(Icons.volume_up_rounded, size: 20),
+              label: const Text('Read All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              onPressed: () {
+                final sentence = widget.word.exampleSentence;
+                if (sentence != null && sentence.isNotEmpty) {
+                  _speakTarget('${widget.word.word}. $sentence');
+                } else {
+                  _speakTarget(widget.word.word);
+                }
+              },
             ),
           ),
         ],
@@ -220,19 +259,45 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    widget.word.translation,
-                    style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.word.translation,
+                        style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.volume_up_rounded, size: 32, color: AppColors.primaryGreen),
+                        tooltip: 'Listen to translation',
+                        onPressed: () => _speakEnglish(widget.word.translation),
+                      ),
+                    ],
                   ),
                   if (widget.word.exampleTranslation != null) ...[
                     const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        widget.word.exampleTranslation!,
-                        style: const TextStyle(fontSize: 20, fontStyle: FontStyle.italic, color: Colors.black54),
-                        textAlign: TextAlign.center,
+                      child: InkWell(
+                        onTap: () => _speakEnglish(widget.word.exampleTranslation!),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.volume_up_outlined, size: 24, color: AppColors.primaryGreenDark),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  widget.word.exampleTranslation!,
+                                  style: const TextStyle(fontSize: 18, fontStyle: FontStyle.italic, color: Colors.black87),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -264,10 +329,23 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
             Positioned(
               bottom: 20,
               right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.volume_up, size: 36, color: AppColors.primaryGreen),
-                tooltip: 'Play English pronunciation',
-                onPressed: () => _speakEnglish(widget.word.translation),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
+                  foregroundColor: AppColors.primaryGreenDark,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                icon: const Icon(Icons.volume_up_rounded, size: 20),
+                label: const Text('Read All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                onPressed: () {
+                  final sentence = widget.word.exampleTranslation;
+                  if (sentence != null && sentence.isNotEmpty) {
+                    _speakEnglish('${widget.word.translation}. $sentence');
+                  } else {
+                    _speakEnglish(widget.word.translation);
+                  }
+                },
               ),
             ),
           ],

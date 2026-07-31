@@ -23,6 +23,7 @@ class FlashcardView extends ConsumerStatefulWidget {
 
 class _FlashcardViewState extends ConsumerState<FlashcardView> {
   List<VocabWord> _words = [];
+  final List<VocabWord> _history = [];
   int _totalDeckCount = 0;
   bool _isLoading = true;
   final GlobalKey<SwipeableFlashcardState> _cardKey = GlobalKey();
@@ -37,6 +38,7 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
     final words = await ref.read(learnRepositoryProvider).getVocabForLesson(widget.lessonId);
     setState(() {
       _words = List.from(words);
+      _history.clear();
       _totalDeckCount = words.length;
       _isLoading = false;
     });
@@ -44,9 +46,9 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
 
   void _markDone() {
     if (_words.isEmpty) return;
-    setState(() {
-      _words.removeAt(0);
-    });
+    final currentWord = _words.removeAt(0);
+    _history.add(currentWord);
+    setState(() {});
 
     if (_words.isEmpty) {
       _showQuizPromptDialog();
@@ -56,6 +58,7 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
   void _markNotDone() {
     if (_words.isEmpty) return;
     final currentWord = _words.removeAt(0);
+    _history.add(currentWord);
     
     // Log persistent mistake/weak word into DB for SRS Daily Review
     try {
@@ -74,6 +77,14 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
     setState(() {
       // Re-queue card to end of deck
       _words.add(currentWord);
+    });
+  }
+
+  void _goPreviousCard() {
+    if (_history.isEmpty) return;
+    final lastWord = _history.removeLast();
+    setState(() {
+      _words.insert(0, lastWord);
     });
   }
 
@@ -215,10 +226,26 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
             children: [
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.surface,
+                  foregroundColor: AppColors.textPrimary,
+                  side: const BorderSide(color: AppColors.divider, width: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
+                label: const Text(
+                  'Previous',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                onPressed: _history.isNotEmpty ? _goPreviousCard : null,
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red[50],
                   foregroundColor: Colors.red[700],
                   side: const BorderSide(color: Colors.red, width: 1.5),
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 icon: const Icon(Icons.refresh_rounded, color: Colors.red),
@@ -228,12 +255,12 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
                 ),
                 onPressed: _markNotDone,
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 16),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 2,
                 ),

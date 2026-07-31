@@ -25,6 +25,7 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
       fluencyScore: _fluencyScore,
       targetLanguage: targetLanguage,
     );
+    await ref.read(onboardingStorageProvider).setCompletedOnboarding();
     if (!mounted) return;
     context.go('/');
   }

@@ -379,17 +379,17 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
     final baseQuestions = _curriculumQuestions[arg] ?? _curriculumQuestions[1]!;
     final List<QuizQuestion> expandedPool = List.from(baseQuestions);
 
-    // Expand pool up to 25-30 questions using variations per REQ #5
+    // Expand pool up to 25-30 questions using variations per REQ #5 & Bug Fix #4
     for (int i = 0; i < baseQuestions.length; i++) {
       final q = baseQuestions[i];
-      // Variation 1: Reverse Question
+      // Variation 1: Reverse Multiple Choice Question
       expandedPool.add(
         QuizQuestion(
           id: '${q.id}_rev',
           type: QuestionType.multipleChoice,
-          prompt: 'Translate: "${q.correctAnswer}"',
-          options: q.options.reversed.toList(),
-          correctAnswer: q.options.firstWhere((opt) => opt != q.correctAnswer, orElse: () => q.correctAnswer),
+          prompt: 'Which option matches "${q.prompt.replaceAll("Select the correct translation for ", "")}"?',
+          options: q.options.contains(q.correctAnswer) ? q.options : [...q.options, q.correctAnswer],
+          correctAnswer: q.correctAnswer,
           explanation: q.explanation,
         ),
       );
@@ -408,7 +408,7 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
         QuizQuestion(
           id: '${q.id}_fill',
           type: QuestionType.fillBlank,
-          prompt: 'Complete: "_____ ${q.correctAnswer}"',
+          prompt: 'Type the translation for "${q.prompt.replaceAll("Select the correct translation for ", "")}":',
           correctAnswer: q.correctAnswer,
           explanation: q.explanation,
         ),
@@ -418,8 +418,8 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
         QuizQuestion(
           id: '${q.id}_word',
           type: QuestionType.multipleChoice,
-          prompt: 'Identify the word matching "${q.prompt}"',
-          options: q.options,
+          prompt: 'Identify the correct term: "${q.prompt.replaceAll("Select the correct translation for ", "")}"',
+          options: q.options.contains(q.correctAnswer) ? q.options : [...q.options, q.correctAnswer],
           correctAnswer: q.correctAnswer,
           explanation: q.explanation,
         ),
@@ -429,7 +429,7 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
         QuizQuestion(
           id: '${q.id}_trans',
           type: QuestionType.translation,
-          prompt: '${q.prompt} (Select translation)',
+          prompt: '${q.prompt} (Translate carefully)',
           correctAnswer: q.correctAnswer,
           explanation: q.explanation,
         ),
@@ -439,8 +439,8 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
         QuizQuestion(
           id: '${q.id}_check',
           type: QuestionType.multipleChoice,
-          prompt: 'Vocabulary check: "${q.correctAnswer}"',
-          options: q.options,
+          prompt: 'Vocabulary check: What is "${q.correctAnswer}" in English/Target?',
+          options: q.options.contains(q.correctAnswer) ? q.options : [...q.options, q.correctAnswer],
           correctAnswer: q.correctAnswer,
           explanation: q.explanation,
         ),

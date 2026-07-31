@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart' hide Column;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/storage/onboarding_storage.dart';
+import '../../../../core/database/database.dart';
+import '../../../learn/domain/repositories/learn_repository.dart';
+import '../../../admin/presentation/screens/admin_panel_screen.dart';
+import '../../../user/presentation/controllers/user_controller.dart';
 import '../providers/progress_controller.dart';
 import '../../../../core/notifications/notification_service.dart';
 import '../providers/settings_provider.dart';
@@ -101,6 +106,11 @@ class ProfileTab extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.edit_rounded, color: AppColors.primaryGreen),
+                      tooltip: 'Edit Profile Info',
+                      onPressed: () => _showEditProfileDialog(context, ref, username),
+                    ),
                   ],
                 ),
               ),
@@ -138,13 +148,8 @@ class ProfileTab extends ConsumerWidget {
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.primaryGreen),
                           tooltip: 'Switch or Enroll in New Language',
-                          onSelected: (String langCode) async {
-                            await onboardingStorage.setTargetLanguage(langCode);
-                            ref.invalidate(progressControllerProvider);
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Enrolled in ${_languages[langCode]}!')),
-                            );
+                          onSelected: (String langCode) {
+                            _switchCourseWithReset(context, ref, langCode, _languages[langCode] ?? langCode);
                           },
                           itemBuilder: (context) {
                             return _languages.entries.map((entry) {
@@ -166,23 +171,7 @@ class ProfileTab extends ConsumerWidget {
                       ),
                       icon: const Icon(Icons.remove_circle_outline_rounded, size: 18),
                       label: const Text('Unenroll Course'),
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Unenroll Course'),
-                            content: Text('Are you sure you want to unenroll from $targetLangName? You can re-enroll anytime.'),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Unenroll', style: TextStyle(color: Colors.red))),
-                            ],
-                          ),
-                        );
-                        if (confirm == true) {
-                          await onboardingStorage.setTargetLanguage('es');
-                          ref.invalidate(progressControllerProvider);
-                        }
-                      },
+                      onPressed: () => _switchCourseWithReset(context, ref, 'es', 'Spanish 🇪🇸'),
                     ),
                   ],
                 ),
@@ -209,7 +198,7 @@ class ProfileTab extends ConsumerWidget {
               ),
               const SizedBox(height: AppConstants.space32),
 
-              // Settings & Contact Us
+              // Settings & Admin Panel
               Text(
                 AppLocalizations.of(context)!.settingsTitle,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -217,6 +206,49 @@ class ProfileTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppConstants.space16),
+              
+              // Admin Panel Navigation Card
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AdminPanelScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(AppConstants.radius16),
+                child: Container(
+                  padding: const EdgeInsets.all(AppConstants.space16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppConstants.radius16),
+                    border: Border.all(color: AppColors.primaryGreen),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.admin_panel_settings_rounded, color: AppColors.primaryGreen, size: 28),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Admin Panel • Ads & Banking Setup ⚙️',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primaryGreenDark),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Manage Google AdMob Unit IDs, Ad toggles & Payout banking accounts',
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded, color: AppColors.primaryGreen),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppConstants.space16),
+
               _buildNotificationSettings(context, ref),
               const SizedBox(height: AppConstants.space16),
               _buildLanguageSettings(context, ref),
@@ -570,6 +602,124 @@ class ProfileTab extends ConsumerWidget {
               ref.invalidate(heartSettingsStorageProvider);
             },
             activeThumbColor: AppColors.primaryGreen,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _switchCourseWithReset(BuildContext context, WidgetRef ref, String newLangCode, String langName) async {
+    final onboardingStorage = ref.read(onboardingStorageProvider);
+    final currentLangCode = onboardingStorage.targetLanguage ?? 'es';
+
+    if (currentLangCode == newLangCode) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+            SizedBox(width: 8),
+            Text('Switch Course & Reset?'),
+          ],
+        ),
+        content: Text(
+          'Warning! Switching your course to $langName will reset your completed modules and streak for your active course.\n\nDo you want to proceed?',
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, Reset & Switch', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        final db = ref.read(databaseProvider);
+        await (db.update(db.lessons)..where((t) => t.id.isBiggerThanValue(1))).write(
+          const LessonsCompanion(isCompleted: Value(false), isLocked: Value(true)),
+        );
+        await (db.update(db.lessons)..where((t) => t.id.equals(1))).write(
+          const LessonsCompanion(isCompleted: Value(false), isLocked: Value(false)),
+        );
+      } catch (_) {}
+
+      await onboardingStorage.setTargetLanguage(newLangCode);
+      ref.invalidate(progressControllerProvider);
+      ref.invalidate(learnRepositoryProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Switched course to $langName! Progress reset.'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showEditProfileDialog(BuildContext context, WidgetRef ref, String currentName) {
+    final controller = TextEditingController(text: currentName);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.person_pin_rounded, color: AppColors.primaryGreen, size: 28),
+            SizedBox(width: 8),
+            Text('Edit Profile Info'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Update Username / Display Name:'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.badge_rounded),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                await ref.read(userControllerProvider.notifier).updateProfile(username: newName);
+              }
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

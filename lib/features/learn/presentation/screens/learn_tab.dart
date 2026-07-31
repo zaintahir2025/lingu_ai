@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../widgets/lesson_path_view.dart';
 import '../../../../core/widgets/shared/streak_flame.dart';
 import '../../../../core/widgets/shared/xp_badge.dart';
+import '../../../../core/widgets/shared/duolingo_streak_widget.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../../../progress/presentation/providers/progress_controller.dart';
 
@@ -123,6 +124,11 @@ class LearnTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          DuolingoStreakWidget(
+            streakCount: streakDays,
+            hasStreakFreeze: true,
+          ),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -130,7 +136,7 @@ class LearnTab extends ConsumerWidget {
               XpBadge(amount: totalXp),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
