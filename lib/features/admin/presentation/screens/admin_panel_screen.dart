@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/local_storage/local_storage_provider.dart';
+import '../../../../core/storage/premium_storage.dart';
 
 final adminSettingsProvider = StateNotifierProvider<AdminSettingsNotifier, AdminSettingsState>((ref) {
   final box = ref.watch(localStorageProvider);
@@ -317,6 +318,93 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                         ],
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Member Premium Management Section
+                const Text(
+                  'Member Premium Access Control',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Builder(
+                    builder: (context) {
+                      final premiumStorage = ref.watch(premiumStorageProvider);
+                      final isPremium = premiumStorage.isPremium;
+                      final expiry = premiumStorage.expiryDate;
+                      final expiryString = expiry != null ? '${expiry.day}/${expiry.month}/${expiry.year}' : 'N/A';
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                isPremium ? Icons.workspace_premium_rounded : Icons.card_membership_rounded,
+                                color: isPremium ? Colors.amber.shade700 : Colors.grey,
+                                size: 28,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isPremium ? 'Premium Pass: ACTIVE 🌟' : 'Free Member Tier',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: isPremium ? Colors.amber.shade900 : AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      isPremium
+                                          ? 'Includes Unlimited Hearts (∞) & BYOK AI practice. Expires: $expiryString (1 Month)'
+                                          : 'Standard 5 lives reset every 24 hours. Upgrade required for Unlimited Hearts.',
+                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: isPremium ? Colors.redAccent : AppColors.primaryGreen,
+                                side: BorderSide(color: isPremium ? Colors.redAccent : AppColors.primaryGreen),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              icon: Icon(isPremium ? Icons.remove_circle_outline_rounded : Icons.star_rounded),
+                              label: Text(
+                                isPremium ? 'Revoke Premium Access' : 'Grant 1-Month Premium Pass',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: () async {
+                                if (isPremium) {
+                                  await ref.read(premiumStorageProvider).revokePremium();
+                                } else {
+                                  await ref.read(premiumStorageProvider).grantOneMonthPremium();
+                                }
+                                setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 32),

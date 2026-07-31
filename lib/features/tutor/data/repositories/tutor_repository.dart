@@ -14,28 +14,39 @@ class TutorRepository {
 
   TutorRepository(this._aiSettingsStorage);
 
+  static const List<String> _geminiModels = [
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-pro',
+    'gemini-pro',
+  ];
+
   Future<bool> validateGeminiApiKey(String apiKey) async {
     final key = apiKey.trim();
     if (key.isEmpty) return false;
-    try {
-      final response = await _dio.post(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$key',
-        options: Options(headers: {'Content-Type': 'application/json'}),
-        data: {
-          'contents': [
-            {
-              'parts': [
-                {'text': 'Hi'}
-              ]
-            }
-          ]
-        },
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      debugPrint('Gemini key validation failed: $e');
-      return false;
+
+    for (final modelName in _geminiModels) {
+      try {
+        final response = await _dio.post(
+          'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$key',
+          options: Options(headers: {'Content-Type': 'application/json'}),
+          data: {
+            'contents': [
+              {
+                'parts': [
+                  {'text': 'Hi'}
+                ]
+              }
+            ]
+          },
+        );
+        if (response.statusCode == 200) return true;
+      } catch (e) {
+        debugPrint('Model $modelName validation failed ($e). Trying next model...');
+      }
     }
+    return false;
   }
 
   Stream<String> streamTutorMessage(
@@ -55,7 +66,7 @@ class TutorRepository {
         if (hasEmitted) return;
       } catch (e) {
         debugPrint('Gemini API Call failed ($e). Displaying API Key guidance to user.');
-        yield '⚠️ Gemini API Key Error: The custom API key provided was rejected by Google AI Studio ($e).\n\nPlease verify your API key in settings (Key icon 🔑). Valid Google AI Studio Gemini API keys start with "AIzaSy...". Get a free key at https://aistudio.google.com';
+        yield '⚠️ Gemini API Key Error: Google AI Studio rejected the custom key or model endpoint.\n\nPlease verify your API key in settings (Key icon 🔑). Valid Google AI Studio keys start with "AIzaSy...". Get a free key at https://aistudio.google.com';
         return;
       }
     }
@@ -79,55 +90,63 @@ Respond helpfully as AI Language Tutor. Keep your response concise, clear, natur
 ''';
 
     // 1. Primary Attempt: google_generative_ai SDK
-    try {
-      final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: apiKey,
-      );
+    for (final modelName in _geminiModels) {
+      try {
+        final model = GenerativeModel(
+          model: modelName,
+          apiKey: apiKey,
+        );
 
-      final responseStream = model.generateContentStream([Content.text(prompt)]);
-      await for (final chunk in responseStream) {
-        if (chunk.text != null && chunk.text!.isNotEmpty) {
-          yield chunk.text!;
+        final responseStream = model.generateContentStream([Content.text(prompt)]);
+        await for (final chunk in responseStream) {
+          if (chunk.text != null && chunk.text!.isNotEmpty) {
+            yield chunk.text!;
+          }
         }
+        return;
+      } catch (sdkError) {
+        debugPrint('Google Generative AI SDK model $modelName failed. Trying REST fallback...');
       }
-      return;
-    } catch (sdkError) {
-      debugPrint('Google Generative AI SDK error: $sdkError. Trying direct REST API fallback...');
     }
 
-    // 2. Fallback Attempt: Direct REST API via Dio
-    final url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey';
-    final response = await _dio.post(
-      url,
-      options: Options(headers: {'Content-Type': 'application/json'}),
-      data: {
-        'contents': [
-          {
-            'parts': [
-              {'text': prompt}
+    // 2. Fallback Attempt: Direct REST API via Dio with model rotation
+    for (final modelName in _geminiModels) {
+      try {
+        final url = 'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey';
+        final response = await _dio.post(
+          url,
+          options: Options(headers: {'Content-Type': 'application/json'}),
+          data: {
+            'contents': [
+              {
+                'parts': [
+                  {'text': prompt}
+                ]
+              }
             ]
-          }
-        ]
-      },
-    );
+          },
+        );
 
-    if (response.statusCode == 200 && response.data != null) {
-      final candidates = response.data['candidates'] as List?;
-      if (candidates != null && candidates.isNotEmpty) {
-        final content = candidates[0]['content'];
-        final parts = content['parts'] as List?;
-        if (parts != null && parts.isNotEmpty) {
-          final text = parts[0]['text'] as String?;
-          if (text != null) {
-            yield text;
-            return;
+        if (response.statusCode == 200 && response.data != null) {
+          final candidates = response.data['candidates'] as List?;
+          if (candidates != null && candidates.isNotEmpty) {
+            final content = candidates[0]['content'];
+            final parts = content['parts'] as List?;
+            if (parts != null && parts.isNotEmpty) {
+              final text = parts[0]['text'] as String?;
+              if (text != null) {
+                yield text;
+                return;
+              }
+            }
           }
         }
+      } catch (dioError) {
+        debugPrint('Dio REST model $modelName failed: $dioError');
       }
     }
 
-    throw Exception('API response error code ${response.statusCode}');
+    throw Exception('All Gemini model endpoints failed for custom key.');
   }
 
   /// Built-in Smart Tutor Engine that responds instantly without requiring API keys.

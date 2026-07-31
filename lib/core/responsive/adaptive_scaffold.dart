@@ -6,6 +6,8 @@ import '../theme/app_colors.dart';
 
 import '../network/connectivity_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../game_state/heart_settings_storage.dart';
+import '../storage/premium_storage.dart';
 import '../game_state/game_state_provider.dart';
 
 class AdaptiveScaffold extends ConsumerWidget {
@@ -28,6 +30,9 @@ class AdaptiveScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final screenSize = ScreenSizeHelper.getSize(context);
     final gameState = ref.watch(gameStateProvider);
+    final heartStorage = ref.watch(heartSettingsStorageProvider);
+    final premiumStorage = ref.watch(premiumStorageProvider);
+    final isUnlimited = heartStorage.isUnlimitedMode && premiumStorage.isPremium;
 
     final actions = [
       Padding(
@@ -58,8 +63,12 @@ class AdaptiveScaffold extends ConsumerWidget {
             SvgPicture.asset('assets/images/svgs/heart.svg', height: 24),
             const SizedBox(width: 4),
             Text(
-              gameState.hearts.toString(),
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent),
+              isUnlimited ? '∞' : gameState.hearts.toString(),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.redAccent,
+                fontSize: isUnlimited ? 20 : 14,
+              ),
             ),
           ],
         ),

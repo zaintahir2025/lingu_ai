@@ -464,6 +464,15 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
 
     if (isCorrect) {
       state = state.copyWith(correctCount: state.correctCount + 1);
+      
+      // Log word as mastered in database
+      try {
+        final db = ref.read(databaseProvider);
+        final targetWord = question.correctAnswer.trim();
+        (db.update(db.vocabWords)..where((t) => t.word.equals(targetWord))).write(
+          const VocabWordsCompanion(status: Value('mastered')),
+        );
+      } catch (_) {}
     } else {
       // Deduct a heart on wrong answer
       ref.read(gameStateProvider.notifier).reduceHeart();

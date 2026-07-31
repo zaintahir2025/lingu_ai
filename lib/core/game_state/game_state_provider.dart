@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart';
 import '../database/database.dart';
 
+import '../local_storage/local_storage_provider.dart';
+
 class GameState {
   final int hearts;
   final int xp;
@@ -28,6 +30,7 @@ class GameState {
 
 class GameStateNotifier extends StateNotifier<GameState> {
   final Ref _ref;
+  static const String _lastResetKey = 'last_hearts_reset_time';
 
   GameStateNotifier(this._ref) : super(const GameState()) {
     _loadState();
@@ -36,6 +39,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   Future<void> _loadState() async {
     try {
       final db = _ref.read(databaseProvider);
+      final box = _ref.read(localStorageProvider);
       final rows = await db.select(db.userProgress).get();
       int xp = 0;
       int streak = 0;
@@ -44,6 +48,26 @@ class GameStateNotifier extends StateNotifier<GameState> {
         xp = rows.first.totalXp;
         streak = rows.first.currentStreak;
         savedHearts = rows.first.hearts;
+      }
+
+      // Check 24-hour free hearts reset
+      if (savedHearts < 5) {
+        final lastResetIso = box.get(_lastResetKey) as String?;
+        bool shouldReset = false;
+        if (lastResetIso == null) {
+          shouldReset = true;
+        } else {
+          final lastResetDate = DateTime.tryParse(lastResetIso);
+          if (lastResetDate == null || DateTime.now().difference(lastResetDate).inHours >= 24) {
+            shouldReset = true;
+          }
+        }
+
+        if (shouldReset) {
+          savedHearts = 5;
+          await box.put(_lastResetKey, DateTime.now().toIso8601String());
+          await _persistHearts(5);
+        }
       }
 
       state = GameState(

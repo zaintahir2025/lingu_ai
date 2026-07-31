@@ -139,7 +139,6 @@ class TtsService {
   }
 
   /// Speaks the given [text] fluently using the configured TTS voiceover engine.
-  /// Automatically handles language selection based on text context and caller instructions.
   Future<void> speak(String text, {String? targetLanguage, double? rate, bool forceEnglish = false}) async {
     if (text.trim().isEmpty) return;
 
@@ -152,8 +151,6 @@ class TtsService {
         langTag = 'en-US';
       } else if (targetLanguage != null) {
         langTag = getBcp47LanguageTag(targetLanguage);
-      } else if (isEnglishText(sanitized)) {
-        langTag = 'en-US';
       } else {
         langTag = _currentLanguage;
       }

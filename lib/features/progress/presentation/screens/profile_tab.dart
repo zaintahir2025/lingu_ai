@@ -17,6 +17,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'contact_us_screen.dart';
 import '../../../../core/storage/study_goal_storage.dart';
 import '../../../../core/game_state/heart_settings_storage.dart';
+import '../../../../core/storage/premium_storage.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -567,7 +568,9 @@ class ProfileTab extends ConsumerWidget {
 
   Widget _buildHeartsModeSettings(BuildContext context, WidgetRef ref) {
     final heartStorage = ref.watch(heartSettingsStorageProvider);
-    final isUnlimited = heartStorage.isUnlimitedMode;
+    final premiumStorage = ref.watch(premiumStorageProvider);
+    final isPremium = premiumStorage.isPremium;
+    final isUnlimited = heartStorage.isUnlimitedMode && isPremium;
 
     return Container(
       padding: const EdgeInsets.all(AppConstants.space16),
@@ -579,17 +582,37 @@ class ProfileTab extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Unlimited Hearts Mode ❤️',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                Row(
+                  children: [
+                    const Text(
+                      'Unlimited Hearts Mode ❤️',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isPremium ? Colors.amber.shade100 : Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        isPremium ? 'PREMIUM (∞)' : 'PRO FEATURE',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isPremium ? Colors.amber.shade900 : Colors.grey.shade700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Recommended for beginners. Learn without app blocking on mistakes.',
+                const SizedBox(height: 4),
+                const Text(
+                  'Exclusive for Premium Members. Learn with infinite lives (∞) without app blocking on mistakes.',
                   style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
@@ -598,10 +621,56 @@ class ProfileTab extends ConsumerWidget {
           Switch(
             value: isUnlimited,
             onChanged: (val) async {
+              if (val && !isPremium) {
+                _showPremiumUpgradeBanner(context);
+                return;
+              }
               await heartStorage.setHeartsMode(val ? 'unlimited' : 'challenge');
               ref.invalidate(heartSettingsStorageProvider);
             },
             activeThumbColor: AppColors.primaryGreen,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPremiumUpgradeBanner(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 28),
+            SizedBox(width: 8),
+            Text('Premium Feature 💎'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Unlimited Hearts (∞) is available exclusively for Premium Pass Members!',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '• Learn without mistake penalties\n• Display Infinity (∞) heart badge\n• 1-Month full access to all features\n\nPlease ask your Admin to grant a 1-Month Premium Pass via the Admin Panel.',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it!'),
           ),
         ],
       ),
