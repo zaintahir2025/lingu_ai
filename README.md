@@ -24,15 +24,9 @@
 - **Zero-Lag Execution**: Asynchronous audio pipeline eliminating main-thread UI stuttering during voice playback.
 - **Contextual Language Routing**: English translations and prompts are spoken using native English (`en-US`), while target vocabulary words and sentences are rendered using proper target BCP-47 voice tags (`es-ES`, `fr-FR`, `ja-JP`, `ur-PK`, `de-DE`).
 
-### 3. Multi-Brain AI Tutor & Interactive Character Companions
-- **6 Fun Character Companions**: Switch between distinct AI companions:
-  - **Lingu Owl**: Master Language Coach
-  - **Professor Bear**: Linguistics & Grammar Guru
-  - **Viktor Robot**: Vocabulary Speedster
-  - **Zari Explorer**: Casual Conversation Buddy
-  - **Junior**: Beginner Helper
-  - **Detective Lucy**: Practical Scenario & Context Solver
-- **Multi-Provider BYOK (Bring Your Own Key)**: Connect custom API keys for Groq (Llama 3.3), Google Gemini, OpenAI GPT-4o, or Anthropic Claude.
+### 3. Google Gemini AI Language Tutor
+- **Powered by Google Gemini**: Advanced AI Language Tutor supporting interactive conversations, grammar explanations, and vocabulary expansion.
+- **Bring Your Own Key (BYOK)**: Connect custom Gemini API keys from Google AI Studio (`aistudio.google.com`) for unlimited online practice.
 - **Built-in Smart Offline Engine**: Includes a resilient local AI engine ensuring uninterrupted conversations when offline or when API keys are unconfigured.
 
 ### 4. Customizable Study Duration Goals & Hearts System

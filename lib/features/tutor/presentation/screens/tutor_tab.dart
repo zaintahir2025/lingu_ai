@@ -6,7 +6,6 @@ import '../../../../core/theme/app_constants.dart';
 import '../../../../core/widgets/shared/offline_gate.dart';
 import '../providers/tutor_controller.dart';
 import '../../domain/models/chat_message.dart';
-import '../../domain/models/character_model.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import 'paywall_screen.dart';
 import 'ai_settings_screen.dart';
@@ -58,15 +57,13 @@ class _TutorTabState extends ConsumerState<TutorTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Welcome to your AI Language Companions! Here is how to make the most out of them:',
+              'Welcome to your AI Language Tutor! Here is how to get the best experience:',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 12),
-            Text('1. 🎭 Choose Your Fun Character:\nTap any character chip at the top (Lingu Owl, Professor Bear, Viktor Robot, Zari, Junior, or Detective Lucy) to practice with different personalities!'),
+            Text('1. 🔑 Google Gemini API Key:\nTap the Key icon at the top right to paste your free Gemini API key from Google AI Studio (aistudio.google.com).'),
             SizedBox(height: 8),
-            Text('2. 🔑 Bring Your Own Key (BYOK):\nTap the Key icon at the top right to use custom Groq, Gemini, OpenAI, or Claude API keys.'),
-            SizedBox(height: 8),
-            Text('3. ⚡ Smart Offline Mode:\nEven without an API key or internet connection, your AI companion responds with smart grammar & vocabulary help!'),
+            Text('2. ⚡ Smart Offline Fallback:\nEven without an API key or internet connection, your AI Tutor provides instant grammar & vocabulary help!'),
           ],
         ),
         actions: [
@@ -94,7 +91,6 @@ class _TutorTabState extends ConsumerState<TutorTab> {
   @override
   Widget build(BuildContext context) {
     final tutorState = ref.watch(tutorControllerProvider);
-    final activeChar = tutorState.activeCharacter;
 
     // Auto scroll when messages change
     ref.listen<TutorState>(tutorControllerProvider, (previous, next) {
@@ -118,18 +114,18 @@ class _TutorTabState extends ConsumerState<TutorTab> {
       message: AppLocalizations.of(context)!.tutorSleepingMessage,
       child: Column(
         children: [
-          // Top Bar with BYOK & Help
+          // Top Bar with Gemini Key Settings & Help
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            color: activeChar.themeColor.withValues(alpha: 0.1),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: AppColors.primaryGreen.withValues(alpha: 0.1),
             child: Row(
               children: [
-                Icon(activeChar.iconFallback, size: 20, color: activeChar.themeColor),
+                const Icon(Icons.auto_awesome_rounded, size: 20, color: AppColors.primaryGreen),
                 const SizedBox(width: 8),
-                Expanded(
+                const Expanded(
                   child: Text(
-                    '${activeChar.name} • ${activeChar.role}',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: activeChar.themeColor),
+                    'AI Language Tutor • Powered by Gemini',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryGreenDark),
                   ),
                 ),
                 IconButton(
@@ -139,7 +135,7 @@ class _TutorTabState extends ConsumerState<TutorTab> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.key_rounded, size: 20, color: AppColors.textSecondary),
-                  tooltip: 'BYOK AI Key Settings',
+                  tooltip: 'Google Gemini API Key Settings',
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
@@ -147,49 +143,6 @@ class _TutorTabState extends ConsumerState<TutorTab> {
                   },
                 ),
               ],
-            ),
-          ),
-          
-          // Character Selection Horizontal Bar
-          Container(
-            height: 56,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            color: Colors.white,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: CharacterModel.allCharacters.length,
-              itemBuilder: (context, index) {
-                final char = CharacterModel.allCharacters[index];
-                final isSelected = char.id == activeChar.id;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    avatar: Icon(
-                      char.iconFallback,
-                      size: 18,
-                      color: isSelected ? Colors.white : char.themeColor,
-                    ),
-                    label: Text(
-                      char.name,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    selected: isSelected,
-                    selectedColor: char.themeColor,
-                    backgroundColor: char.themeColor.withValues(alpha: 0.12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    onSelected: (val) {
-                      if (val) {
-                        ref.read(tutorControllerProvider.notifier).selectCharacter(char);
-                      }
-                    },
-                  ),
-                );
-              },
             ),
           ),
           const Divider(height: 1, thickness: 1),
@@ -202,17 +155,17 @@ class _TutorTabState extends ConsumerState<TutorTab> {
               itemCount: tutorState.messages.length,
               itemBuilder: (context, index) {
                 final message = tutorState.messages[index];
-                return _buildMessageBubble(message, activeChar);
+                return _buildMessageBubble(message);
               },
             ),
           ),
-          _buildInputArea(context, tutorState.isStreaming, activeChar),
+          _buildInputArea(context, tutorState.isStreaming),
         ],
       ),
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message, CharacterModel character) {
+  Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.isUser;
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppConstants.space16),
@@ -223,8 +176,8 @@ class _TutorTabState extends ConsumerState<TutorTab> {
           if (!isUser) ...[
             CircleAvatar(
               radius: 18,
-              backgroundColor: character.themeColor.withValues(alpha: 0.2),
-              child: Icon(character.iconFallback, size: 20, color: character.themeColor),
+              backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
+              child: const Icon(Icons.smart_toy_rounded, size: 20, color: AppColors.primaryGreen),
             ),
             const SizedBox(width: 8),
           ],
@@ -232,7 +185,7 @@ class _TutorTabState extends ConsumerState<TutorTab> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isUser ? character.themeColor : AppColors.surface,
+                color: isUser ? AppColors.primaryGreen : AppColors.surface,
                 borderRadius: BorderRadiusDirectional.only(
                   topStart: const Radius.circular(16),
                   topEnd: const Radius.circular(16),
@@ -268,7 +221,7 @@ class _TutorTabState extends ConsumerState<TutorTab> {
     );
   }
 
-  Widget _buildInputArea(BuildContext context, bool isStreaming, CharacterModel character) {
+  Widget _buildInputArea(BuildContext context, bool isStreaming) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -288,7 +241,7 @@ class _TutorTabState extends ConsumerState<TutorTab> {
               controller: _textController,
               enabled: !isStreaming,
               decoration: InputDecoration(
-                hintText: isStreaming ? AppLocalizations.of(context)!.tutorIsTyping : 'Ask ${character.name}...',
+                hintText: isStreaming ? AppLocalizations.of(context)!.tutorIsTyping : 'Ask AI Tutor...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
@@ -303,7 +256,7 @@ class _TutorTabState extends ConsumerState<TutorTab> {
           const SizedBox(width: 8),
           FloatingActionButton(
             mini: true,
-            backgroundColor: isStreaming ? Colors.grey : character.themeColor,
+            backgroundColor: isStreaming ? Colors.grey : AppColors.primaryGreen,
             elevation: 0,
             onPressed: isStreaming ? null : _sendMessage,
             child: const Icon(Icons.send, color: Colors.white, size: 20),
@@ -313,3 +266,4 @@ class _TutorTabState extends ConsumerState<TutorTab> {
     );
   }
 }
+

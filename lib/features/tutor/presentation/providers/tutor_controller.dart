@@ -1,33 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../domain/models/chat_message.dart';
-import '../../domain/models/character_model.dart';
 import '../../data/repositories/tutor_repository.dart';
 
 class TutorState {
   final List<ChatMessage> messages;
   final bool isStreaming;
   final bool requiresPremium;
-  final CharacterModel activeCharacter;
 
   const TutorState({
     required this.messages,
     this.isStreaming = false,
     this.requiresPremium = false,
-    required this.activeCharacter,
   });
 
   TutorState copyWith({
     List<ChatMessage>? messages,
     bool? isStreaming,
     bool? requiresPremium,
-    CharacterModel? activeCharacter,
   }) {
     return TutorState(
       messages: messages ?? this.messages,
       isStreaming: isStreaming ?? this.isStreaming,
       requiresPremium: requiresPremium ?? this.requiresPremium,
-      activeCharacter: activeCharacter ?? this.activeCharacter,
     );
   }
 }
@@ -35,27 +30,11 @@ class TutorState {
 class TutorController extends Notifier<TutorState> {
   @override
   TutorState build() {
-    final defaultChar = CharacterModel.allCharacters.first;
-    return TutorState(
-      activeCharacter: defaultChar,
+    return const TutorState(
       messages: [
         ChatMessage(
           id: '0',
-          content: defaultChar.greetingMessage,
-          isUser: false,
-        ),
-      ],
-    );
-  }
-
-  void selectCharacter(CharacterModel character) {
-    if (state.activeCharacter.id == character.id) return;
-    state = state.copyWith(
-      activeCharacter: character,
-      messages: [
-        ChatMessage(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          content: character.greetingMessage,
+          content: '¡Hola! I am your AI Language Tutor powered by Google Gemini. Ask me any questions about vocabulary, grammar, or daily conversation!',
           isUser: false,
         ),
       ],
@@ -89,7 +68,7 @@ class TutorController extends Notifier<TutorState> {
     );
 
     try {
-      // Tiered Context Window per REQ #6
+      // Tiered Context Window
       final isPro = state.requiresPremium == false;
       final maxContextMistakes = isPro ? 10 : 3;
       final maxMessageHistory = isPro ? 20 : 3;
@@ -107,11 +86,10 @@ class TutorController extends Notifier<TutorState> {
       final recentMistakes = await db.getRecentMistakes(limit: maxContextMistakes);
       final contextWords = recentMistakes.map((e) => e.word).toList();
 
-      // 2. Start Streaming with active character
+      // 2. Start Streaming with AI Tutor
       final stream = repo.streamTutorMessage(
         userMessage.content,
         contextWords,
-        character: state.activeCharacter,
       );
 
       await for (final token in stream) {
@@ -158,3 +136,4 @@ class TutorController extends Notifier<TutorState> {
 final tutorControllerProvider = NotifierProvider<TutorController, TutorState>(() {
   return TutorController();
 });
+

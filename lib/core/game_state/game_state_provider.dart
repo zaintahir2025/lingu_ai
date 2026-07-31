@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart';
 import '../database/database.dart';
-import '../local_storage/local_storage_provider.dart';
 
 class GameState {
   final int hearts;
