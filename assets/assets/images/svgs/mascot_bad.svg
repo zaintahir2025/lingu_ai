@@ -1,0 +1,64 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Metallic Red Alert Body Gradient -->
+    <linearGradient id="robotBodyBad" x1="20" y1="10" x2="100" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFEBEB"/>
+      <stop offset="60%" stop-color="#FFCDCD"/>
+      <stop offset="100%" stop-color="#F87171"/>
+    </linearGradient>
+
+    <!-- Red Alert Glow Gradient -->
+    <linearGradient id="redGlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF4D4D"/>
+      <stop offset="100%" stop-color="#DC2626"/>
+    </linearGradient>
+
+    <!-- Dark Visor Glass Gradient -->
+    <linearGradient id="visorGlassBad" x1="30" y1="35" x2="90" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#311215"/>
+      <stop offset="100%" stop-color="#180709"/>
+    </linearGradient>
+
+    <!-- Drop Shadow filter -->
+    <filter id="softGlowRed" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Antenna Rod -->
+  <rect x="57" y="10" width="6" height="14" rx="3" fill="#64748B"/>
+  <!-- Red Flashing Antenna Bulb -->
+  <circle cx="60" cy="10" r="8" fill="url(#redGlow)" filter="url(#softGlowRed)"/>
+  <circle cx="60" cy="10" r="3" fill="#FFFFFF"/>
+
+  <!-- Left & Right Ear Modules (Red) -->
+  <rect x="18" y="44" width="8" height="18" rx="4" fill="#EF4444"/>
+  <rect x="94" y="44" width="8" height="18" rx="4" fill="#EF4444"/>
+
+  <!-- Main Head Chassis -->
+  <rect x="23" y="22" width="74" height="62" rx="20" fill="url(#robotBodyBad)" stroke="#EF4444" stroke-width="2"/>
+
+  <!-- Dark Visor Screen -->
+  <rect x="30" y="32" width="60" height="42" rx="14" fill="url(#visorGlassBad)"/>
+
+  <!-- Left 'X' Eye -->
+  <path d="M41 44 L51 54 M51 44 L41 54" stroke="url(#redGlow)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Right 'X' Eye -->
+  <path d="M69 44 L79 54 M79 44 L69 54" stroke="url(#redGlow)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Oops / Wavy Mouth Line -->
+  <path d="M52 64 Q56 61 60 64 T68 64" stroke="url(#redGlow)" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- Robot Body / Base Support -->
+  <path d="M40 84 L80 84 L74 104 C74 108 46 108 46 104 Z" fill="url(#robotBodyBad)" stroke="#EF4444" stroke-width="1.5"/>
+
+  <!-- Chest AI Badge / Warning Core -->
+  <rect x="52" y="89" width="16" height="12" rx="6" fill="url(#redGlow)"/>
+  <path d="M60 92 L60 96 M60 98 L60 99" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Raised Surprise Hands -->
+  <circle cx="16" cy="62" r="7" fill="url(#robotBodyBad)" stroke="#EF4444" stroke-width="2"/>
+  <circle cx="104" cy="62" r="7" fill="url(#robotBodyBad)" stroke="#EF4444" stroke-width="2"/>
+</svg>
