@@ -4,12 +4,18 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
+import '../../../../core/storage/onboarding_storage.dart';
+import '../../../../main.dart';
+import '../../data/vocab_translator.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import 'package:shimmer/shimmer.dart';
 
 final vocabularyListProvider = FutureProvider<List<VocabWord>>((ref) async {
   final db = ref.read(databaseProvider);
-  return await db.select(db.vocabWords).get();
+  final items = await db.select(db.vocabWords).get();
+  final targetLang = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+  final uiLocale = ref.read(localeProvider).languageCode;
+  return VocabTranslator.translateList(items, targetLang, uiLocale);
 });
 
 class VocabularyListScreen extends ConsumerStatefulWidget {
@@ -83,7 +89,7 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> wit
             controller: _tabController,
             children: [
               _buildList(context, words),
-              _buildList(context, words.where((w) => w.interval < 21 && w.repetitions > 0).toList()),
+              _buildList(context, words.where((w) => w.interval < 21).toList()),
               _buildList(context, words.where((w) => w.interval >= 21).toList()),
             ],
           );

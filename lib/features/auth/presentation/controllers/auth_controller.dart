@@ -11,7 +11,7 @@ class AuthState {
   final User? user;
   final String? loginError;
   final String? registerError;
-  final String? errorMessage; // kept for backwards compatibility if needed, but we'll use specific ones
+  final String? errorMessage;
 
   const AuthState({
     this.status = AuthStatus.initial,
@@ -48,14 +48,15 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> _init() async {
     final token = _tokenStorage.jwt;
+    final savedName = _tokenStorage.username ?? 'Learner';
     if (token != null) {
       state = state.copyWith(
         status: AuthStatus.authenticated,
         user: User(
           id: 'restored', 
           email: 'user@example.com', 
-          name: 'Learner',
-          username: 'Learner',
+          name: savedName,
+          username: savedName,
           targetLanguage: 'es',
           knowledgeLevel: 'A1',
         ),
@@ -74,7 +75,16 @@ class AuthController extends StateNotifier<AuthState> {
         return;
       }
       final user = await _repository.login(email, password);
-      state = state.copyWith(status: AuthStatus.authenticated, user: user);
+      final savedName = _tokenStorage.username ?? user.username ?? user.name ?? 'Learner';
+      final updatedUser = User(
+        id: user.id,
+        email: user.email,
+        name: savedName,
+        username: savedName,
+        targetLanguage: user.targetLanguage,
+        knowledgeLevel: user.knowledgeLevel,
+      );
+      state = state.copyWith(status: AuthStatus.authenticated, user: updatedUser);
     } catch (e) {
       state = state.copyWith(status: AuthStatus.unauthenticated, loginError: e.toString().replaceAll('Exception: ', ''));
     }
@@ -106,6 +116,8 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   void updateUser(User user) {
+    final nameToSave = user.username ?? user.name ?? 'Learner';
+    _tokenStorage.saveUsername(nameToSave);
     state = state.copyWith(user: user);
   }
 }

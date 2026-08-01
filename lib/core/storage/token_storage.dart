@@ -14,6 +14,7 @@ class TokenStorage {
 
   static const String _jwtKey = 'jwt_token';
   static const String _refreshKey = 'refresh_token';
+  static const String _usernameKey = 'saved_username';
 
   TokenStorage(this._box, this._secureStorage);
 
@@ -28,8 +29,15 @@ class TokenStorage {
     return await _secureStorage.read(key: _refreshKey);
   }
 
+  Future<void> saveUsername(String username) async {
+    await _box.put(_usernameKey, username);
+  }
+
+  String? get username => _box.get(_usernameKey) as String?;
+
   Future<void> clearTokens() async {
     await _box.delete(_jwtKey);
+    await _box.delete(_usernameKey);
     await _secureStorage.delete(key: _refreshKey);
   }
 }
