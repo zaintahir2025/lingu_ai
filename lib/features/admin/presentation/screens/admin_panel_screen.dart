@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/local_storage/local_storage_provider.dart';
 import '../../../../core/storage/premium_storage.dart';
+import '../../../../core/storage/user_registry_storage.dart';
+import '../../../../core/storage/support_messages_storage.dart';
+import '../../../../core/widgets/shared/premium_badge.dart';
 
 final adminSettingsProvider = StateNotifierProvider<AdminSettingsNotifier, AdminSettingsState>((ref) {
   final box = ref.watch(localStorageProvider);
@@ -158,13 +161,87 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     }
   }
 
+  void _showReplyDialog(SupportTicket ticket) {
+    final replyController = TextEditingController(text: ticket.reply ?? '');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.reply_rounded, color: AppColors.primaryGreen),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Reply to ${ticket.username}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Ticket: ${ticket.subject}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            const SizedBox(height: 4),
+            Text('Message: "${ticket.message}"', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: replyController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Admin Reply Message',
+                border: OutlineInputBorder(),
+                hintText: 'Type your official response here...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              final text = replyController.text.trim();
+              if (text.isNotEmpty) {
+                await ref.read(supportMessagesStorageProvider).replyMessage(ticket.id, text);
+                setState(() {});
+              }
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Send Reply', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final adminState = ref.watch(adminSettingsProvider);
+    final userRegistry = ref.watch(userRegistryStorageProvider);
+    final supportStorage = ref.watch(supportMessagesStorageProvider);
+    final registeredUsers = userRegistry.getAllUsers();
+    final tickets = supportStorage.getAllMessages();
+
+    // Priority Sort: Premium tickets appear FIRST at the top
+    tickets.sort((a, b) {
+      if (a.isPremium && !b.isPremium) return -1;
+      if (!a.isPremium && b.isPremium) return 1;
+      return 0;
+    });
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Panel • Ads & Banking Setup'),
+        title: const Text('Admin Panel • System Control'),
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: Colors.white,
       ),
@@ -172,7 +249,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
         padding: const EdgeInsets.all(24.0),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
+            constraints: const BoxConstraints(maxWidth: 750),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -198,7 +275,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                             ),
                             Text(
-                              'Configure Google AdMob Monetization & Banking Payout Accounts',
+                              'Manage Registered Accounts, Banking Accounts, Premium Access & Support Tickets',
                               style: TextStyle(color: Colors.white70, fontSize: 13),
                             ),
                           ],
@@ -209,9 +286,230 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                // SECTION 1: Google Ads Configuration
+                // SECTION 1: Registered Accounts & Premium Access Control
                 const Text(
-                  '1. Google Ads (AdMob) Setup 📢',
+                  '1. Registered User Accounts & Premium Control 👥',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: registeredUsers.length,
+                    separatorBuilder: (context, index) => const Divider(height: 20),
+                    itemBuilder: (context, index) {
+                      final user = registeredUsers[index];
+                      return Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: user.isPremium ? Colors.amber.shade100 : AppColors.primaryGreen.withValues(alpha: 0.2),
+                            child: Text(
+                              user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: user.isPremium ? Colors.amber.shade900 : AppColors.primaryGreen,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        user.username,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (user.isPremium) ...[
+                                      const SizedBox(width: 8),
+                                      const PremiumBadge(),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  user.email,
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                                Text(
+                                  'Registered: ${user.registeredAt} • Status: ${user.isPremium ? "Active Premium (1-Month)" : "Free Tier"}',
+                                  style: TextStyle(fontSize: 11, color: user.isPremium ? AppColors.primaryGreenDark : Colors.grey.shade700),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: user.isPremium ? Colors.red.shade100 : AppColors.primaryGreen,
+                              foregroundColor: user.isPremium ? Colors.red.shade900 : Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: () async {
+                              await userRegistry.setPremiumStatus(user.email, !user.isPremium);
+                              if (user.email == 'learner@linguai.com' || user.email == 'user@example.com') {
+                                if (user.isPremium) {
+                                  await ref.read(premiumStorageProvider).revokePremium();
+                                } else {
+                                  await ref.read(premiumStorageProvider).grantOneMonthPremium();
+                                }
+                              }
+                              setState(() {});
+                            },
+                            child: Text(
+                              user.isPremium ? 'Revoke' : 'Grant Premium',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // SECTION 2: Customer Support Messages (Reply & Delete with Priority Sorting)
+                const Text(
+                  '2. Customer Support Messages (Priority Queue) 📩',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Note: Support is for all users. Tickets from Premium members are prioritized at the top.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: tickets.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: Text('No support messages received yet.')),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: tickets.length,
+                          separatorBuilder: (context, index) => const Divider(height: 24),
+                          itemBuilder: (context, index) {
+                            final ticket = tickets[index];
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    if (ticket.isPremium) ...[
+                                      const PremiumBadge(),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    Expanded(
+                                      child: Text(
+                                        '[${ticket.category}] ${ticket.subject}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                      ),
+                                    ),
+                                    Text(
+                                      ticket.submittedAt,
+                                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'From: ${ticket.username} (${ticket.userEmail})',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.grey.shade200),
+                                  ),
+                                  child: Text(
+                                    ticket.message,
+                                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                                  ),
+                                ),
+                                if (ticket.reply != null) ...[
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Admin Reply (${ticket.repliedAt}):',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.primaryGreenDark),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          ticket.reply!,
+                                          style: const TextStyle(fontSize: 13, color: Colors.black87),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.primaryGreen,
+                                        side: const BorderSide(color: AppColors.primaryGreen),
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      ),
+                                      icon: const Icon(Icons.reply_rounded, size: 16),
+                                      label: Text(ticket.reply == null ? 'Reply' : 'Edit Reply'),
+                                      onPressed: () => _showReplyDialog(ticket),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                                      tooltip: 'Delete Ticket',
+                                      onPressed: () async {
+                                        await supportStorage.deleteMessage(ticket.id);
+                                        setState(() {});
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                ),
+                const SizedBox(height: 28),
+
+                // SECTION 3: Google Ads Configuration
+                const Text(
+                  '3. Google Ads (AdMob) Setup 📢',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 12),
@@ -226,7 +524,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                     children: [
                       SwitchListTile(
                         title: const Text('Enable In-App Ads', style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: const Text('Monetize app sessions with Google AdMob banners and reward ads.'),
+                        subtitle: const Text('Monetize app sessions with Google AdMob banners for Free members.'),
                         value: adminState.adsEnabled,
                         activeThumbColor: AppColors.primaryGreen,
                         onChanged: (val) {
@@ -256,9 +554,9 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                // SECTION 2: Banking & Payout Setup
+                // SECTION 4: Banking & Revenue Payout Setup
                 const Text(
-                  '2. Banking & Revenue Payout Setup 🏦',
+                  '4. Banking & Revenue Payout Setup 🏦',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 12),
@@ -306,105 +604,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                           prefixIcon: Icon(Icons.swap_vertical_circle_rounded),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          const Icon(Icons.verified_rounded, color: AppColors.primaryGreen, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Payout Status: ${adminState.payoutStatus}',
-                            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
-                          ),
-                        ],
-                      ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Member Premium Management Section
-                const Text(
-                  'Member Premium Access Control',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.divider),
-                  ),
-                  child: Builder(
-                    builder: (context) {
-                      final premiumStorage = ref.watch(premiumStorageProvider);
-                      final isPremium = premiumStorage.isPremium;
-                      final expiry = premiumStorage.expiryDate;
-                      final expiryString = expiry != null ? '${expiry.day}/${expiry.month}/${expiry.year}' : 'N/A';
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                isPremium ? Icons.workspace_premium_rounded : Icons.card_membership_rounded,
-                                color: isPremium ? Colors.amber.shade700 : Colors.grey,
-                                size: 28,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      isPremium ? 'Premium Pass: ACTIVE 🌟' : 'Free Member Tier',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: isPremium ? Colors.amber.shade900 : AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      isPremium
-                                          ? 'Includes Unlimited Hearts (∞) & BYOK AI practice. Expires: $expiryString (1 Month)'
-                                          : 'Standard 5 lives reset every 24 hours. Upgrade required for Unlimited Hearts.',
-                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: isPremium ? Colors.redAccent : AppColors.primaryGreen,
-                                side: BorderSide(color: isPremium ? Colors.redAccent : AppColors.primaryGreen),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              icon: Icon(isPremium ? Icons.remove_circle_outline_rounded : Icons.star_rounded),
-                              label: Text(
-                                isPremium ? 'Revoke Premium Access' : 'Grant 1-Month Premium Pass',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              onPressed: () async {
-                                if (isPremium) {
-                                  await ref.read(premiumStorageProvider).revokePremium();
-                                } else {
-                                  await ref.read(premiumStorageProvider).grantOneMonthPremium();
-                                }
-                                setState(() {});
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    },
                   ),
                 ),
                 const SizedBox(height: 32),

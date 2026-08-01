@@ -787,6 +787,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log Out'**
   String get logOut;
+
+  /// No description provided for @enrolledLanguageCourse.
+  ///
+  /// In en, this message translates to:
+  /// **'Enrolled Language Course'**
+  String get enrolledLanguageCourse;
+
+  /// No description provided for @unenrollCourse.
+  ///
+  /// In en, this message translates to:
+  /// **'Unenroll Course'**
+  String get unenrollCourse;
+
+  /// No description provided for @appInterfaceLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'App Interface Language'**
+  String get appInterfaceLanguage;
+
+  /// No description provided for @switchBetweenEnUr.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between English and Urdu UI'**
+  String get switchBetweenEnUr;
+
+  /// No description provided for @studyDurationGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Study Duration Goals 🎯'**
+  String get studyDurationGoals;
+
+  /// No description provided for @selectDurationPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Select how much duration you plan to dedicate to learning:'**
+  String get selectDurationPlan;
+
+  /// No description provided for @dailyGoalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Goal:'**
+  String get dailyGoalLabel;
+
+  /// No description provided for @weeklyTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Target:'**
+  String get weeklyTargetLabel;
+
+  /// No description provided for @monthlyTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Target:'**
+  String get monthlyTargetLabel;
+
+  /// No description provided for @unlimitedHeartsMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited Hearts Mode ❤️'**
+  String get unlimitedHeartsMode;
+
+  /// No description provided for @unlimitedHeartsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive for Premium Members. Learn with infinite lives (∞) without app blocking on mistakes.'**
+  String get unlimitedHeartsDesc;
+
+  /// No description provided for @adminPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Panel • Ads & Banking Setup ⚙️'**
+  String get adminPanelTitle;
+
+  /// No description provided for @adminPanelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Google AdMob Unit IDs, Ad toggles & Payout banking accounts'**
+  String get adminPanelDesc;
+
+  /// No description provided for @contactUsSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us & Support'**
+  String get contactUsSupport;
+
+  /// No description provided for @contactButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get contactButton;
+
+  /// No description provided for @unlockPremiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Premium 👑'**
+  String get unlockPremiumTitle;
+
+  /// No description provided for @unlockPremiumDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get 1-Month access to AI Tutor, Unlimited Hearts, Ad-Free experience & Priority Support'**
+  String get unlockPremiumDesc;
+
+  /// No description provided for @unlockPremiumButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Premium Access'**
+  String get unlockPremiumButton;
+
+  /// No description provided for @premiumMemberBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'PREMIUM 👑'**
+  String get premiumMemberBadge;
+
+  /// No description provided for @freeMemberBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE TIER'**
+  String get freeMemberBadge;
+
+  /// No description provided for @aiTutorPremiumOnlyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Tutor is a Premium Feature 🌟'**
+  String get aiTutorPremiumOnlyTitle;
+
+  /// No description provided for @aiTutorPremiumOnlyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock Premium Membership to chat with your personal AI Language Tutor, enjoy ad-free learning, unlimited hearts, and priority support!'**
+  String get aiTutorPremiumOnlyDesc;
+
+  /// No description provided for @proceedToPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Proceed to Payment'**
+  String get proceedToPayment;
+
+  /// No description provided for @paymentScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debit / Credit Card Payment'**
+  String get paymentScreenTitle;
+
+  /// No description provided for @cardHolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Cardholder Name'**
+  String get cardHolderName;
+
+  /// No description provided for @cardNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Card Number'**
+  String get cardNumber;
+
+  /// No description provided for @expiryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry Date (MM/YY)'**
+  String get expiryDate;
+
+  /// No description provided for @cvvCode.
+  ///
+  /// In en, this message translates to:
+  /// **'CVV / CVC Code'**
+  String get cvvCode;
+
+  /// No description provided for @payAndUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay & Unlock Premium (1 Month)'**
+  String get payAndUnlock;
+
+  /// No description provided for @adminBankingDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct Payment to Admin Account 🏦'**
+  String get adminBankingDetails;
+
+  /// No description provided for @bankNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Name:'**
+  String get bankNameLabel;
+
+  /// No description provided for @accountHolderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Holder:'**
+  String get accountHolderLabel;
+
+  /// No description provided for @ibanLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IBAN / Account #:'**
+  String get ibanLabel;
+
+  /// No description provided for @swiftLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SWIFT Code:'**
+  String get swiftLabel;
+
+  /// No description provided for @supportPriorityTag.
+  ///
+  /// In en, this message translates to:
+  /// **'PRIORITY SUPPORT ⚡'**
+  String get supportPriorityTag;
+
+  /// No description provided for @renewReminderMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠️ Your Premium Membership expires today! Tap to reactivate.'**
+  String get renewReminderMessage;
+
+  /// No description provided for @tapCardToReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap card to reveal meaning'**
+  String get tapCardToReveal;
+
+  /// No description provided for @tapToFlipBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to flip back'**
+  String get tapToFlipBack;
+
+  /// No description provided for @readAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Read All'**
+  String get readAll;
 }
 
 class _AppLocalizationsDelegate

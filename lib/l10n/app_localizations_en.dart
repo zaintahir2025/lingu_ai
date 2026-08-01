@@ -365,4 +365,127 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logOut => 'Log Out';
+
+  @override
+  String get enrolledLanguageCourse => 'Enrolled Language Course';
+
+  @override
+  String get unenrollCourse => 'Unenroll Course';
+
+  @override
+  String get appInterfaceLanguage => 'App Interface Language';
+
+  @override
+  String get switchBetweenEnUr => 'Switch between English and Urdu UI';
+
+  @override
+  String get studyDurationGoals => 'Study Duration Goals 🎯';
+
+  @override
+  String get selectDurationPlan =>
+      'Select how much duration you plan to dedicate to learning:';
+
+  @override
+  String get dailyGoalLabel => 'Daily Goal:';
+
+  @override
+  String get weeklyTargetLabel => 'Weekly Target:';
+
+  @override
+  String get monthlyTargetLabel => 'Monthly Target:';
+
+  @override
+  String get unlimitedHeartsMode => 'Unlimited Hearts Mode ❤️';
+
+  @override
+  String get unlimitedHeartsDesc =>
+      'Exclusive for Premium Members. Learn with infinite lives (∞) without app blocking on mistakes.';
+
+  @override
+  String get adminPanelTitle => 'Admin Panel • Ads & Banking Setup ⚙️';
+
+  @override
+  String get adminPanelDesc =>
+      'Manage Google AdMob Unit IDs, Ad toggles & Payout banking accounts';
+
+  @override
+  String get contactUsSupport => 'Contact Us & Support';
+
+  @override
+  String get contactButton => 'Contact';
+
+  @override
+  String get unlockPremiumTitle => 'Unlock Premium 👑';
+
+  @override
+  String get unlockPremiumDesc =>
+      'Get 1-Month access to AI Tutor, Unlimited Hearts, Ad-Free experience & Priority Support';
+
+  @override
+  String get unlockPremiumButton => 'Unlock Premium Access';
+
+  @override
+  String get premiumMemberBadge => 'PREMIUM 👑';
+
+  @override
+  String get freeMemberBadge => 'FREE TIER';
+
+  @override
+  String get aiTutorPremiumOnlyTitle => 'AI Tutor is a Premium Feature 🌟';
+
+  @override
+  String get aiTutorPremiumOnlyDesc =>
+      'Unlock Premium Membership to chat with your personal AI Language Tutor, enjoy ad-free learning, unlimited hearts, and priority support!';
+
+  @override
+  String get proceedToPayment => 'Proceed to Payment';
+
+  @override
+  String get paymentScreenTitle => 'Debit / Credit Card Payment';
+
+  @override
+  String get cardHolderName => 'Cardholder Name';
+
+  @override
+  String get cardNumber => 'Card Number';
+
+  @override
+  String get expiryDate => 'Expiry Date (MM/YY)';
+
+  @override
+  String get cvvCode => 'CVV / CVC Code';
+
+  @override
+  String get payAndUnlock => 'Pay & Unlock Premium (1 Month)';
+
+  @override
+  String get adminBankingDetails => 'Direct Payment to Admin Account 🏦';
+
+  @override
+  String get bankNameLabel => 'Bank Name:';
+
+  @override
+  String get accountHolderLabel => 'Account Holder:';
+
+  @override
+  String get ibanLabel => 'IBAN / Account #:';
+
+  @override
+  String get swiftLabel => 'SWIFT Code:';
+
+  @override
+  String get supportPriorityTag => 'PRIORITY SUPPORT ⚡';
+
+  @override
+  String get renewReminderMessage =>
+      '⚠️ Your Premium Membership expires today! Tap to reactivate.';
+
+  @override
+  String get tapCardToReveal => 'Tap card to reveal meaning';
+
+  @override
+  String get tapToFlipBack => 'Tap to flip back';
+
+  @override
+  String get readAll => 'Read All';
 }

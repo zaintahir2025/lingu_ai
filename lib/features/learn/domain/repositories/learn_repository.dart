@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart';
 import '../../../../core/database/database.dart';
-
 import '../../../../core/storage/onboarding_storage.dart';
 import '../../data/vocab_data.dart';
+import '../../data/vocab_translator.dart';
 
 class LearnRepository {
   final AppDatabase _db;
@@ -36,7 +36,6 @@ class LearnRepository {
         batch.insertAllOnConflictUpdate(_db.vocabWords, seedVocabWords);
       });
     } else {
-      // Sync any missing vocab words into existing database instances
       final existingVocabCount = await _db.select(_db.vocabWords).get();
       if (existingVocabCount.length < seedVocabWords.length) {
         await _db.batch((batch) {
@@ -60,156 +59,25 @@ class LearnRepository {
     return (_db.select(_db.lessons)..orderBy([(t) => OrderingTerm(expression: t.orderIndex)])).watch();
   }
 
-  Future<List<VocabWord>> getVocabForLesson(int lessonId) async {
+  /// Gets the highest unlocked lesson ID (e.g. if lessons 1, 2, 3 are unlocked, returns 3)
+  Future<int> getHighestUnlockedLessonId() async {
+    final unlockedLessons = await (_db.select(_db.lessons)
+          ..where((t) => t.isLocked.equals(false))
+          ..orderBy([(t) => OrderingTerm(expression: t.orderIndex, mode: OrderingMode.desc)]))
+        .get();
+    
+    if (unlockedLessons.isNotEmpty) {
+      return unlockedLessons.first.id;
+    }
+    return 1;
+  }
+
+  Future<List<VocabWord>> getVocabForLesson(int lessonId, {String? targetLang, String? uiLocale}) async {
     final defaultWords = await (_db.select(_db.vocabWords)..where((t) => t.lessonId.equals(lessonId))).get();
-    final langCode = _onboardingStorage?.targetLanguage?.toLowerCase() ?? 'es';
+    final langCode = targetLang ?? _onboardingStorage?.targetLanguage?.toLowerCase() ?? 'es';
+    final uiCode = uiLocale ?? 'en';
 
-    if (langCode == 'es') return defaultWords;
-
-    // Multi-Language Translations Map for Japanese, French, German, Urdu, English
-    final Map<String, Map<String, String>> multiLangMap = {
-      // Japanese (ja)
-      'ja': {
-        'Hola': 'こんにちは (Konnichiwa)',
-        'Buenos días': 'おはようございます (Ohayou)',
-        'Buenas tardes': 'こんにちは (Konnichiwa)',
-        'Buenas noches': 'おやすみなさい (Oyasumi)',
-        'Adiós': 'さようなら (Sayounara)',
-        'Hasta luego': 'またね (Mata ne)',
-        'Cómo estás': 'お元気ですか (Ogenki desu ka)',
-        'Gracias': 'ありがとう (Arigatou)',
-        'Por favor': 'お願いします (Onegai shimasu)',
-        'De nada': 'どういたしまして (Douitashimashite)',
-        'Cómo te llamas': 'お名前は何ですか (Onamae wa)',
-        'Me llamo': '私の名前は (Watashi no namae wa)',
-        'Mucho gusto': 'はじめまして (Hajimemashite)',
-        'De dónde eres': 'どこから来ましたか (Doko kara)',
-        'Soy de': '私は〜出身です (Watashi wa)',
-        'Amigo': '友達 (Tomodachi)',
-        'Señor': '〜さん (San)',
-        'Señora': '〜さん (San)',
-        'Hablo': '話します (Hanashimasu)',
-        'Entiendo': '理解します (Rikai shimasu)',
-        'Uno': '一 (Ichi)',
-        'Dos': '二 (Ni)',
-        'Tres': '三 (San)',
-        'Cuatro': '四 (Yon)',
-        'Cinco': '五 (Go)',
-        'Seis': '六 (Roku)',
-        'Siete': '七 (Nana)',
-        'Ocho': '八 (Hachi)',
-        'Nueve': '九 (Kyuu)',
-        'Diez': '十 (Juu)',
-        'Pan': 'パン (Pan)',
-        'Agua': '水 (Mizu)',
-        'Manzana': 'りんご (Ringo)',
-        'Café': 'コーヒー (Koohii)',
-        'Leche': '牛乳 (Gyūnyū)',
-        'Queso': 'チーズ (Chiizu)',
-        'Arroz': 'ご飯 (Gohan)',
-        'Pollo': '鶏肉 (Toriniku)',
-        'Restaurante': 'レストラン (Resutoran)',
-        'Comida': '食べ物 (Tabemono)',
-        'Madre': '母 (Haha)',
-        'Padre': '父 (Chichi)',
-        'Hermano': '兄 / 弟 (Kyōdai)',
-        'Hermana': '姉 / 妹 (Shimai)',
-        'Hijo': '息子 (Musuko)',
-        'Hija': '娘 (Musume)',
-        'Abuelo': '祖父 (Sofu)',
-        'Abuela': '祖母 (Sobo)',
-        'Familia': '家族 (Kazoku)',
-        'Casa': '家 (Ie)',
-      },
-      // French (fr)
-      'fr': {
-        'Hola': 'Bonjour',
-        'Buenos días': 'Bonjour',
-        'Buenas tardes': 'Bon après-midi',
-        'Buenas noches': 'Bonne nuit',
-        'Adiós': 'Au revoir',
-        'Hasta luego': 'À bientôt',
-        'Cómo estás': 'Comment allez-vous',
-        'Gracias': 'Merci',
-        'Por favor': 'S\'il vous plaît',
-        'De nada': 'De rien',
-        'Cómo te llamas': 'Comment vous appelez-vous',
-        'Me llamo': 'Je m\'appelle',
-        'Mucho gusto': 'Enchanté',
-        'De dónde eres': 'D\'où venez-vous',
-        'Soy de': 'Je viens de',
-        'Amigo': 'Ami',
-        'Señor': 'Monsieur',
-        'Señora': 'Madame',
-        'Pan': 'Pain',
-        'Agua': 'Eau',
-        'Manzana': 'Pomme',
-        'Café': 'Café',
-        'Leche': 'Lait',
-        'Restaurante': 'Restaurant',
-        'Madre': 'Mère',
-        'Padre': 'Père',
-        'Hermano': 'Frère',
-        'Hermana': 'Sœur',
-        'Familia': 'Famille',
-      },
-      // German (de)
-      'de': {
-        'Hola': 'Hallo',
-        'Buenos días': 'Guten Morgen',
-        'Buenas tardes': 'Guten Tag',
-        'Buenas noches': 'Gute Nacht',
-        'Adiós': 'Auf Wiedersehen',
-        'Hasta luego': 'Bis später',
-        'Cómo estás': 'Wie geht es dir',
-        'Gracias': 'Danke',
-        'Por favor': 'Bitte',
-        'De nada': 'Gern geschehen',
-        'Pan': 'Brot',
-        'Agua': 'Wasser',
-        'Manzana': 'Apfel',
-        'Café': 'Kaffee',
-        'Leche': 'Milch',
-        'Madre': 'Mutter',
-        'Padre': 'Vater',
-        'Hermano': 'Bruder',
-        'Hermana': 'Schwester',
-      },
-      // Urdu (ur)
-      'ur': {
-        'Hola': 'سلام (Salam)',
-        'Buenos días': 'صبح بخیر (Subah BaKhair)',
-        'Buenas tardes': 'دوپہر بخیر (Dopahar BaKhair)',
-        'Buenas noches': 'شب بخیر (Shab BaKhair)',
-        'Adiós': 'خدا حافظ (Khuda Hafiz)',
-        'Hasta luego': 'پھر ملیں گے (Phir Milengay)',
-        'Cómo estás': 'آپ کیسے ہیں (Aap Kaise Hain)',
-        'Gracias': 'شکریہ (Shukriya)',
-        'Por favor': 'برائے مہربانی (Baraye Mehrbani)',
-        'De nada': 'کوئی بات نہیں (Koi Baat Nahi)',
-        'Pan': 'روٹی (Roti)',
-        'Agua': 'پانی (Paani)',
-        'Manzana': 'سیب (Saeb)',
-        'Café': 'کافی (Coffee)',
-        'Leche': 'دودھ (Doodh)',
-        'Madre': 'امی (Ammi)',
-        'Padre': 'ابو (Abbu)',
-        'Hermano': 'بھائی (Bhai)',
-        'Hermana': 'بہن (Behan)',
-        'Familia': 'خاندان (Khandan)',
-      },
-    };
-
-    final langTranslations = multiLangMap[langCode];
-    if (langTranslations == null) return defaultWords;
-
-    return defaultWords.map((item) {
-      final translatedWord = langTranslations[item.word];
-      if (translatedWord != null) {
-        return item.copyWith(word: translatedWord);
-      }
-      return item;
-    }).toList();
+    return VocabTranslator.translateList(defaultWords, langCode, uiCode);
   }
 }
 

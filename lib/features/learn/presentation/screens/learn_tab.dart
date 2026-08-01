@@ -8,6 +8,7 @@ import '../../../../core/widgets/shared/xp_badge.dart';
 import '../../../../core/widgets/shared/duolingo_streak_widget.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../../../progress/presentation/providers/progress_controller.dart';
+import '../../domain/repositories/learn_repository.dart';
 
 class LearnTab extends ConsumerWidget {
   const LearnTab({super.key});
@@ -39,77 +40,91 @@ class LearnTab extends ConsumerWidget {
 
   Widget _buildMainContent(BuildContext context, WidgetRef ref) {
     final completedCount = ref.watch(completedLessonsCountProvider).value ?? 0;
-    final nextLessonId = completedCount + 1;
-    final isNewUser = completedCount == 0;
 
-    final bannerTitle = isNewUser
-        ? 'Welcome to LinguAI! 👋'
-        : 'Continue Learning 🚀';
-    final bannerSubtitle = isNewUser
-        ? 'Let\'s get started with your very first lecture!'
-        : 'Pick up right where you left off: Lesson $nextLessonId';
-    final buttonText = isNewUser ? 'Get Started' : 'Continue';
+    return StreamBuilder(
+      stream: ref.watch(learnRepositoryProvider).watchLessons(),
+      builder: (context, snapshot) {
+        int highestUnlockedId = 1;
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          final unlocked = snapshot.data!.where((l) => !l.isLocked).toList();
+          if (unlocked.isNotEmpty) {
+            unlocked.sort((a, b) => b.orderIndex.compareTo(a.orderIndex));
+            highestUnlockedId = unlocked.first.id;
+          }
+        }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primaryGreen, AppColors.streakOrange],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+        final isNewUser = completedCount == 0 && highestUnlockedId == 1;
+
+        final bannerTitle = isNewUser
+            ? 'Welcome to LinguAI! 👋'
+            : 'Continue Learning 🚀';
+        final bannerSubtitle = isNewUser
+            ? 'Let\'s get started with your very first lecture!'
+            : 'Pick up right where you left off: Lesson $highestUnlockedId';
+        final buttonText = isNewUser ? AppLocalizations.of(context)!.getStartedButton : AppLocalizations.of(context)!.continueButton;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primaryGreen, AppColors.streakOrange],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 44),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            bannerTitle,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            bannerSubtitle,
+                            style: const TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.push('/module/$highestUnlockedId');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppColors.primaryGreen,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      child: Text(buttonText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    ),
+                  ],
+                ),
               ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ],
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 44),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        bannerTitle,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        bannerSubtitle,
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    context.push('/module/$nextLessonId');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primaryGreen,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  child: Text(buttonText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const Expanded(child: LessonPathView()),
-      ],
+            const Expanded(child: LessonPathView()),
+          ],
+        );
+      },
     );
   }
 

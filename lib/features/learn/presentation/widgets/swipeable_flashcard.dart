@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/audio/tts_service.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:lingu_ai/l10n/app_localizations.dart';
 
 class SwipeableFlashcard extends ConsumerStatefulWidget {
   final VocabWord word;
@@ -119,31 +120,32 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
           onPanUpdate: _onPanUpdate,
           onPanEnd: _onPanEnd,
           child: AnimatedBuilder(
-          animation: _flipController,
-          builder: (context, child) {
-            final angle = _flipController.value * pi;
-            final transform = Matrix4.identity()
-              ..setEntry(3, 2, 0.001)
-              ..rotateY(angle);
+            animation: _flipController,
+            builder: (context, child) {
+              final angle = _flipController.value * pi;
+              final transform = Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateY(angle);
 
-            bool showFront = angle < pi / 2;
+              bool showFront = angle < pi / 2;
 
-            return Transform.translate(
-              offset: _dragOffset,
-              child: Transform(
-                transform: transform,
-                alignment: Alignment.center,
-                child: showFront ? _buildFront() : _buildBack(),
-              ),
-            );
-          },
-        ), // AnimatedBuilder
-      ), // GestureDetector
-    ), // Focus
-    ); // Semantics
+              return Transform.translate(
+                offset: _dragOffset,
+                child: Transform(
+                  transform: transform,
+                  alignment: Alignment.center,
+                  child: showFront ? _buildFront(context) : _buildBack(context),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget _buildFront() {
+  Widget _buildFront(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return _buildCardContent(
       color: Colors.white,
       child: Stack(
@@ -207,14 +209,14 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.flip_camera_android_rounded, size: 16, color: AppColors.primaryGreen),
-                  SizedBox(width: 6),
+                  const Icon(Icons.flip_camera_android_rounded, size: 16, color: AppColors.primaryGreen),
+                  const SizedBox(width: 6),
                   Text(
-                    'Tap card to reveal meaning',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
+                    loc.tapCardToReveal,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
                   ),
                 ],
               ),
@@ -231,7 +233,7 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
               icon: const Icon(Icons.volume_up_rounded, size: 20),
-              label: const Text('Read All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              label: Text(loc.readAll, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
               onPressed: () {
                 final sentence = widget.word.exampleSentence;
                 if (sentence != null && sentence.isNotEmpty) {
@@ -247,7 +249,8 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
     );
   }
 
-  Widget _buildBack() {
+  Widget _buildBack(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Transform(
       transform: Matrix4.identity()..rotateY(pi),
       alignment: Alignment.center,
@@ -313,14 +316,14 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                   color: AppColors.primaryGreen.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.touch_app_rounded, size: 16, color: AppColors.primaryGreenDark),
-                    SizedBox(width: 6),
+                    const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.primaryGreenDark),
+                    const SizedBox(width: 6),
                     Text(
-                      'Tap to flip back',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
+                      loc.tapToFlipBack,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
                     ),
                   ],
                 ),
@@ -337,7 +340,7 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
                 icon: const Icon(Icons.volume_up_rounded, size: 20),
-                label: const Text('Read All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                label: Text(loc.readAll, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                 onPressed: () {
                   final sentence = widget.word.exampleTranslation;
                   if (sentence != null && sentence.isNotEmpty) {

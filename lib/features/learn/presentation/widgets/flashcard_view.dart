@@ -6,6 +6,8 @@ import 'package:drift/drift.dart' show Value;
 import '../../../../core/database/database.dart';
 import '../widgets/swipeable_flashcard.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/storage/onboarding_storage.dart';
+import '../../../../main.dart';
 
 class FlashcardView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -35,7 +37,14 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
   }
 
   Future<void> _loadWords() async {
-    final words = await ref.read(learnRepositoryProvider).getVocabForLesson(widget.lessonId);
+    final uiLocale = ref.read(localeProvider).languageCode;
+    final targetLang = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+    final words = await ref.read(learnRepositoryProvider).getVocabForLesson(
+      widget.lessonId,
+      targetLang: targetLang,
+      uiLocale: uiLocale,
+    );
+
     setState(() {
       _words = List.from(words);
       _history.clear();
@@ -60,7 +69,6 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
     final currentWord = _words.removeAt(0);
     _history.add(currentWord);
     
-    // Log persistent mistake/weak word into DB for SRS Daily Review
     try {
       final db = ref.read(databaseProvider);
       db.into(db.vocabWords).insertOnConflictUpdate(
@@ -69,13 +77,12 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
           lessonId: currentWord.lessonId,
           word: currentWord.word,
           translation: currentWord.translation,
-          easinessFactor: const Value(1.5), // Lower easiness factor for SRS
+          easinessFactor: const Value(1.5),
         ),
       );
     } catch (_) {}
 
     setState(() {
-      // Re-queue card to end of deck
       _words.add(currentWord);
     });
   }
@@ -109,7 +116,7 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _loadWords(); // Reset deck for extra review
+              _loadWords();
             },
             child: const Text('Review Again', style: TextStyle(color: Colors.grey)),
           ),

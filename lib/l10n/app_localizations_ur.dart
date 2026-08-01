@@ -368,4 +368,127 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get logOut => 'لاگ آؤٹ';
+
+  @override
+  String get enrolledLanguageCourse => 'کورس کی زبان';
+
+  @override
+  String get unenrollCourse => 'کورس خارج کریں';
+
+  @override
+  String get appInterfaceLanguage => 'ایپ انٹرفیس کی زبان';
+
+  @override
+  String get switchBetweenEnUr => 'انگریزی اور اردو UI کے درمیان سوئچ کریں';
+
+  @override
+  String get studyDurationGoals => 'مطالعہ کے دورانیے کے اہداف 🎯';
+
+  @override
+  String get selectDurationPlan =>
+      'منتخب کریں کہ آپ کتنا وقت سیکھنے میں صرف کرنا چاہتے ہیں:';
+
+  @override
+  String get dailyGoalLabel => 'روزانہ کا ہدف:';
+
+  @override
+  String get weeklyTargetLabel => 'ہفتہ وار ہدف:';
+
+  @override
+  String get monthlyTargetLabel => 'ماہانہ ہدف:';
+
+  @override
+  String get unlimitedHeartsMode => 'لامحدود دلوں کا موڈ ❤️';
+
+  @override
+  String get unlimitedHeartsDesc =>
+      'پریمیم ممبران کے لیے خاص۔ غلطیوں پر ایپ رکے بغیر لامحدود زندگیوں (∞) کے ساتھ سیکھیں۔';
+
+  @override
+  String get adminPanelTitle => 'ایڈمن پینل • اشتہارات اور بینکنگ سیٹ اپ ⚙️';
+
+  @override
+  String get adminPanelDesc =>
+      'گوگل ایڈموب آئی ڈیز، اشتہارات اور پے آؤٹ بینک اکاؤنٹس کا نظم کریں';
+
+  @override
+  String get contactUsSupport => 'ہم سے رابطہ کریں اور سپورٹ';
+
+  @override
+  String get contactButton => 'رابطہ کریں';
+
+  @override
+  String get unlockPremiumTitle => 'پریمیم ان لاک کریں 👑';
+
+  @override
+  String get unlockPremiumDesc =>
+      'اے آئی ٹیوٹر، لامحدود دل، بغیر اشتہارات اور ترجیحی سپورٹ حاصل کریں';
+
+  @override
+  String get unlockPremiumButton => 'پریمیم رسائی ان لاک کریں';
+
+  @override
+  String get premiumMemberBadge => 'پریمیم 👑';
+
+  @override
+  String get freeMemberBadge => 'مفت ممبر';
+
+  @override
+  String get aiTutorPremiumOnlyTitle => 'اے آئی ٹیوٹر ایک پریمیم خصوصیت ہے 🌟';
+
+  @override
+  String get aiTutorPremiumOnlyDesc =>
+      'اپنے ذاتی اے آئی ٹیوٹر سے بات کرنے، بغیر اشتہارات سیکھنے اور لامحدود دل حاصل کرنے کے لیے پریمیم ممبرشپ ان لاک کریں!';
+
+  @override
+  String get proceedToPayment => 'ادائیگی کی طرف بڑھیں';
+
+  @override
+  String get paymentScreenTitle => 'ڈیبٹ / کریڈٹ کارڈ کی ادائیگی';
+
+  @override
+  String get cardHolderName => 'کارڈ ہولڈر کا نام';
+
+  @override
+  String get cardNumber => 'کارڈ نمبر';
+
+  @override
+  String get expiryDate => 'میعاد ختم ہونے کی تاریخ (MM/YY)';
+
+  @override
+  String get cvvCode => 'سی وی وی کوڈ';
+
+  @override
+  String get payAndUnlock => 'ادائیگی کریں اور پریمیم ان لاک کریں (1 ماہ)';
+
+  @override
+  String get adminBankingDetails => 'ایڈمن اکاؤنٹ میں براہ راست ادائیگی 🏦';
+
+  @override
+  String get bankNameLabel => 'بینک کا نام:';
+
+  @override
+  String get accountHolderLabel => 'اکاؤنٹ ہولڈر:';
+
+  @override
+  String get ibanLabel => 'آئی بی اے این / اکاؤنٹ نمبر:';
+
+  @override
+  String get swiftLabel => 'سوئفٹ کوڈ:';
+
+  @override
+  String get supportPriorityTag => 'ترجیحی سپورٹ ⚡';
+
+  @override
+  String get renewReminderMessage =>
+      '⚠️ آپ کی پریمیم ممبرشپ آج ختم ہو رہی ہے! تجدید کے لیے ٹیپ کریں۔';
+
+  @override
+  String get tapCardToReveal => 'معنی دیکھنے کے لیے کارڈ پر ٹیپ کریں';
+
+  @override
+  String get tapToFlipBack => 'واپس پلٹنے کے لیے ٹیپ کریں';
+
+  @override
+  String get readAll => 'سب سنیں';
 }

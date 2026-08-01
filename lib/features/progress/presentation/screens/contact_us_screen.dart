@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
+import '../../../../core/storage/premium_storage.dart';
+import '../../../../core/storage/support_messages_storage.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/widgets/shared/premium_badge.dart';
 
-class ContactUsScreen extends StatefulWidget {
+class ContactUsScreen extends ConsumerStatefulWidget {
   const ContactUsScreen({super.key});
 
   @override
-  State<ContactUsScreen> createState() => _ContactUsScreenState();
+  ConsumerState<ContactUsScreen> createState() => _ContactUsScreenState();
 }
 
-class _ContactUsScreenState extends State<ContactUsScreen> {
+class _ContactUsScreenState extends ConsumerState<ContactUsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _subjectController = TextEditingController();
   final _messageController = TextEditingController();
@@ -32,30 +37,54 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
     super.dispose();
   }
 
-  void _submitFeedback() {
+  void _submitFeedback() async {
     if (_formKey.currentState!.validate()) {
-      InAppNotificationBanner.show(
-        context: context,
-        title: 'Feedback Sent! 📩',
-        message: 'Thank you! Our team has received your message and will review it promptly.',
-        type: NotificationType.success,
+      final isPremium = ref.read(premiumStorageProvider).isPremium;
+      final authState = ref.read(authControllerProvider);
+      final email = authState.user?.email ?? 'learner@linguai.com';
+      final username = authState.user?.username ?? authState.user?.name ?? 'Learner';
+
+      final ticket = SupportTicket(
+        id: 'tkt_${DateTime.now().millisecondsSinceEpoch}',
+        userEmail: email,
+        username: username,
+        category: _selectedCategory,
+        subject: _subjectController.text.trim(),
+        message: _messageController.text.trim(),
+        isPremium: isPremium,
+        submittedAt: DateTime.now().toString().substring(0, 16),
       );
 
-      _subjectController.clear();
-      _messageController.clear();
+      await ref.read(supportMessagesStorageProvider).addMessage(ticket);
 
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) Navigator.pop(context);
-      });
+      if (mounted) {
+        InAppNotificationBanner.show(
+          context: context,
+          title: isPremium ? 'Priority Ticket Sent! ⚡' : 'Feedback Sent! 📩',
+          message: isPremium
+              ? 'Your message has been assigned High Priority. Our premium support team will reply shortly.'
+              : 'Thank you! Our team has received your message and will review it promptly.',
+          type: NotificationType.success,
+        );
+
+        _subjectController.clear();
+        _messageController.clear();
+
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) Navigator.pop(context);
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isPremium = ref.watch(premiumStorageProvider).isPremium;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Contact Us & Feedback'),
+        title: const Text('Contact Us & Support'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -68,18 +97,46 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                  color: isPremium ? Colors.amber.shade50 : AppColors.primaryGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+                  border: Border.all(color: isPremium ? Colors.amber : AppColors.primaryGreen.withValues(alpha: 0.3)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.support_agent_rounded, color: AppColors.primaryGreen, size: 32),
-                    SizedBox(width: 12),
+                    Icon(
+                      isPremium ? Icons.offline_bolt_rounded : Icons.support_agent_rounded,
+                      color: isPremium ? Colors.amber.shade900 : AppColors.primaryGreen,
+                      size: 32,
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        'We value your feedback! Send us your complaints, feature ideas, or support requests.',
-                        style: TextStyle(fontSize: 13, color: AppColors.primaryGreenDark, fontWeight: FontWeight.w600),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                isPremium ? 'Priority Support Channel ⚡' : 'Customer Support',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isPremium ? Colors.amber.shade900 : AppColors.primaryGreenDark,
+                                ),
+                              ),
+                              if (isPremium) ...[
+                                const SizedBox(width: 8),
+                                const PremiumBadge(),
+                              ]
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isPremium
+                                ? 'As a Premium Member, your support tickets are routed directly to our priority desk.'
+                                : 'We value your feedback! Send us your complaints, feature ideas, or support requests.',
+                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -160,7 +217,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               ),
               const SizedBox(height: AppConstants.space32),
               PrimaryButton(
-                text: 'Submit Feedback',
+                text: isPremium ? 'Submit Priority Ticket ⚡' : 'Submit Feedback',
                 onPressed: _submitFeedback,
               ),
             ],

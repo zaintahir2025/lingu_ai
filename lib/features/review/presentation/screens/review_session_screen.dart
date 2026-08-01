@@ -9,6 +9,9 @@ import 'package:drift/drift.dart' hide Column;
 import '../../../../core/algorithms/sm2.dart';
 import '../../../../core/sync/sync_service.dart';
 import '../../../../core/network/connectivity_provider.dart';
+import '../../../../core/storage/onboarding_storage.dart';
+import '../../../../main.dart';
+import '../../../learn/data/vocab_translator.dart';
 import '../../../progress/presentation/providers/progress_controller.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 
@@ -38,9 +41,13 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
           ..where((t) => t.nextReviewDate.isNull() | t.nextReviewDate.isSmallerOrEqualValue(now)))
         .get();
 
+    final targetLang = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+    final uiLocale = ref.read(localeProvider).languageCode;
+    final translated = VocabTranslator.translateList(items, targetLang, uiLocale);
+
     if (mounted) {
       setState(() {
-        _queue = items;
+        _queue = translated;
         _isLoading = false;
       });
     }
@@ -77,13 +84,11 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
 
     // 3. Queue management
     if (quality < 3) {
-      // "Again" - re-queue to the end of the session
       setState(() {
         _queue.add(currentWord);
       });
     }
 
-    // 4. Proceed to next
     _nextCard();
   }
 
@@ -102,7 +107,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
 
     final completed = _currentIndex >= _queue.length;
     if (completed) {
-      ref.read(progressControllerProvider.notifier).addXp(5); // Reward XP
+      ref.read(progressControllerProvider.notifier).addXp(5);
       return Scaffold(
         appBar: AppBar(title: Text(AppLocalizations.of(context)!.sessionCompleteTitle)),
         body: Center(
@@ -175,6 +180,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                         Text(
                           currentWord.word,
                           style: Theme.of(context).textTheme.displayMedium,
+                          textAlign: TextAlign.center,
                         ),
                         if (_isFlipped) ...[
                           const SizedBox(height: AppConstants.space32),
@@ -185,6 +191,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: AppColors.primaryGreen,
                             ),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ],

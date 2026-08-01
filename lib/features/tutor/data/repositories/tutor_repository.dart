@@ -15,22 +15,38 @@ class TutorRepository {
   TutorRepository(this._aiSettingsStorage);
 
   static const List<String> _geminiModels = [
-    'gemini-2.0-flash',
     'gemini-1.5-flash',
-    'gemini-1.5-flash-latest',
     'gemini-1.5-pro',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-flash-latest',
     'gemini-pro',
   ];
 
+  /// Sanitizes Google AI Studio API Key string
+  String sanitizeApiKey(String key) {
+    return key.trim().replaceAll('"', '').replaceAll("'", '').replaceAll('\n', '').replaceAll('\r', '');
+  }
+
   Future<bool> validateGeminiApiKey(String apiKey) async {
-    final key = apiKey.trim();
+    final key = sanitizeApiKey(apiKey);
     if (key.isEmpty) return false;
+
+    // Direct endpoint check for Google AI Studio keys
+    try {
+      final response = await _dio.get(
+        'https://generativelanguage.googleapis.com/v1beta/models?key=$key',
+      );
+      if (response.statusCode == 200) return true;
+    } catch (_) {}
 
     for (final modelName in _geminiModels) {
       try {
         final response = await _dio.post(
           'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$key',
-          options: Options(headers: {'Content-Type': 'application/json'}),
+          options: Options(headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': key,
+          }),
           data: {
             'contents': [
               {
@@ -53,7 +69,7 @@ class TutorRepository {
     String message,
     List<String> contextWords,
   ) async* {
-    final customKey = _aiSettingsStorage.customKey.trim();
+    final customKey = sanitizeApiKey(_aiSettingsStorage.customKey);
 
     // If Gemini API key is provided, attempt online Google Gemini call
     if (customKey.isNotEmpty) {
@@ -115,7 +131,10 @@ Respond helpfully as AI Language Tutor. Keep your response concise, clear, natur
         final url = 'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey';
         final response = await _dio.post(
           url,
-          options: Options(headers: {'Content-Type': 'application/json'}),
+          options: Options(headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          }),
           data: {
             'contents': [
               {
@@ -162,19 +181,18 @@ Respond helpfully as AI Language Tutor. Keep your response concise, clear, natur
     if (msg.contains('hello') || msg.contains('hola') || msg.contains('hi')) {
       reply = '¡Hola! I am your AI Language Tutor. I am excited to help you learn! What topic or word would you like to practice today?';
     } else if (msg.contains('grammar') || msg.contains('rule')) {
-      reply = 'Grammar Tip: In Spanish, adjectives usually come AFTER the noun (e.g. "casa grande" = big house). Also, subject pronouns like "yo" or "tú" can often be omitted because the verb ending already shows who is speaking!';
+      reply = 'Grammar Tip: In Spanish/French, adjectives often describe the noun closely. Practice daily flashcards to master conjugations!';
     } else if (msg.contains('word') || msg.contains('vocab') || msg.contains('meaning')) {
       final contextStr = contextWords.isNotEmpty ? ' Your recent words: ${contextWords.take(5).join(", ")}.' : '';
       reply = 'Great choice! Expanding your vocabulary is key to fluency.$contextStr Remember to use spaced repetition flashcards daily to retain new words in your long-term memory!';
     } else if (msg.contains('why') || msg.contains('wrong') || msg.contains('mistake')) {
-      reply = 'Tutor Explains: Making mistakes is how your brain builds new language connections! Check your flashcards or re-read the example sentence to understand the correct word order or verb conjugation.';
+      reply = 'Tutor Explains: Making mistakes is how your brain builds new language connections! Check your flashcards or re-read the example sentence to understand the correct word order.';
     } else if (msg.contains('help') || msg.contains('how')) {
-      reply = 'I am here as your personal AI language companion! You can ask me:\n• "How do I say [phrase] in Spanish?"\n• "Explain the difference between ser and estar"\n• "Give me a practice sentence"';
+      reply = 'I am here as your personal AI language companion! You can ask me:\n• "How do I say [phrase] in target language?"\n• "Explain grammar rules"\n• "Give me a practice sentence"';
     } else {
       reply = '¡Excelente! You said: "$message". Keep practicing everyday—consistency is the secret to moving from beginner to fluent!';
     }
 
-    // Simulate natural typing stream
     final words = reply.split(' ');
     for (int i = 0; i < words.length; i++) {
       yield '${words[i]}${i == words.length - 1 ? "" : " "}';
@@ -188,5 +206,3 @@ final tutorRepositoryProvider = Provider<TutorRepository>((ref) {
     ref.watch(aiSettingsStorageProvider),
   );
 });
-
-
