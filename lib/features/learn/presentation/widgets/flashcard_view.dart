@@ -6,8 +6,8 @@ import 'package:drift/drift.dart' show Value;
 import '../../../../core/database/database.dart';
 import '../widgets/swipeable_flashcard.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/storage/onboarding_storage.dart';
 import '../../../../main.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 class FlashcardView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -38,19 +38,21 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
 
   Future<void> _loadWords() async {
     final uiLocale = ref.read(localeProvider).languageCode;
-    final targetLang = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+    final targetLang = ref.read(targetLanguageProvider);
     final words = await ref.read(learnRepositoryProvider).getVocabForLesson(
       widget.lessonId,
       targetLang: targetLang,
       uiLocale: uiLocale,
     );
 
-    setState(() {
-      _words = List.from(words);
-      _history.clear();
-      _totalDeckCount = words.length;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _words = List.from(words);
+        _history.clear();
+        _totalDeckCount = words.length;
+        _isLoading = false;
+      });
+    }
   }
 
   void _markDone() {
@@ -71,14 +73,8 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
     
     try {
       final db = ref.read(databaseProvider);
-      db.into(db.vocabWords).insertOnConflictUpdate(
-        VocabWordsCompanion.insert(
-          id: Value(currentWord.id),
-          lessonId: currentWord.lessonId,
-          word: currentWord.word,
-          translation: currentWord.translation,
-          easinessFactor: const Value(1.5),
-        ),
+      (db.update(db.vocabWords)..where((t) => t.id.equals(currentWord.id))).write(
+        const VocabWordsCompanion(easinessFactor: Value(1.5)),
       );
     } catch (_) {}
 
@@ -152,6 +148,12 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(targetLanguageProvider, (previous, next) {
+      if (previous != next) {
+        _loadWords();
+      }
+    });
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database.dart';
 import '../../domain/models/chat_message.dart';
 import '../../data/repositories/tutor_repository.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 class TutorState {
   final List<ChatMessage> messages;
@@ -30,11 +31,20 @@ class TutorState {
 class TutorController extends Notifier<TutorState> {
   @override
   TutorState build() {
-    return const TutorState(
+    final targetLang = ref.watch(targetLanguageProvider);
+    final flag = TargetLanguages.getFlag(targetLang);
+    final name = TargetLanguages.getName(targetLang);
+
+    String greeting = '¡Hola!';
+    if (targetLang == 'fr') greeting = 'Bonjour !';
+    if (targetLang == 'ja') greeting = 'こんにちは !';
+    if (targetLang == 'de') greeting = 'Hallo !';
+
+    return TutorState(
       messages: [
         ChatMessage(
           id: '0',
-          content: '¡Hola! I am your AI Language Tutor powered by Google Gemini. Ask me any questions about vocabulary, grammar, or daily conversation!',
+          content: '$greeting $flag I am your AI Language Tutor for $name. Ask me any questions about vocabulary, grammar, or daily conversation!',
           isUser: false,
         ),
       ],
@@ -47,6 +57,7 @@ class TutorController extends Notifier<TutorState> {
 
     final db = ref.read(databaseProvider);
     final repo = ref.read(tutorRepositoryProvider);
+    final targetLang = ref.read(targetLanguageProvider);
 
     final userMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -90,6 +101,7 @@ class TutorController extends Notifier<TutorState> {
       final stream = repo.streamTutorMessage(
         userMessage.content,
         contextWords,
+        targetLang: targetLang,
       );
 
       await for (final token in stream) {

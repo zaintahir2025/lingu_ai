@@ -5,6 +5,7 @@ import '../../features/user/presentation/controllers/user_controller.dart';
 import '../database/database.dart';
 import '../audio/tts_service.dart';
 import '../../features/progress/presentation/providers/progress_controller.dart';
+import '../../features/learn/data/vocab_data.dart';
 import '../../features/learn/domain/repositories/learn_repository.dart';
 
 class TargetLanguages {
@@ -63,6 +64,12 @@ class TargetLanguageNotifier extends StateNotifier<String> {
         await (db.update(db.lessons)..where((t) => t.id.equals(1))).write(
           const LessonsCompanion(isCompleted: Value(false), isLocked: Value(false)),
         );
+
+        // Re-seed original base words to fix any corrupted translated records
+        await db.batch((batch) {
+          batch.insertAllOnConflictUpdate(db.vocabWords, seedVocabWords);
+        });
+
         await db.update(db.vocabWords).write(
           const VocabWordsCompanion(
             repetitions: Value(0),

@@ -5,6 +5,7 @@ import '../../domain/repositories/learn_repository.dart';
 import 'lesson_node.dart';
 import '../../../../core/widgets/mascot/lingu_mascot.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 class LessonPathView extends ConsumerStatefulWidget {
   const LessonPathView({super.key});
@@ -24,7 +25,8 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
 
   @override
   Widget build(BuildContext context) {
-    final stream = ref.read(learnRepositoryProvider).watchLessons();
+    ref.watch(targetLanguageProvider);
+    final stream = ref.watch(learnRepositoryProvider).watchLessons();
     
     return StreamBuilder(
       stream: stream,

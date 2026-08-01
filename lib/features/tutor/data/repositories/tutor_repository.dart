@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../presentation/screens/ai_settings_screen.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 class TutorRepository {
   final AiSettingsStorage _aiSettingsStorage;
@@ -67,15 +68,16 @@ class TutorRepository {
 
   Stream<String> streamTutorMessage(
     String message,
-    List<String> contextWords,
-  ) async* {
+    List<String> contextWords, {
+    String? targetLang,
+  }) async* {
     final customKey = sanitizeApiKey(_aiSettingsStorage.customKey);
 
     // If Gemini API key is provided, attempt online Google Gemini call
     if (customKey.isNotEmpty) {
       bool hasEmitted = false;
       try {
-        await for (final chunk in _callGeminiApi(customKey, message, contextWords)) {
+        await for (final chunk in _callGeminiApi(customKey, message, contextWords, targetLang: targetLang)) {
           hasEmitted = true;
           yield chunk;
         }
@@ -94,15 +96,18 @@ class TutorRepository {
   Stream<String> _callGeminiApi(
     String apiKey,
     String message,
-    List<String> contextWords,
-  ) async* {
+    List<String> contextWords, {
+    String? targetLang,
+  }) async* {
+    final langName = targetLang != null ? TargetLanguages.getName(targetLang) : 'Spanish 🇪🇸';
     final prompt = '''
-You are LinguAI Tutor, a friendly, encouraging, and highly intelligent AI language learning tutor.
+You are LinguAI Tutor, a friendly, encouraging, and highly intelligent AI language learning tutor for $langName.
+Target Language being taught: $langName ($targetLang).
 Recent learned words context: ${contextWords.join(', ')}
 
 User message: $message
 
-Respond helpfully as AI Language Tutor. Keep your response concise, clear, natural, and beginner friendly.
+Respond helpfully as AI Language Tutor for $langName. Keep your response concise, clear, natural, and beginner friendly. Use $langName examples where appropriate.
 ''';
 
     // 1. Primary Attempt: google_generative_ai SDK

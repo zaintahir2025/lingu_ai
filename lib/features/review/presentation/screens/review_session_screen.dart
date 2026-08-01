@@ -68,13 +68,13 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
     final db = ref.read(databaseProvider);
     final nextDate = DateTime.now().add(Duration(days: result.interval));
 
-    await db.update(db.vocabWords).replace(
-      currentWord.copyWith(
-        repetitions: result.repetitions,
-        easinessFactor: result.easinessFactor,
-        interval: result.interval,
+    await (db.update(db.vocabWords)..where((t) => t.id.equals(currentWord.id))).write(
+      VocabWordsCompanion(
+        repetitions: Value(result.repetitions),
+        easinessFactor: Value(result.easinessFactor),
+        interval: Value(result.interval),
         nextReviewDate: Value<DateTime?>(nextDate),
-        status: (quality >= 4 || result.repetitions >= 2) ? 'mastered' : 'review',
+        status: Value((quality >= 4 || result.repetitions >= 2) ? 'mastered' : 'review'),
       ),
     );
     

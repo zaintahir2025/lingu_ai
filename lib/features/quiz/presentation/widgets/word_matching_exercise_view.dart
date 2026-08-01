@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/audio/tts_service.dart';
+import '../../../../core/providers/target_language_provider.dart';
 import '../../../learn/domain/repositories/learn_repository.dart';
 
 class WordMatchingExerciseView extends ConsumerStatefulWidget {
@@ -35,8 +36,9 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
   }
 
   Future<void> _loadWords() async {
+    final targetLang = ref.read(targetLanguageProvider);
     final repo = ref.read(learnRepositoryProvider);
-    final vocab = await repo.getVocabForLesson(widget.lessonId);
+    final vocab = await repo.getVocabForLesson(widget.lessonId, targetLang: targetLang);
     
     if (vocab.isNotEmpty) {
       final sample = vocab.take(4).toList();
@@ -92,6 +94,12 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(targetLanguageProvider, (previous, next) {
+      if (previous != next) {
+        _loadWords();
+      }
+    });
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
