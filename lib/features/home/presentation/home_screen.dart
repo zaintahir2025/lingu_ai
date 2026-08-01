@@ -108,7 +108,7 @@ class HomeScreen extends ConsumerWidget {
       selectedIndex: selectedIndex,
       onNavigationIndexChanged: (index) {
         if (index == 2) {
-          final isPremium = ref.read(premiumStorageProvider).isPremium;
+          final isPremium = ref.read(premiumStorageProvider);
           if (!isPremium) {
             _showAiTutorPremiumModal(context);
             return;

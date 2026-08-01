@@ -31,8 +31,8 @@ class AdaptiveScaffold extends ConsumerWidget {
     final screenSize = ScreenSizeHelper.getSize(context);
     final gameState = ref.watch(gameStateProvider);
     final heartStorage = ref.watch(heartSettingsStorageProvider);
-    final premiumStorage = ref.watch(premiumStorageProvider);
-    final isUnlimited = heartStorage.isUnlimitedMode && premiumStorage.isPremium;
+    final isPremium = ref.watch(premiumStorageProvider);
+    final isUnlimited = heartStorage.isUnlimitedMode && isPremium;
 
     final actions = [
       Padding(

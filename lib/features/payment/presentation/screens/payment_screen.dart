@@ -43,7 +43,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     // 1. Mark local user as Premium for 1 Month (30 days)
-    await ref.read(premiumStorageProvider).grantOneMonthPremium();
+    await ref.read(premiumStorageProvider.notifier).grantOneMonthPremium();
 
     // 2. Sync to Admin User Registry
     final authState = ref.read(authControllerProvider);

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/token_storage.dart';
+import '../../../../core/storage/user_registry_storage.dart';
+import '../../../../core/storage/premium_storage.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 enum AuthStatus { initial, unauthenticated, authenticating, authenticated }
@@ -41,8 +43,9 @@ class AuthState {
 class AuthController extends StateNotifier<AuthState> {
   final AuthRepository _repository;
   final TokenStorage _tokenStorage;
+  final Ref _ref;
 
-  AuthController(this._repository, this._tokenStorage) : super(const AuthState()) {
+  AuthController(this._repository, this._tokenStorage, this._ref) : super(const AuthState()) {
     _init();
   }
 
@@ -50,20 +53,37 @@ class AuthController extends StateNotifier<AuthState> {
     final token = _tokenStorage.jwt;
     final savedName = _tokenStorage.username ?? 'Learner';
     if (token != null) {
+      final user = User(
+        id: 'restored', 
+        email: 'user@example.com', 
+        name: savedName,
+        username: savedName,
+        targetLanguage: 'es',
+        knowledgeLevel: 'A1',
+      );
       state = state.copyWith(
         status: AuthStatus.authenticated,
-        user: User(
-          id: 'restored', 
-          email: 'user@example.com', 
-          name: savedName,
-          username: savedName,
-          targetLanguage: 'es',
-          knowledgeLevel: 'A1',
-        ),
+        user: user,
       );
+      _registerUserInAdminRegistry(user);
     } else {
       state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
     }
+  }
+
+  void _registerUserInAdminRegistry(User user) {
+    try {
+      final isPremium = _ref.read(premiumStorageProvider);
+      _ref.read(userRegistryStorageProvider).registerOrUpdateUser(
+        RegisteredUserAccount(
+          id: user.id,
+          email: user.email,
+          username: user.username ?? user.name ?? 'Learner',
+          registeredAt: DateTime.now().toIso8601String().substring(0, 10),
+          isPremium: isPremium,
+        ),
+      );
+    } catch (_) {}
   }
 
   Future<void> login(String email, String password) async {
@@ -75,7 +95,7 @@ class AuthController extends StateNotifier<AuthState> {
         return;
       }
       final user = await _repository.login(email, password);
-      final savedName = _tokenStorage.username ?? user.username ?? user.name ?? 'Learner';
+      final savedName = _tokenStorage.username ?? user.username ?? user.name ?? email.split('@').first;
       final updatedUser = User(
         id: user.id,
         email: user.email,
@@ -85,6 +105,7 @@ class AuthController extends StateNotifier<AuthState> {
         knowledgeLevel: user.knowledgeLevel,
       );
       state = state.copyWith(status: AuthStatus.authenticated, user: updatedUser);
+      _registerUserInAdminRegistry(updatedUser);
     } catch (e) {
       state = state.copyWith(status: AuthStatus.unauthenticated, loginError: e.toString().replaceAll('Exception: ', ''));
     }
@@ -99,6 +120,15 @@ class AuthController extends StateNotifier<AuthState> {
         return;
       }
       await _repository.register(email, password);
+      final newUser = RegisteredUserAccount(
+        id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
+        email: email,
+        username: email.split('@').first,
+        registeredAt: DateTime.now().toIso8601String().substring(0, 10),
+        isPremium: false,
+      );
+      await _ref.read(userRegistryStorageProvider).registerOrUpdateUser(newUser);
+
       state = state.copyWith(
         status: AuthStatus.unauthenticated, 
         user: null, 
@@ -119,11 +149,12 @@ class AuthController extends StateNotifier<AuthState> {
     final nameToSave = user.username ?? user.name ?? 'Learner';
     _tokenStorage.saveUsername(nameToSave);
     state = state.copyWith(user: user);
+    _registerUserInAdminRegistry(user);
   }
 }
 
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
   final repository = ref.watch(authRepositoryProvider);
   final tokenStorage = ref.watch(tokenStorageProvider);
-  return AuthController(repository, tokenStorage);
+  return AuthController(repository, tokenStorage, ref);
 });

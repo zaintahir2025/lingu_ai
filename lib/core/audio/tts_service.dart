@@ -2,12 +2,33 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../storage/onboarding_storage.dart';
+import '../local_storage/local_storage_provider.dart';
+
+final ttsSpeechRateProvider = StateNotifierProvider<TtsRateNotifier, double>((ref) {
+  final box = ref.watch(localStorageProvider);
+  return TtsRateNotifier(box);
+});
+
+class TtsRateNotifier extends StateNotifier<double> {
+  final dynamic _box;
+  static const String _key = 'tts_speech_rate';
+
+  TtsRateNotifier(this._box) : super((_box.get(_key, defaultValue: 0.45) as double?) ?? 0.45);
+
+  Future<void> setRate(double newRate) async {
+    state = newRate;
+    await _box.put(_key, newRate);
+    TtsService().setSpeechRate(newRate);
+  }
+}
 
 final ttsServiceProvider = Provider<TtsService>((ref) {
   final onboardingStorage = ref.watch(onboardingStorageProvider);
   final targetLang = onboardingStorage.targetLanguage ?? 'es';
+  final rate = ref.watch(ttsSpeechRateProvider);
   final service = TtsService();
   service.initLanguage(targetLang);
+  service.setSpeechRate(rate);
   return service;
 });
 
@@ -21,7 +42,14 @@ class TtsService {
   double _speechRate = 0.45;
 
   bool get isInitialized => _isInitialized;
-  void setSpeechRate(double rate) => _speechRate = rate;
+  double get currentSpeechRate => _speechRate;
+
+  void setSpeechRate(double rate) {
+    _speechRate = rate;
+    try {
+      _flutterTts.setSpeechRate(rate);
+    } catch (_) {}
+  }
 
   TtsService._internal() {
     _initTts();
@@ -101,11 +129,11 @@ class TtsService {
         langTag = _currentLanguage;
       }
 
-      await _flutterTts.stop();
-      await _flutterTts.setLanguage(langTag);
-      await _flutterTts.setSpeechRate(rate ?? _speechRate);
-      await _flutterTts.setPitch(1.0);
-      await _flutterTts.setVolume(1.0);
+      _flutterTts.stop();
+      _flutterTts.setLanguage(langTag);
+      _flutterTts.setSpeechRate(rate ?? _speechRate);
+      _flutterTts.setPitch(1.0);
+      _flutterTts.setVolume(1.0);
 
       _flutterTts.speak(sanitized);
     } catch (e) {

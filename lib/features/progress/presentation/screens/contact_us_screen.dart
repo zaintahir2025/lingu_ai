@@ -39,7 +39,7 @@ class _ContactUsScreenState extends ConsumerState<ContactUsScreen> {
 
   void _submitFeedback() async {
     if (_formKey.currentState!.validate()) {
-      final isPremium = ref.read(premiumStorageProvider).isPremium;
+      final isPremium = ref.read(premiumStorageProvider);
       final authState = ref.read(authControllerProvider);
       final email = authState.user?.email ?? 'learner@linguai.com';
       final username = authState.user?.username ?? authState.user?.name ?? 'Learner';
@@ -79,7 +79,7 @@ class _ContactUsScreenState extends ConsumerState<ContactUsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isPremium = ref.watch(premiumStorageProvider).isPremium;
+    final isPremium = ref.watch(premiumStorageProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,

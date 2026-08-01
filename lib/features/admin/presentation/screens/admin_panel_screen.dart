@@ -6,6 +6,7 @@ import '../../../../core/storage/premium_storage.dart';
 import '../../../../core/storage/user_registry_storage.dart';
 import '../../../../core/storage/support_messages_storage.dart';
 import '../../../../core/widgets/shared/premium_badge.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 
 final adminSettingsProvider = StateNotifierProvider<AdminSettingsNotifier, AdminSettingsState>((ref) {
   final box = ref.watch(localStorageProvider);
@@ -227,9 +228,24 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
   @override
   Widget build(BuildContext context) {
     final adminState = ref.watch(adminSettingsProvider);
+    final authUser = ref.watch(authControllerProvider).user;
+    final isPremiumActive = ref.watch(premiumStorageProvider);
     final userRegistry = ref.watch(userRegistryStorageProvider);
     final supportStorage = ref.watch(supportMessagesStorageProvider);
-    final registeredUsers = userRegistry.getAllUsers();
+
+    var registeredUsers = userRegistry.getAllUsers();
+    if (registeredUsers.isEmpty && authUser != null) {
+      final activeAcc = RegisteredUserAccount(
+        id: authUser.id,
+        email: authUser.email,
+        username: authUser.username ?? authUser.name ?? 'Learner',
+        registeredAt: '2026-08-01',
+        isPremium: isPremiumActive,
+      );
+      userRegistry.registerOrUpdateUser(activeAcc);
+      registeredUsers = [activeAcc];
+    }
+
     final tickets = supportStorage.getAllMessages();
 
     // Priority Sort: Premium tickets appear FIRST at the top
@@ -299,85 +315,93 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.divider),
                   ),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: registeredUsers.length,
-                    separatorBuilder: (context, index) => const Divider(height: 20),
-                    itemBuilder: (context, index) {
-                      final user = registeredUsers[index];
-                      return Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: user.isPremium ? Colors.amber.shade100 : AppColors.primaryGreen.withValues(alpha: 0.2),
-                            child: Text(
-                              user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: user.isPremium ? Colors.amber.shade900 : AppColors.primaryGreen,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                  child: registeredUsers.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: Text('No registered user accounts found.')),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: registeredUsers.length,
+                          separatorBuilder: (context, index) => const Divider(height: 20),
+                          itemBuilder: (context, index) {
+                            final user = registeredUsers[index];
+                            final isThisUserPremium = user.email.toLowerCase() == authUser?.email.toLowerCase()
+                                ? isPremiumActive
+                                : user.isPremium;
+
+                            return Row(
                               children: [
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        user.username,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                CircleAvatar(
+                                  backgroundColor: isThisUserPremium ? Colors.amber.shade100 : AppColors.primaryGreen.withValues(alpha: 0.2),
+                                  child: Text(
+                                    user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isThisUserPremium ? Colors.amber.shade900 : AppColors.primaryGreen,
                                     ),
-                                    if (user.isPremium) ...[
-                                      const SizedBox(width: 8),
-                                      const PremiumBadge(),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              user.username,
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (isThisUserPremium) ...[
+                                            const SizedBox(width: 8),
+                                            const PremiumBadge(),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        user.email,
+                                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                      ),
+                                      Text(
+                                        'Registered: ${user.registeredAt} • Status: ${isThisUserPremium ? "Active Premium (1-Month)" : "Free Tier"}',
+                                        style: TextStyle(fontSize: 11, color: isThisUserPremium ? AppColors.primaryGreenDark : Colors.grey.shade700),
+                                      ),
                                     ],
-                                  ],
+                                  ),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  user.email,
-                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                ),
-                                Text(
-                                  'Registered: ${user.registeredAt} • Status: ${user.isPremium ? "Active Premium (1-Month)" : "Free Tier"}',
-                                  style: TextStyle(fontSize: 11, color: user.isPremium ? AppColors.primaryGreenDark : Colors.grey.shade700),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isThisUserPremium ? Colors.red.shade100 : AppColors.primaryGreen,
+                                    foregroundColor: isThisUserPremium ? Colors.red.shade900 : Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  onPressed: () async {
+                                    final newStatus = !isThisUserPremium;
+                                    await userRegistry.setPremiumStatus(user.email, newStatus);
+                                    if (newStatus) {
+                                      await ref.read(premiumStorageProvider.notifier).grantOneMonthPremium();
+                                    } else {
+                                      await ref.read(premiumStorageProvider.notifier).revokePremium();
+                                    }
+                                    setState(() {});
+                                  },
+                                  child: Text(
+                                    isThisUserPremium ? 'Revoke' : 'Grant Premium',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                  ),
                                 ),
                               ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: user.isPremium ? Colors.red.shade100 : AppColors.primaryGreen,
-                              foregroundColor: user.isPremium ? Colors.red.shade900 : Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onPressed: () async {
-                              await userRegistry.setPremiumStatus(user.email, !user.isPremium);
-                              if (user.email == 'learner@linguai.com' || user.email == 'user@example.com') {
-                                if (user.isPremium) {
-                                  await ref.read(premiumStorageProvider).revokePremium();
-                                } else {
-                                  await ref.read(premiumStorageProvider).grantOneMonthPremium();
-                                }
-                              }
-                              setState(() {});
-                            },
-                            child: Text(
-                              user.isPremium ? 'Revoke' : 'Grant Premium',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                            );
+                          },
+                        ),
                 ),
                 const SizedBox(height: 28),
 
@@ -402,7 +426,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
                   child: tickets.isEmpty
                       ? const Padding(
                           padding: EdgeInsets.all(16.0),
-                          child: Center(child: Text('No support messages received yet.')),
+                          child: Center(child: Text('No customer support messages received yet.')),
                         )
                       : ListView.separated(
                           shrinkWrap: true,

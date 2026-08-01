@@ -82,38 +82,7 @@ class SupportMessagesStorage {
   final Box _box;
   static const String _supportTicketsKey = 'support_contact_tickets_v1';
 
-  SupportMessagesStorage(this._box) {
-    _seedDefaultTicketsIfEmpty();
-  }
-
-  void _seedDefaultTicketsIfEmpty() {
-    final raw = _box.get(_supportTicketsKey) as String?;
-    if (raw == null || raw.isEmpty) {
-      final defaultTickets = [
-        SupportTicket(
-          id: 'tkt_101',
-          userEmail: 'pro_learner@gmail.com',
-          username: 'Sarah_Polyglot',
-          category: 'Feature Request 💡',
-          subject: 'Priority Support Request - Japanese Sentences',
-          message: 'Can you please add more advanced Japanese conversation flashcards in Unit 2?',
-          isPremium: true,
-          submittedAt: '2026-08-01 10:15',
-        ),
-        SupportTicket(
-          id: 'tkt_102',
-          userEmail: 'student@linguai.com',
-          username: 'ZainTahir',
-          category: 'General Feedback',
-          subject: 'Love the app interface!',
-          message: 'Great app! The streak flame and XP counters keep me motivated every day.',
-          isPremium: false,
-          submittedAt: '2026-07-31 16:40',
-        ),
-      ];
-      _saveTickets(defaultTickets);
-    }
-  }
+  SupportMessagesStorage(this._box);
 
   List<SupportTicket> getAllMessages() {
     final raw = _box.get(_supportTicketsKey) as String?;

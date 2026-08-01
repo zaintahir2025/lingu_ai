@@ -35,7 +35,7 @@ class RegisteredUserAccount {
       };
 
   factory RegisteredUserAccount.fromJson(Map<String, dynamic> json) => RegisteredUserAccount(
-        id: json['id'] ?? 'user_1',
+        id: json['id'] ?? 'usr_1',
         email: json['email'] ?? 'learner@linguai.com',
         username: json['username'] ?? 'Learner',
         registeredAt: json['registeredAt'] ?? '2026-08-01',
@@ -46,11 +46,12 @@ class RegisteredUserAccount {
   RegisteredUserAccount copyWith({
     bool? isPremium,
     String? premiumExpiryDate,
+    String? username,
   }) {
     return RegisteredUserAccount(
       id: id,
       email: email,
-      username: username,
+      username: username ?? this.username,
       registeredAt: registeredAt,
       isPremium: isPremium ?? this.isPremium,
       premiumExpiryDate: premiumExpiryDate ?? this.premiumExpiryDate,
@@ -62,33 +63,7 @@ class UserRegistryStorage {
   final Box _box;
   static const String _userRegistryKey = 'user_registry_accounts_v1';
 
-  UserRegistryStorage(this._box) {
-    _seedDefaultUsersIfEmpty();
-  }
-
-  void _seedDefaultUsersIfEmpty() {
-    final raw = _box.get(_userRegistryKey) as String?;
-    if (raw == null || raw.isEmpty) {
-      final defaultUsers = [
-        RegisteredUserAccount(
-          id: 'usr_001',
-          email: 'student@linguai.com',
-          username: 'ZainTahir',
-          registeredAt: '2026-07-28',
-          isPremium: false,
-        ),
-        RegisteredUserAccount(
-          id: 'usr_002',
-          email: 'pro_learner@gmail.com',
-          username: 'Sarah_Polyglot',
-          registeredAt: '2026-07-30',
-          isPremium: true,
-          premiumExpiryDate: DateTime.now().add(const Duration(days: 28)).toIso8601String(),
-        ),
-      ];
-      saveUsers(defaultUsers);
-    }
-  }
+  UserRegistryStorage(this._box);
 
   List<RegisteredUserAccount> getAllUsers() {
     final raw = _box.get(_userRegistryKey) as String?;

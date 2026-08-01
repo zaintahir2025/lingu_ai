@@ -20,6 +20,7 @@ import '../../../../core/storage/study_goal_storage.dart';
 import '../../../../core/game_state/heart_settings_storage.dart';
 import '../../../../core/storage/premium_storage.dart';
 import '../../../../core/widgets/shared/premium_badge.dart';
+import '../../../../core/audio/tts_service.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -31,13 +32,30 @@ class ProfileTab extends ConsumerWidget {
     'de': 'German 🇩🇪',
   };
 
+  Widget _buildPillBadge(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24, width: 0.8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progressState = ref.watch(progressControllerProvider);
     final authState = ref.watch(authControllerProvider);
     final onboardingStorage = ref.watch(onboardingStorageProvider);
-    final premiumStorage = ref.watch(premiumStorageProvider);
-    final isPremium = premiumStorage.isPremium;
+    
+    // Reactive Riverpod Premium state
+    final isPremium = ref.watch(premiumStorageProvider);
+    final premiumNotifier = ref.watch(premiumStorageProvider.notifier);
     final loc = AppLocalizations.of(context)!;
 
     final username = authState.user?.username ?? authState.user?.name ?? 'Learner';
@@ -46,7 +64,7 @@ class ProfileTab extends ConsumerWidget {
     final targetLangName = _languages[targetLangCode] ?? 'Spanish 🇪🇸';
 
     // Expiry check
-    final expiryDate = premiumStorage.expiryDate;
+    final expiryDate = premiumNotifier.expiryDate;
     final isLastDay = isPremium && expiryDate != null && expiryDate.difference(DateTime.now()).inDays <= 1;
 
     return progressState.when(
@@ -173,51 +191,138 @@ class ProfileTab extends ConsumerWidget {
               ),
               const SizedBox(height: AppConstants.space24),
 
-              // Unlock Premium Banner (For Free Members)
+              // If FREE: Show Unlock Premium Banner
+              // If PREMIUM: Show Active Premium Subscription Badge
               if (!isPremium) ...[
                 InkWell(
                   onTap: () => _showUnlockPremiumModal(context),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
+                        colors: [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF4338CA)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.amber.shade400, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.amber.withValues(alpha: 0.4),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                          color: const Color(0xFF4338CA).withValues(alpha: 0.35),
+                          blurRadius: 15,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.workspace_premium_rounded, size: 40, color: Colors.black),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade400.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.amber.shade400, width: 1.5),
+                          ),
+                          child: const Icon(Icons.workspace_premium_rounded, size: 36, color: Colors.amber),
+                        ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                loc.unlockPremiumTitle,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.black),
+                              const Row(
+                                children: [
+                                  Text(
+                                    'LinguAI PRO',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white, letterSpacing: 0.5),
+                                  ),
+                                  SizedBox(width: 8),
+                                  PremiumBadge(),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                loc.unlockPremiumDesc,
-                                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Unlock AI Tutor, Ad-Free Sessions, Unlimited Lives & Priority Support!',
+                                style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.3),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: [
+                                  _buildPillBadge('🤖 AI Tutor'),
+                                  _buildPillBadge('🚫 No Ads'),
+                                  _buildPillBadge('❤️ Infinite Lives'),
+                                ],
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.black, size: 20),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade400,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.arrow_forward_rounded, color: Colors.black, size: 18),
+                        ),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(height: AppConstants.space24),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.amber.shade600, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade600,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.workspace_premium_rounded, size: 30, color: Colors.white),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '👑 Active LinguAI PRO Membership',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              expiryDate != null
+                                  ? 'Your 1-Month Pass is active • Expires ${expiryDate.day}/${expiryDate.month}/${expiryDate.year}'
+                                  : 'Active Unlimited PRO Pass',
+                              style: TextStyle(fontSize: 12, color: Colors.amber.shade900, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const PremiumBadge(),
+                    ],
                   ),
                 ),
                 const SizedBox(height: AppConstants.space24),
@@ -356,6 +461,8 @@ class ProfileTab extends ConsumerWidget {
               ),
               const SizedBox(height: AppConstants.space16),
 
+              _buildTtsSpeedSettings(context, ref),
+              const SizedBox(height: AppConstants.space16),
               _buildNotificationSettings(context, ref),
               const SizedBox(height: AppConstants.space16),
               _buildLanguageSettings(context, ref),
@@ -449,6 +556,75 @@ class ProfileTab extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, s) => Center(child: Text('Error loading progress: $e')),
+    );
+  }
+
+  Widget _buildTtsSpeedSettings(BuildContext context, WidgetRef ref) {
+    final ttsSpeed = ref.watch(ttsSpeechRateProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.space16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppConstants.radius16),
+        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.record_voice_over_rounded, color: AppColors.primaryGreen),
+                  SizedBox(width: 8),
+                  Text(
+                    'Audio Pronunciation Speed 🔊',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${(ttsSpeed * 2).toStringAsFixed(2)}x',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreenDark),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Adjust speech speed for audio pronunciation on flashcards and quizzes.',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Text('Slow (0.2x)', style: TextStyle(fontSize: 11, color: Colors.grey)),
+              Expanded(
+                child: Slider(
+                  value: ttsSpeed,
+                  min: 0.20,
+                  max: 0.80,
+                  divisions: 12,
+                  activeColor: AppColors.primaryGreen,
+                  label: '${(ttsSpeed * 2).toStringAsFixed(2)}x',
+                  onChanged: (newRate) {
+                    ref.read(ttsSpeechRateProvider.notifier).setRate(newRate);
+                  },
+                ),
+              ),
+              const Text('Fast (1.0x)', style: TextStyle(fontSize: 11, color: Colors.grey)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -730,8 +906,7 @@ class ProfileTab extends ConsumerWidget {
 
   Widget _buildHeartsModeSettings(BuildContext context, WidgetRef ref) {
     final heartStorage = ref.watch(heartSettingsStorageProvider);
-    final premiumStorage = ref.watch(premiumStorageProvider);
-    final isPremium = premiumStorage.isPremium;
+    final isPremium = ref.watch(premiumStorageProvider);
     final isUnlimited = heartStorage.isUnlimitedMode && isPremium;
     final loc = AppLocalizations.of(context)!;
 
@@ -840,14 +1015,12 @@ class ProfileTab extends ConsumerWidget {
     if (confirm == true) {
       try {
         final db = ref.read(databaseProvider);
-        // Reset lesson unlock states
         await (db.update(db.lessons)..where((t) => t.id.isBiggerThanValue(1))).write(
           const LessonsCompanion(isCompleted: Value(false), isLocked: Value(true)),
         );
         await (db.update(db.lessons)..where((t) => t.id.equals(1))).write(
           const LessonsCompanion(isCompleted: Value(false), isLocked: Value(false)),
         );
-        // Reset SRS review word cards
         await db.update(db.vocabWords).write(
           const VocabWordsCompanion(
             repetitions: Value(0),
