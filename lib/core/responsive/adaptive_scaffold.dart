@@ -9,6 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../game_state/heart_settings_storage.dart';
 import '../storage/premium_storage.dart';
 import '../game_state/game_state_provider.dart';
+import '../providers/target_language_provider.dart';
 
 class AdaptiveScaffold extends ConsumerWidget {
   final Widget body;
@@ -26,6 +27,128 @@ class AdaptiveScaffold extends ConsumerWidget {
     required this.onNavigationIndexChanged,
   });
 
+  void _showCoursePickerSheet(BuildContext context, WidgetRef ref) {
+    final currentLang = ref.read(targetLanguageProvider);
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Language Courses 🌍',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Select a language course to learn. Switching will update your active course.',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                ...TargetLanguages.languages.entries.map((entry) {
+                  final code = entry.key;
+                  final name = entry.value;
+                  final isSelected = code == currentLang;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primaryGreen.withAlpha(20) : AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primaryGreen : AppColors.divider,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: ListTile(
+                      leading: Text(TargetLanguages.getFlag(code), style: const TextStyle(fontSize: 28)),
+                      title: Text(
+                        name,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? AppColors.primaryGreen : AppColors.textPrimary,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle_rounded, color: AppColors.primaryGreen)
+                          : const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+                      onTap: () async {
+                        Navigator.pop(context);
+                        if (code == currentLang) return;
+
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            title: const Row(
+                              children: [
+                                Icon(Icons.swap_horizontal_circle_rounded, color: AppColors.primaryGreen, size: 28),
+                                SizedBox(width: 8),
+                                Text('Switch Course?'),
+                              ],
+                            ),
+                            content: Text(
+                              'Switching course to $name will reset unlocked lessons & flashcards for the new course.\n\nDo you want to proceed?',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryGreen,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Switch Course', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          await ref.read(targetLanguageProvider.notifier).switchLanguage(code, resetProgress: true);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Course switched to $name!'),
+                                backgroundColor: AppColors.primaryGreen,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final screenSize = ScreenSizeHelper.getSize(context);
@@ -33,20 +156,21 @@ class AdaptiveScaffold extends ConsumerWidget {
     final heartStorage = ref.watch(heartSettingsStorageProvider);
     final isPremium = ref.watch(premiumStorageProvider);
     final isUnlimited = heartStorage.isUnlimitedMode && isPremium;
+    final targetLang = ref.watch(targetLanguageProvider);
 
     final actions = [
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SvgPicture.asset('assets/images/svgs/points.svg', height: 24),
+            SvgPicture.asset('assets/images/svgs/points.svg', height: 22),
             const SizedBox(width: 4),
             Text(
               gameState.xp.toString(),
               style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Icon(
               Icons.local_fire_department,
               color: gameState.streak > 0 ? AppColors.streakOrange : Colors.grey,
@@ -59,8 +183,8 @@ class AdaptiveScaffold extends ConsumerWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: 16),
-            SvgPicture.asset('assets/images/svgs/heart.svg', height: 24),
+            const SizedBox(width: 12),
+            SvgPicture.asset('assets/images/svgs/heart.svg', height: 22),
             const SizedBox(width: 4),
             Text(
               isUnlimited ? '∞' : gameState.hearts.toString(),
@@ -105,9 +229,36 @@ class AdaptiveScaffold extends ConsumerWidget {
       ],
     );
 
+    Widget appBarTitle = Row(
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(width: 8),
+        InkWell(
+          onTap: () => _showCoursePickerSheet(context, ref),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.primaryGreen.withAlpha(120), width: 1.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(TargetLanguages.getFlag(targetLang), style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 2),
+                const Icon(Icons.arrow_drop_down_rounded, size: 20, color: AppColors.primaryGreen),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
     if (screenSize.isMobile) {
       return Scaffold(
-        appBar: AppBar(title: Text(title), actions: actions),
+        appBar: AppBar(title: appBarTitle, actions: actions),
         body: bodyWithBanner,
         bottomNavigationBar: NavigationBar(
           selectedIndex: selectedIndex,
@@ -120,7 +271,7 @@ class AdaptiveScaffold extends ConsumerWidget {
     } else {
       // Tablet and Desktop -> Side rail
       return Scaffold(
-        appBar: AppBar(title: Text(title), actions: actions),
+        appBar: AppBar(title: appBarTitle, actions: actions),
         body: Row(
           children: [
             NavigationRail(

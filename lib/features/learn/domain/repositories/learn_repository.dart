@@ -5,6 +5,8 @@ import '../../../../core/storage/onboarding_storage.dart';
 import '../../data/vocab_data.dart';
 import '../../data/vocab_translator.dart';
 
+import '../../../../core/providers/target_language_provider.dart';
+
 class LearnRepository {
   final AppDatabase _db;
   final OnboardingStorage? _onboardingStorage;
@@ -84,5 +86,6 @@ class LearnRepository {
 final learnRepositoryProvider = Provider<LearnRepository>((ref) {
   final db = ref.watch(databaseProvider);
   final onboardingStorage = ref.watch(onboardingStorageProvider);
+  ref.watch(targetLanguageProvider); // Re-instantiate or trigger dependency on language change
   return LearnRepository(db, onboardingStorage);
 });

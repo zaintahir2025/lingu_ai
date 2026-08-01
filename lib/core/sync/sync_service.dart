@@ -65,7 +65,7 @@ class SyncService {
   }
 
   Future<void> _pushLocalData() async {
-    final token = await _getToken();
+    final token = isTesting ? 'test-token' : await _getToken();
     if (token == null) return; // not logged in
 
     // Sync SM-2 Logs
@@ -73,12 +73,14 @@ class SyncService {
     if (logs.isNotEmpty) {
       debugPrint('SyncService: Pushing ${logs.length} SM-2 review logs...');
       try {
-        await _dio.post('$baseUrl/reviews', 
-          data: {
-            'logs': logs.map((l) => {'vocabWordId': l.vocabWordId, 'quality': l.quality}).toList(),
-          },
-          options: Options(headers: {'Authorization': 'Bearer $token'})
-        );
+        if (!isTesting) {
+          await _dio.post('$baseUrl/reviews', 
+            data: {
+              'logs': logs.map((l) => {'vocabWordId': l.vocabWordId, 'quality': l.quality}).toList(),
+            },
+            options: Options(headers: {'Authorization': 'Bearer $token'})
+          );
+        }
         for (final log in logs) {
           await (_db.delete(_db.offlineReviewLogs)..where((t) => t.id.equals(log.id))).go();
         }

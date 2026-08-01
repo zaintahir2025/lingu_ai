@@ -76,10 +76,9 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
     
     final db = ref.read(databaseProvider);
     final now = _clock();
-    
-    int newTotalXp = currentState.progress.totalXp + amount;
+    int newTotalXp = currentState.progress.totalXp;
     int newLevel = calculateLevel(newTotalXp);
-    bool leveledUp = newLevel > currentState.progress.level;
+    bool leveledUp = false;
 
     // Streak logic
     int newStreak = currentState.progress.currentStreak;

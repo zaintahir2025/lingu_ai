@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/shared/app_card.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
-import '../../../../core/storage/onboarding_storage.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 class LangPickerScreen extends ConsumerWidget {
   const LangPickerScreen({super.key});
@@ -55,14 +55,8 @@ class LangPickerScreen extends ConsumerWidget {
   Widget _buildLangOption(BuildContext context, WidgetRef ref, String name, String flag, String code, bool isLoading) {
     return InkWell(
       onTap: isLoading ? null : () async {
-        // Save locally
-        await ref.read(onboardingStorageProvider).setTargetLanguage(code);
-        // Sync to server
-        try {
-          await ref.read(userControllerProvider.notifier).updateProfile(targetLanguage: code);
-        } catch (_) {
-          // Continue even if server sync fails — the survey step will also send it
-        }
+        // Save locally & sync
+        await ref.read(targetLanguageProvider.notifier).switchLanguage(code, resetProgress: false);
         if (context.mounted) {
           context.go('/experience-choice');
         }

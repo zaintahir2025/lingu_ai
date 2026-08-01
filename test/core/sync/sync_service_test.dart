@@ -1,13 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:drift/native.dart';
 import 'package:lingu_ai/core/database/database.dart';
 import 'package:lingu_ai/core/sync/sync_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
   late SyncService syncService;
 
   setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
     db = AppDatabase.forTesting(NativeDatabase.memory());
     syncService = SyncService(db, isTesting: true);
   });

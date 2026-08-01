@@ -21,16 +21,12 @@ import '../../../../core/game_state/heart_settings_storage.dart';
 import '../../../../core/storage/premium_storage.dart';
 import '../../../../core/widgets/shared/premium_badge.dart';
 import '../../../../core/audio/tts_service.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
 
-  static const Map<String, String> _languages = {
-    'es': 'Spanish 🇪🇸',
-    'fr': 'French 🇫🇷',
-    'ja': 'Japanese 🇯🇵',
-    'de': 'German 🇩🇪',
-  };
+  static const Map<String, String> _languages = TargetLanguages.languages;
 
   Widget _buildPillBadge(String label) {
     return Container(
@@ -51,7 +47,6 @@ class ProfileTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final progressState = ref.watch(progressControllerProvider);
     final authState = ref.watch(authControllerProvider);
-    final onboardingStorage = ref.watch(onboardingStorageProvider);
     
     // Reactive Riverpod Premium state
     final isPremium = ref.watch(premiumStorageProvider);
@@ -60,7 +55,7 @@ class ProfileTab extends ConsumerWidget {
 
     final username = authState.user?.username ?? authState.user?.name ?? 'Learner';
     final email = authState.user?.email ?? 'learner@linguai.com';
-    final targetLangCode = onboardingStorage.targetLanguage ?? 'es';
+    final targetLangCode = ref.watch(targetLanguageProvider);
     final targetLangName = _languages[targetLangCode] ?? 'Spanish 🇪🇸';
 
     // Expiry check

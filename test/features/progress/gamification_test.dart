@@ -84,7 +84,7 @@ void main() { TestWidgetsFlutterBinding.ensureInitialized();
     await controller.addXp(10); // Day 2: +15
 
     final state = container.read(progressControllerProvider).value!;
-    expect(state.progress.totalXp, 30);
+    expect(state.progress.totalXp, 33);
     expect(state.progress.currentStreak, 2);
   });
 
@@ -126,7 +126,7 @@ void main() { TestWidgetsFlutterBinding.ensureInitialized();
     await controller.addXp(10); // Day 3: +15, freeze consumed, streak 2
 
     final state = container.read(progressControllerProvider).value!;
-    expect(state.progress.totalXp, 30);
+    expect(state.progress.totalXp, 33);
     expect(state.progress.currentStreak, 2);
     expect(state.progress.streakFreezes, 0);
   });

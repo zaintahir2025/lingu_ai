@@ -4,16 +4,16 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
-import '../../../../core/storage/onboarding_storage.dart';
 import '../../../../main.dart';
 import '../../data/vocab_translator.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 final vocabularyListProvider = FutureProvider<List<VocabWord>>((ref) async {
   final db = ref.read(databaseProvider);
   final items = await db.select(db.vocabWords).get();
-  final targetLang = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+  final targetLang = ref.watch(targetLanguageProvider);
   final uiLocale = ref.read(localeProvider).languageCode;
   return VocabTranslator.translateList(items, targetLang, uiLocale);
 });

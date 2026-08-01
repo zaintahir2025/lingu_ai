@@ -8,9 +8,9 @@ import 'package:drift/drift.dart' hide Column;
 import '../../../../core/database/database.dart';
 import '../../../progress/presentation/providers/progress_controller.dart';
 import '../../../../core/game_state/game_state_provider.dart';
-import '../../../../core/storage/onboarding_storage.dart';
 import '../../../../main.dart';
 import '../../../learn/data/vocab_translator.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 class QuizState {
   final List<QuizQuestion> queue;
@@ -18,6 +18,7 @@ class QuizState {
   final int correctCount;
   final int totalQuestions;
   final bool isFinished;
+  final int xpEarned;
 
   QuizState({
     required this.queue,
@@ -25,6 +26,7 @@ class QuizState {
     this.correctCount = 0,
     required this.totalQuestions,
     this.isFinished = false,
+    this.xpEarned = 0,
   });
 
   QuizQuestion? get currentQuestion =>
@@ -42,6 +44,7 @@ class QuizState {
     int? correctCount,
     int? totalQuestions,
     bool? isFinished,
+    int? xpEarned,
   }) {
     return QuizState(
       queue: queue ?? this.queue,
@@ -49,6 +52,7 @@ class QuizState {
       correctCount: correctCount ?? this.correctCount,
       totalQuestions: totalQuestions ?? this.totalQuestions,
       isFinished: isFinished ?? this.isFinished,
+      xpEarned: xpEarned ?? this.xpEarned,
     );
   }
 }
@@ -152,7 +156,7 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
 
   @override
   QuizState build(int arg) {
-    final targetLang = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+    final targetLang = ref.watch(targetLanguageProvider);
     final uiLocale = ref.read(localeProvider).languageCode;
     final baseQuestions = _curriculumQuestions[arg] ?? _curriculumQuestions[1]!;
     
