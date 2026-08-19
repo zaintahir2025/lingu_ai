@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/repositories/learn_repository.dart';
 import 'lesson_node.dart';
-import '../../../../core/widgets/mascot/lingu_mascot.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/providers/target_language_provider.dart';
 
@@ -27,17 +27,22 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
   Widget build(BuildContext context) {
     ref.watch(targetLanguageProvider);
     final stream = ref.watch(learnRepositoryProvider).watchLessons();
-    
+
     return StreamBuilder(
       stream: stream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
             itemCount: 5,
             itemBuilder: (context, index) {
-              final alignment = index % 2 == 0 ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd;
-              final padding = index % 2 == 0 ? const EdgeInsetsDirectional.only(start: 40) : const EdgeInsetsDirectional.only(end: 40);
+              final alignment = index % 2 == 0
+                  ? AlignmentDirectional.centerStart
+                  : AlignmentDirectional.centerEnd;
+              final padding = index % 2 == 0
+                  ? const EdgeInsetsDirectional.only(start: 40)
+                  : const EdgeInsetsDirectional.only(end: 40);
               return Align(
                 alignment: alignment,
                 child: Padding(
@@ -59,7 +64,7 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
             },
           );
         }
-        
+
         final lessons = snapshot.data ?? [];
         if (lessons.isEmpty) {
           return Center(
@@ -70,12 +75,16 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
                 const SizedBox(height: 16),
                 Text(
                   "No lessons available yet.",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "Your learning path will appear here.",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                 ),
               ],
             ),
@@ -88,9 +97,13 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
           itemBuilder: (context, index) {
             final lesson = lessons[index];
             final isCurrent = !lesson.isLocked && !lesson.isCompleted;
-            
-            final alignment = index % 2 == 0 ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd;
-            final padding = index % 2 == 0 ? const EdgeInsetsDirectional.only(start: 40) : const EdgeInsetsDirectional.only(end: 40);
+
+            final alignment = index % 2 == 0
+                ? AlignmentDirectional.centerStart
+                : AlignmentDirectional.centerEnd;
+            final padding = index % 2 == 0
+                ? const EdgeInsetsDirectional.only(start: 40)
+                : const EdgeInsetsDirectional.only(end: 40);
 
             return Align(
               alignment: alignment,
@@ -99,10 +112,10 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isCurrent && index % 2 != 0) 
+                    if (isCurrent && index % 2 != 0)
                       const Padding(
                         padding: EdgeInsetsDirectional.only(end: 16.0),
-                        child: LinguMascot(size: 80, pose: MascotPose.encouraging),
+                        child: PikoMascot(size: 80, pose: PikoPose.encouraging),
                       ),
                     LessonNode(
                       lesson: lesson,
@@ -111,10 +124,10 @@ class _LessonPathViewState extends ConsumerState<LessonPathView> {
                         context.push('/module/${lesson.id}');
                       },
                     ),
-                    if (isCurrent && index % 2 == 0) 
+                    if (isCurrent && index % 2 == 0)
                       const Padding(
                         padding: EdgeInsetsDirectional.only(start: 16.0),
-                        child: LinguMascot(size: 80, pose: MascotPose.encouraging),
+                        child: PikoMascot(size: 80, pose: PikoPose.encouraging),
                       ),
                   ],
                 ),

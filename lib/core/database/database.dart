@@ -5,12 +5,27 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [Lessons, VocabWords, OfflineReviewLogs, UserProgress, DailyXp, OfflineXpLogs])
+@DriftDatabase(
+  tables: [
+    Lessons,
+    VocabWords,
+    OfflineReviewLogs,
+    UserProgress,
+    DailyXp,
+    OfflineXpLogs,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(driftDatabase(name: 'linguai_db', web: DriftWebOptions(
-      sqlite3Wasm: Uri.parse('sqlite3.wasm'),
-      driftWorker: Uri.parse('drift_worker.js'),
-  )));
+  AppDatabase()
+    : super(
+        driftDatabase(
+          name: 'linguai_db',
+          web: DriftWebOptions(
+            sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+            driftWorker: Uri.parse('drift_worker.js'),
+          ),
+        ),
+      );
 
   AppDatabase.forTesting(super.e);
 
@@ -19,20 +34,27 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (Migrator m) => m.createAll(),
-        onUpgrade: (Migrator m, int from, int to) async {
-          // Drop all tables to reset progress and apply new schema
-          for (final table in allTables) {
-            await m.drop(table);
-          }
-          await m.createAll();
-        },
-      );
+    onCreate: (Migrator m) => m.createAll(),
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        await m.addColumn(vocabWords, vocabWords.exampleSentence);
+        await m.addColumn(vocabWords, vocabWords.exampleTranslation);
+        await m.addColumn(userProgress, userProgress.hearts);
+      }
+    },
+  );
 
   Future<List<VocabWord>> getRecentMistakes({int limit = 5}) async {
     return (select(vocabWords)
-          ..where((t) => t.easinessFactor.isSmallerThanValue(2.5)) // threshold for difficult
-          ..orderBy([(t) => OrderingTerm(expression: t.easinessFactor, mode: OrderingMode.asc)])
+          ..where(
+            (t) => t.easinessFactor.isSmallerThanValue(2.5),
+          ) // threshold for difficult
+          ..orderBy([
+            (t) => OrderingTerm(
+              expression: t.easinessFactor,
+              mode: OrderingMode.asc,
+            ),
+          ])
           ..limit(limit))
         .get();
   }

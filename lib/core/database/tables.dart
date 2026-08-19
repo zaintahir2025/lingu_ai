@@ -22,9 +22,11 @@ class VocabWords extends Table {
   TextColumn get audioUrl => text().nullable()();
   TextColumn get exampleSentence => text().nullable()();
   TextColumn get exampleTranslation => text().nullable()();
-  
+
   // Basic SRS state
-  TextColumn get status => text().withDefault(const Constant('new'))(); // new, learning, review, mastered
+  TextColumn get status => text().withDefault(
+    const Constant('new'),
+  )(); // new, learning, review, mastered
   DateTimeColumn get nextReviewDate => dateTime().nullable()();
 
   // SM-2 specific fields

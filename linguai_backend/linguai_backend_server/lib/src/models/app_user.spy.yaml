@@ -1,0 +1,20 @@
+class: AppUser
+table: app_user
+fields:
+  email: String
+  passwordHash: String
+  isEmailVerified: bool, default=false
+  isDisabled: bool, default=false
+  dateOfBirth: DateTime?
+  role: String, default='user'
+  targetLanguage: String, default='es'
+  username: String?
+  avatarId: String?
+  knowledgeLevel: String?
+  fluencyScore: int?
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  app_user_email_unique_idx:
+    fields: email
+    unique: true

@@ -15,25 +15,31 @@ void showFloatingXp(BuildContext context, int amount) {
         child: Center(
           child: Material(
             color: Colors.transparent,
-            child: Text(
-              '+$amount XP',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                color: AppColors.xpGold,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  const Shadow(
-                    color: Colors.white,
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-            )
-            .animate(onComplete: (controller) {
-              entry.remove();
-            })
-            .fadeIn(duration: 300.ms)
-            .slideY(begin: 0.5, end: -0.5, duration: 1500.ms, curve: Curves.easeOut)
-            .fadeOut(delay: 1000.ms, duration: 500.ms),
+            child:
+                Text(
+                      '+$amount XP',
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            color: AppColors.xpGold,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              const Shadow(color: Colors.white, blurRadius: 10),
+                            ],
+                          ),
+                    )
+                    .animate(
+                      onComplete: (controller) {
+                        entry.remove();
+                      },
+                    )
+                    .fadeIn(duration: 300.ms)
+                    .slideY(
+                      begin: 0.5,
+                      end: -0.5,
+                      duration: 1500.ms,
+                      curve: Curves.easeOut,
+                    )
+                    .fadeOut(delay: 1000.ms, duration: 500.ms),
           ),
         ),
       );

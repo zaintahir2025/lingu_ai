@@ -2,29 +2,25 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../local_storage/local_storage_provider.dart';
 
-final premiumStorageProvider = StateNotifierProvider<PremiumStorageNotifier, bool>((ref) {
-  final box = ref.watch(localStorageProvider);
-  return PremiumStorageNotifier(box);
-});
+final premiumStorageProvider =
+    StateNotifierProvider<PremiumStorageNotifier, bool>((ref) {
+      final box = ref.watch(localStorageProvider);
+      return PremiumStorageNotifier(box);
+    });
 
 class PremiumStorageNotifier extends StateNotifier<bool> {
   final Box _box;
-  static const String _isPremiumKey = 'is_premium_member';
-  static const String _premiumExpiryKey = 'premium_expiry_date';
+  static const String _isPremiumKey = 'verified_premium_member_v2';
+  static const String _premiumExpiryKey = 'verified_premium_expiry_date_v2';
 
-  PremiumStorageNotifier(this._box) : super(true) {
-    // Ensure default test account gets active 1-Month Premium
-    final hasSet = _box.containsKey(_isPremiumKey);
-    if (!hasSet) {
-      grantOneMonthPremium();
-    } else {
-      state = isPremium;
-    }
+  PremiumStorageNotifier(this._box) : super(false) {
+    state = isPremium;
   }
 
   /// Returns true if the user is a Premium Member AND their subscription has not expired.
   bool get isPremium {
-    final flag = (_box.get(_isPremiumKey, defaultValue: true) as bool?) ?? true;
+    final flag =
+        (_box.get(_isPremiumKey, defaultValue: false) as bool?) ?? false;
     if (!flag) return false;
 
     final expiryIso = _box.get(_premiumExpiryKey) as String?;
@@ -44,23 +40,23 @@ class PremiumStorageNotifier extends StateNotifier<bool> {
     if (expiryIso != null) {
       return DateTime.tryParse(expiryIso);
     }
-    // Default 30 days from now if not explicitly set
-    return DateTime.now().add(const Duration(days: 30));
+    return null;
   }
 
-  /// Grants 1-Month (30-day) Premium status to the member
-  Future<void> grantOneMonthPremium() async {
-    final thirtyDaysLater = DateTime.now().add(const Duration(days: 30));
-    await _box.put(_isPremiumKey, true);
-    await _box.put(_premiumExpiryKey, thirtyDaysLater.toIso8601String());
-    state = true;
-  }
-
-  /// Revokes Premium status
-  Future<void> revokePremium() async {
-    await _box.put(_isPremiumKey, false);
-    await _box.delete(_premiumExpiryKey);
-    state = false;
+  /// Applies subscription state that has already been verified by the backend.
+  Future<void> applyVerifiedSubscription({
+    required bool active,
+    DateTime? expiresAt,
+  }) async {
+    final valid =
+        active && expiresAt != null && expiresAt.isAfter(DateTime.now());
+    await _box.put(_isPremiumKey, valid);
+    if (valid) {
+      await _box.put(_premiumExpiryKey, expiresAt.toIso8601String());
+    } else {
+      await _box.delete(_premiumExpiryKey);
+    }
+    state = valid;
   }
 
   /// Refreshes state from Hive

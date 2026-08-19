@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
-import '../../../../core/widgets/mascot/lingu_mascot.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
+import '../../../../core/audio/tts_service.dart';
+import '../../../../core/ads/ad_service.dart';
+import '../../../../core/audio/sound_service.dart';
 
 class ModuleScoreboardView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -20,7 +23,8 @@ class ModuleScoreboardView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ModuleScoreboardView> createState() => _ModuleScoreboardViewState();
+  ConsumerState<ModuleScoreboardView> createState() =>
+      _ModuleScoreboardViewState();
 }
 
 class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
@@ -36,13 +40,24 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
     if (_processedResult) return;
     _processedResult = true;
 
-    // XP awarding and lesson completion are handled in QuizController.nextQuestion()
-    // This view is display-only — no duplicate awards needed.
+    final isPassed = widget.score >= 0.6;
+    if (isPassed) {
+      await SoundService.playAchievement();
+      TtsService().speakTarget(
+        '¡Felicidades! Great job completing lesson ${widget.lessonId}!',
+        emotion: TtsEmotion.excited,
+      );
+    } else {
+      TtsService().speakTarget(
+        'Good effort! Keep practicing to master this lesson.',
+        emotion: TtsEmotion.encouraging,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isPassed = widget.score >= 0.8; // 80% threshold
+    final bool isPassed = widget.score >= 0.6;
 
     return Padding(
       padding: const EdgeInsets.all(AppConstants.space24),
@@ -68,7 +83,9 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
                         strokeWidth: 20,
                         backgroundColor: AppColors.divider,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          isPassed ? AppColors.primaryGreen : AppColors.streakOrange,
+                          isPassed
+                              ? AppColors.primaryGreen
+                              : AppColors.streakOrange,
                         ),
                         strokeCap: StrokeCap.round,
                       ),
@@ -78,15 +95,17 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
                           children: [
                             Text(
                               '${(value * 100).toInt()}%',
-                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                    color: isPassed ? AppColors.primaryGreen : AppColors.streakOrange,
+                              style: Theme.of(context).textTheme.displayLarge
+                                  ?.copyWith(
+                                    color: isPassed
+                                        ? AppColors.primaryGreen
+                                        : AppColors.streakOrange,
                                   ),
                             ),
                             Text(
                               isPassed ? 'Passed!' : 'Try Again',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -109,8 +128,8 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
             ),
             const SizedBox(height: AppConstants.space16),
           ],
-          LinguMascot(
-            pose: isPassed ? MascotPose.celebrating : MascotPose.encouraging,
+          PikoMascot(
+            pose: isPassed ? PikoPose.celebrating : PikoPose.encouraging,
             size: 100,
           ),
           const Spacer(),
@@ -125,7 +144,13 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
             ),
           PrimaryButton(
             text: isPassed ? 'Next Level' : 'Finish',
-            onPressed: widget.onContinue,
+            onPressed: () async {
+              // AdMob controls close timing. This natural lesson boundary is
+              // the only full-screen placement and ad failure never blocks UX.
+              await ref.read(adServiceProvider).showInterstitialAd();
+              if (!context.mounted) return;
+              widget.onContinue();
+            },
           ),
         ],
       ),

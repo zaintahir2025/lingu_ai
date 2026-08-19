@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Emits `true` if online (mobile, wifi, ethernet, etc.), and `false` if offline.
 final connectivityProvider = StreamProvider<bool>((ref) async* {
   final connectivity = Connectivity();
-  
+
   // Yield initial state
   final initialResult = await connectivity.checkConnectivity();
   yield !initialResult.contains(ConnectivityResult.none);

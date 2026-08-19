@@ -8,6 +8,8 @@ import '../../../../core/theme/app_colors.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../widgets/turnstile_widget.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
+import 'package:flutter/foundation.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -20,7 +22,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _confirmPasswordFocus = FocusNode();
@@ -31,6 +33,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _hasMinLength = false;
   bool _hasNumber = false;
   bool _hasSpecialChar = false;
+  bool _hasUppercase = false;
 
   String? _turnstileToken;
 
@@ -46,6 +49,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       _hasMinLength = text.length >= 8;
       _hasNumber = RegExp(r'[0-9]').hasMatch(text);
       _hasSpecialChar = RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(text);
+      _hasUppercase = RegExp(r'[A-Z]').hasMatch(text);
     });
   }
 
@@ -60,18 +64,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-
-
-  bool _isAbove13 = true;
+  bool _isAbove13 = false;
 
   void _register() {
-    if (!_hasMinLength || !_hasNumber || !_hasSpecialChar) return;
-    
+    if (!_hasMinLength || !_hasNumber || !_hasSpecialChar || !_hasUppercase) {
+      return;
+    }
+
     if (!_isAbove13) {
       InAppNotificationBanner.show(
         context: context,
         title: 'Age Requirement',
-        message: 'Users under 13 require parental consent per Play Store policy.',
+        message:
+            'Users under 13 require parental consent per Play Store policy.',
         type: NotificationType.error,
       );
       return;
@@ -97,10 +102,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    ref.read(authControllerProvider.notifier).register(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    ref
+        .read(authControllerProvider.notifier)
+        .register(
+          _emailController.text.trim(),
+          _passwordController.text,
+          _turnstileToken!,
+        );
   }
 
   Widget _buildChecklistRow(String text, bool isValid) {
@@ -127,15 +135,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.status == AuthStatus.authenticating;
+    const productionTurnstileSiteKey = String.fromEnvironment(
+      'TURNSTILE_SITE_KEY',
+    );
+    final turnstileSiteKey = productionTurnstileSiteKey.isNotEmpty
+        ? productionTurnstileSiteKey
+        : (kDebugMode ? '1x00000000000000000000AA' : '');
 
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
-      if (previous?.registerError != next.registerError && next.registerError != null) {
-        if (!context.mounted || ModalRoute.of(context)?.isCurrent != true) return;
+      if (previous?.registerError != next.registerError &&
+          next.registerError != null) {
+        if (!context.mounted || ModalRoute.of(context)?.isCurrent != true) {
+          return;
+        }
         InAppNotificationBanner.show(
           context: context,
           title: 'Message',
           message: next.registerError!,
-          type: next.status == AuthStatus.authenticated ? NotificationType.success : NotificationType.error,
+          type: next.status == AuthStatus.authenticated
+              ? NotificationType.success
+              : NotificationType.error,
         );
       }
     });
@@ -152,6 +171,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const Center(
+                    child: PikoMascot(size: 88, pose: PikoPose.encouraging),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     AppLocalizations.of(context)!.createAccountTitle,
                     textAlign: TextAlign.center,
@@ -167,11 +190,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     focusNode: _emailFocus,
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.emailLabel,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_passwordFocus),
+                    onSubmitted: (_) =>
+                        FocusScope.of(context).requestFocus(_passwordFocus),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -179,10 +205,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     focusNode: _passwordFocus,
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.passwordLabel,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: AppColors.textSecondary,
                         ),
                         onPressed: () {
@@ -194,7 +224,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_confirmPasswordFocus),
+                    onSubmitted: (_) => FocusScope.of(
+                      context,
+                    ).requestFocus(_confirmPasswordFocus),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -202,10 +234,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     focusNode: _confirmPasswordFocus,
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: AppColors.textSecondary,
                         ),
                         onPressed: () {
@@ -220,11 +256,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     onSubmitted: (_) => _register(),
                   ),
                   const SizedBox(height: 12),
-                  _buildChecklistRow(AppLocalizations.of(context)!.passwordMinLength, _hasMinLength),
+                  _buildChecklistRow(
+                    AppLocalizations.of(context)!.passwordMinLength,
+                    _hasMinLength,
+                  ),
                   const SizedBox(height: 4),
-                  _buildChecklistRow(AppLocalizations.of(context)!.passwordContainsNumber, _hasNumber),
+                  _buildChecklistRow(
+                    'Contains an uppercase letter',
+                    _hasUppercase,
+                  ),
                   const SizedBox(height: 4),
-                  _buildChecklistRow(AppLocalizations.of(context)!.passwordContainsSpecialChar, _hasSpecialChar),
+                  _buildChecklistRow(
+                    AppLocalizations.of(context)!.passwordContainsNumber,
+                    _hasNumber,
+                  ),
+                  const SizedBox(height: 4),
+                  _buildChecklistRow(
+                    AppLocalizations.of(context)!.passwordContainsSpecialChar,
+                    _hasSpecialChar,
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -233,7 +283,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         activeColor: AppColors.primaryGreen,
                         onChanged: (val) {
                           setState(() {
-                            _isAbove13 = val ?? true;
+                            _isAbove13 = val ?? false;
                           });
                         },
                       ),
@@ -242,30 +292,48 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           'I confirm I am 13 years of age or older',
                           style: TextStyle(
                             fontSize: 13,
-                            color: _isAbove13 ? AppColors.textPrimary : AppColors.heartRed,
+                            color: _isAbove13
+                                ? AppColors.textPrimary
+                                : AppColors.heartRed,
                           ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  TurnstileWidget(
-                    siteKey: '1x00000000000000000000AA', // Test site key
-                    onTokenReceived: (token) {
-                      setState(() {
-                        _turnstileToken = token;
-                      });
-                    },
-                  ),
+                  if (turnstileSiteKey.isNotEmpty)
+                    TurnstileWidget(
+                      siteKey: turnstileSiteKey,
+                      onTokenReceived: (token) {
+                        setState(() {
+                          _turnstileToken = token;
+                        });
+                      },
+                      onTokenExpired: () {
+                        setState(() {
+                          _turnstileToken = null;
+                        });
+                      },
+                    )
+                  else
+                    const Text(
+                      'Registration is temporarily unavailable: CAPTCHA is not configured.',
+                      style: TextStyle(color: AppColors.heartRed),
+                      textAlign: TextAlign.center,
+                    ),
                   const SizedBox(height: 16),
                   PrimaryButton(
-                    text: isLoading ? AppLocalizations.of(context)!.registeringLabel : AppLocalizations.of(context)!.registerTitle,
+                    text: isLoading
+                        ? AppLocalizations.of(context)!.registeringLabel
+                        : AppLocalizations.of(context)!.registerTitle,
                     onPressed: isLoading ? null : _register,
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => context.pop(),
-                    child: Text(AppLocalizations.of(context)!.alreadyHaveAccountLabel),
+                    child: Text(
+                      AppLocalizations.of(context)!.alreadyHaveAccountLabel,
+                    ),
                   ),
                 ],
               ),

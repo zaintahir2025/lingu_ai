@@ -6,11 +6,7 @@ class ProgressBar extends StatelessWidget {
   final double progress; // 0.0 to 1.0
   final Color? color;
 
-  const ProgressBar({
-    super.key,
-    required this.progress,
-    this.color,
-  });
+  const ProgressBar({super.key, required this.progress, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +38,9 @@ class ProgressBar extends StatelessWidget {
                     height: 4,
                     decoration: BoxDecoration(
                       color: Colors.white.withAlpha(76),
-                      borderRadius: BorderRadius.circular(AppConstants.radiusRound),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusRound,
+                      ),
                     ),
                   ),
                 ),

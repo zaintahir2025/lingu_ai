@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lingu_ai/features/user/domain/repositories/user_repository.dart';
 import 'package:lingu_ai/features/auth/presentation/controllers/auth_controller.dart';
+
 class UserState {
   final bool isLoading;
   final String? error;
@@ -14,19 +15,36 @@ class UserController extends StateNotifier<UserState> {
 
   UserController(this._repository, this._ref) : super(const UserState());
 
-  Future<void> updateProfile({String? username, String? avatarId, DateTime? dob, String? targetLanguage}) async {
+  Future<void> updateProfile({
+    String? username,
+    String? avatarId,
+    DateTime? dob,
+    String? targetLanguage,
+  }) async {
     state = const UserState(isLoading: true);
     try {
-      final user = await _repository.updateProfile(username: username, avatarId: avatarId, dob: dob, targetLanguage: targetLanguage);
+      final user = await _repository.updateProfile(
+        username: username,
+        avatarId: avatarId,
+        dob: dob,
+        targetLanguage: targetLanguage,
+      );
       _ref.read(authControllerProvider.notifier).updateUser(user);
       state = const UserState(isLoading: false);
     } catch (e) {
-      state = UserState(isLoading: false, error: e.toString().replaceAll('Exception: ', ''));
+      state = UserState(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
       rethrow;
     }
   }
 
-  Future<void> submitSurvey({String? knowledgeLevel, int? fluencyScore, String? targetLanguage}) async {
+  Future<void> submitSurvey({
+    String? knowledgeLevel,
+    int? fluencyScore,
+    String? targetLanguage,
+  }) async {
     state = const UserState(isLoading: true);
     try {
       final user = await _repository.submitSurvey(
@@ -37,12 +55,17 @@ class UserController extends StateNotifier<UserState> {
       _ref.read(authControllerProvider.notifier).updateUser(user);
       state = const UserState(isLoading: false);
     } catch (e) {
-      state = UserState(isLoading: false, error: e.toString().replaceAll('Exception: ', ''));
+      state = UserState(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
       rethrow;
     }
   }
 }
 
-final userControllerProvider = StateNotifierProvider<UserController, UserState>((ref) {
-  return UserController(ref.watch(userRepositoryProvider), ref);
-});
+final userControllerProvider = StateNotifierProvider<UserController, UserState>(
+  (ref) {
+    return UserController(ref.watch(userRepositoryProvider), ref);
+  },
+);

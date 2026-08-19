@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
+import '../../../../core/network/api_config.dart';
 
 class LeaderboardList extends StatefulWidget {
   final int currentXp;
@@ -18,7 +18,7 @@ class _LeaderboardListState extends State<LeaderboardList> {
   final ScrollController _scrollController = ScrollController();
   final Dio _dio = Dio();
   final _storage = const FlutterSecureStorage();
-  
+
   List<Map<String, dynamic>> _leaderboard = [];
   bool _isLoading = true;
 
@@ -29,19 +29,15 @@ class _LeaderboardListState extends State<LeaderboardList> {
   }
 
   Future<void> _fetchLeaderboard() async {
-    final baseUrl = kIsWeb || Theme.of(context).platform != TargetPlatform.android
-        ? 'http://localhost:3000'
-        : 'http://10.0.2.2:3000';
-
     try {
-      final token = await _storage.read(key: 'jwt');
+      final token = await _storage.read(key: 'jwt_token');
       final response = await _dio.get(
-        '$baseUrl/api/leaderboard',
+        '${ApiConfig.baseUrl}/leaderboard',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      
+
       final data = response.data['leaderboard'] as List;
-      
+
       setState(() {
         _leaderboard = data.map((e) => e as Map<String, dynamic>).toList();
         _isLoading = false;
@@ -52,17 +48,8 @@ class _LeaderboardListState extends State<LeaderboardList> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          
-          final List<Map<String, dynamic>> mockData = [
-            {'id': '1', 'name': 'Master Learner 👑', 'xp': 2500, 'trend': 1, 'isMe': false},
-            {'id': '2', 'name': 'Ahmed', 'xp': 1500, 'trend': 1, 'isMe': false},
-            {'id': '3', 'name': 'Sara', 'xp': 1200, 'trend': -1, 'isMe': false},
-            {'id': 'me', 'name': 'You', 'xp': widget.currentXp, 'trend': 0, 'isMe': true},
-            {'id': '5', 'name': 'John', 'xp': 300, 'trend': 0, 'isMe': false},
-            {'id': '6', 'name': 'Emma', 'xp': 150, 'trend': -1, 'isMe': false},
-          ];
-          mockData.sort((a, b) => (b['xp'] as int).compareTo(a['xp'] as int));
-          _leaderboard = mockData;
+
+          _leaderboard = [];
         });
       }
       _scrollToMe();
@@ -72,7 +59,9 @@ class _LeaderboardListState extends State<LeaderboardList> {
   void _scrollToMe() {
     int myIndex = _leaderboard.indexWhere((user) => user['isMe'] == true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (myIndex != -1 && _scrollController.hasClients && _scrollController.position.pixels == 0) {
+      if (myIndex != -1 &&
+          _scrollController.hasClients &&
+          _scrollController.position.pixels == 0) {
         final offset = (myIndex * 72.0) - (150);
         _scrollController.animateTo(
           offset > 0 ? offset : 0,
@@ -103,7 +92,8 @@ class _LeaderboardListState extends State<LeaderboardList> {
           : ListView.separated(
               controller: _scrollController,
               itemCount: _leaderboard.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, indent: 56),
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 1, indent: 56),
               itemBuilder: (context, index) {
                 final user = _leaderboard[index];
                 final isMe = user['isMe'] == true;
@@ -111,7 +101,10 @@ class _LeaderboardListState extends State<LeaderboardList> {
                 final trend = user['trend'] as int;
 
                 return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: AppConstants.space16, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.space16,
+                    vertical: 4,
+                  ),
                   tileColor: isMe ? AppColors.primaryGreen.withAlpha(25) : null,
                   leading: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -123,15 +116,21 @@ class _LeaderboardListState extends State<LeaderboardList> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: isMe ? AppColors.primaryGreen : Colors.grey.shade600,
+                            color: isMe
+                                ? AppColors.primaryGreen
+                                : Colors.grey.shade600,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       CircleAvatar(
-                        backgroundColor: isMe ? AppColors.primaryGreen : Colors.grey.shade200,
+                        backgroundColor: isMe
+                            ? AppColors.primaryGreen
+                            : Colors.grey.shade200,
                         child: Text(
-                          (user['name'] as String).isNotEmpty ? (user['name'] as String)[0].toUpperCase() : 'U',
+                          (user['name'] as String).isNotEmpty
+                              ? (user['name'] as String)[0].toUpperCase()
+                              : 'U',
                           style: TextStyle(
                             color: isMe ? Colors.white : AppColors.textPrimary,
                             fontWeight: FontWeight.bold,
@@ -144,7 +143,9 @@ class _LeaderboardListState extends State<LeaderboardList> {
                     isMe ? 'You' : user['name'],
                     style: TextStyle(
                       fontWeight: isMe ? FontWeight.bold : FontWeight.w500,
-                      color: isMe ? AppColors.primaryGreen : AppColors.textPrimary,
+                      color: isMe
+                          ? AppColors.primaryGreen
+                          : AppColors.textPrimary,
                     ),
                   ),
                   trailing: Row(
@@ -159,8 +160,16 @@ class _LeaderboardListState extends State<LeaderboardList> {
                       ),
                       const SizedBox(width: 8),
                       Icon(
-                        trend > 0 ? Icons.arrow_drop_up : (trend < 0 ? Icons.arrow_drop_down : Icons.remove),
-                        color: trend > 0 ? AppColors.primaryGreen : (trend < 0 ? AppColors.softErrorText : Colors.grey),
+                        trend > 0
+                            ? Icons.arrow_drop_up
+                            : (trend < 0
+                                  ? Icons.arrow_drop_down
+                                  : Icons.remove),
+                        color: trend > 0
+                            ? AppColors.primaryGreen
+                            : (trend < 0
+                                  ? AppColors.softErrorText
+                                  : Colors.grey),
                       ),
                     ],
                   ),

@@ -1,5 +1,3 @@
-
-
 class SM2Result {
   final int repetitions;
   final double easinessFactor;
@@ -13,7 +11,7 @@ class SM2Result {
 }
 
 /// Calculates the next spaced repetition interval using the SM-2 algorithm.
-/// 
+///
 /// [quality] - User rating from 0 (forgot) to 5 (perfect memory).
 /// [repetitions] - Number of times the item has been consecutively successfully recalled.
 /// [easinessFactor] - The current easiness factor (starts at 2.5).
@@ -42,13 +40,14 @@ SM2Result calculateSM2({
     nextInterval = 1;
   }
 
-  nextEasinessFactor = easinessFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  
+  nextEasinessFactor =
+      easinessFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+
   // EF should never fall below 1.3
   if (nextEasinessFactor < 1.3) {
     nextEasinessFactor = 1.3;
   }
-  
+
   // To avoid precision issues over time, we can round EF to 2 decimal places (optional but common in simple implementations)
   nextEasinessFactor = double.parse(nextEasinessFactor.toStringAsFixed(2));
 

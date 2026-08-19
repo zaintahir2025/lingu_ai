@@ -34,11 +34,32 @@ class LangPickerScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  _buildLangOption(context, ref, AppLocalizations.of(context)!.langSpanish, '🇪🇸', 'es', userState.isLoading),
+                  _buildLangOption(
+                    context,
+                    ref,
+                    AppLocalizations.of(context)!.langSpanish,
+                    '🇪🇸',
+                    'es',
+                    userState.isLoading,
+                  ),
                   const SizedBox(height: 16),
-                  _buildLangOption(context, ref, AppLocalizations.of(context)!.langFrench, '🇫🇷', 'fr', userState.isLoading),
+                  _buildLangOption(
+                    context,
+                    ref,
+                    AppLocalizations.of(context)!.langFrench,
+                    '🇫🇷',
+                    'fr',
+                    userState.isLoading,
+                  ),
                   const SizedBox(height: 16),
-                  _buildLangOption(context, ref, AppLocalizations.of(context)!.langJapanese, '🇯🇵', 'ja', userState.isLoading),
+                  _buildLangOption(
+                    context,
+                    ref,
+                    AppLocalizations.of(context)!.langJapanese,
+                    '🇯🇵',
+                    'ja',
+                    userState.isLoading,
+                  ),
                   if (userState.isLoading) ...[
                     const SizedBox(height: 16),
                     const CircularProgressIndicator(),
@@ -52,15 +73,26 @@ class LangPickerScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLangOption(BuildContext context, WidgetRef ref, String name, String flag, String code, bool isLoading) {
+  Widget _buildLangOption(
+    BuildContext context,
+    WidgetRef ref,
+    String name,
+    String flag,
+    String code,
+    bool isLoading,
+  ) {
     return InkWell(
-      onTap: isLoading ? null : () async {
-        // Save locally & sync
-        await ref.read(targetLanguageProvider.notifier).switchLanguage(code, resetProgress: false);
-        if (context.mounted) {
-          context.go('/experience-choice');
-        }
-      },
+      onTap: isLoading
+          ? null
+          : () async {
+              // Save locally & sync
+              await ref
+                  .read(targetLanguageProvider.notifier)
+                  .switchLanguage(code, resetProgress: false);
+              if (context.mounted) {
+                context.go('/experience-choice');
+              }
+            },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -74,7 +106,11 @@ class LangPickerScreen extends ConsumerWidget {
             const SizedBox(width: 16),
             Text(
               name,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
             ),
           ],
         ),

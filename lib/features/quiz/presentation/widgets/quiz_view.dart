@@ -10,11 +10,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../domain/models/quiz_question.dart';
 import 'package:go_router/go_router.dart';
-import '../../../tutor/presentation/providers/tutor_controller.dart';
-import '../../../home/presentation/home_screen.dart';
 
 import '../../../../core/game_state/game_state_provider.dart';
 import '../../../../core/game_state/heart_settings_storage.dart';
+
+import 'in_quiz_tutor_modal.dart';
 
 class QuizView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -22,7 +22,7 @@ class QuizView extends ConsumerStatefulWidget {
   final Function(double score) onComplete;
 
   const QuizView({
-    super.key, 
+    super.key,
     required this.lessonId,
     this.isPractice = false,
     required this.onComplete,
@@ -65,11 +65,15 @@ class _QuizViewState extends ConsumerState<QuizView> {
       return;
     }
 
-    final question = ref.read(quizControllerProvider(widget.lessonId)).currentQuestion;
+    final question = ref
+        .read(quizControllerProvider(widget.lessonId))
+        .currentQuestion;
     if (question == null) return;
 
     _isFeedbackShowing = true;
-    final isCorrect = ref.read(quizControllerProvider(widget.lessonId).notifier).submitAnswer(_currentAnswer);
+    final isCorrect = ref
+        .read(quizControllerProvider(widget.lessonId).notifier)
+        .submitAnswer(_currentAnswer);
 
     FeedbackBottomSheet.show(
       context: context,
@@ -77,44 +81,12 @@ class _QuizViewState extends ConsumerState<QuizView> {
       correctAnswer: question.correctAnswer,
       explanation: question.explanation,
       onAskTutor: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Row(
-              children: [
-                const Icon(Icons.workspace_premium_rounded, color: AppColors.xpGold, size: 28),
-                const SizedBox(width: 10),
-                const Text('AI Tutor (Premium) 👑', style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-            content: const Text(
-              'Personalized AI Tutor explanations are a Premium feature!\n\nDuring testing, tap Upgrade to launch AI Tutor with your question.',
-              style: TextStyle(fontSize: 14),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.of(context).pop(); // Close feedback sheet
-                  final prompt = 'I answered "$_currentAnswer" but the correct answer is "${question.correctAnswer}" for the question: "${question.prompt}". Can you explain why I was wrong?';
-                  ref.read(tutorControllerProvider.notifier).sendMessage(prompt);
-                  ref.read(homeTabProvider.notifier).state = 2;
-                  context.go('/');
-                },
-                child: const Text('Upgrade & Ask AI Tutor', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
+        InQuizTutorModal.show(
+          context,
+          questionPrompt: question.prompt,
+          userAnswer: _currentAnswer,
+          correctAnswer: question.correctAnswer,
+          explanation: question.explanation,
         );
       },
       onContinue: () {
@@ -122,8 +94,10 @@ class _QuizViewState extends ConsumerState<QuizView> {
         setState(() {
           _currentAnswer = '';
         });
-        ref.read(quizControllerProvider(widget.lessonId).notifier).nextQuestion();
-        
+        ref
+            .read(quizControllerProvider(widget.lessonId).notifier)
+            .nextQuestion();
+
         final state = ref.read(quizControllerProvider(widget.lessonId));
         if (state.isFinished) {
           widget.onComplete(state.score);
@@ -143,19 +117,34 @@ class _QuizViewState extends ConsumerState<QuizView> {
         return KeyEventResult.handled;
       }
 
-      final question = ref.read(quizControllerProvider(widget.lessonId)).currentQuestion;
-      if (question?.type == QuestionType.multipleChoice && !_isFeedbackShowing) {
-        if (event.logicalKey == LogicalKeyboardKey.digit1 || event.logicalKey == LogicalKeyboardKey.numpad1) {
-          if (question!.options.isNotEmpty) _onAnswerChanged(question.options[0]);
+      final question = ref
+          .read(quizControllerProvider(widget.lessonId))
+          .currentQuestion;
+      if (question?.type == QuestionType.multipleChoice &&
+          !_isFeedbackShowing) {
+        if (event.logicalKey == LogicalKeyboardKey.digit1 ||
+            event.logicalKey == LogicalKeyboardKey.numpad1) {
+          if (question!.options.isNotEmpty) {
+            _onAnswerChanged(question.options[0]);
+          }
           return KeyEventResult.handled;
-        } else if (event.logicalKey == LogicalKeyboardKey.digit2 || event.logicalKey == LogicalKeyboardKey.numpad2) {
-          if (question!.options.length > 1) _onAnswerChanged(question.options[1]);
+        } else if (event.logicalKey == LogicalKeyboardKey.digit2 ||
+            event.logicalKey == LogicalKeyboardKey.numpad2) {
+          if (question!.options.length > 1) {
+            _onAnswerChanged(question.options[1]);
+          }
           return KeyEventResult.handled;
-        } else if (event.logicalKey == LogicalKeyboardKey.digit3 || event.logicalKey == LogicalKeyboardKey.numpad3) {
-          if (question!.options.length > 2) _onAnswerChanged(question.options[2]);
+        } else if (event.logicalKey == LogicalKeyboardKey.digit3 ||
+            event.logicalKey == LogicalKeyboardKey.numpad3) {
+          if (question!.options.length > 2) {
+            _onAnswerChanged(question.options[2]);
+          }
           return KeyEventResult.handled;
-        } else if (event.logicalKey == LogicalKeyboardKey.digit4 || event.logicalKey == LogicalKeyboardKey.numpad4) {
-          if (question!.options.length > 3) _onAnswerChanged(question.options[3]);
+        } else if (event.logicalKey == LogicalKeyboardKey.digit4 ||
+            event.logicalKey == LogicalKeyboardKey.numpad4) {
+          if (question!.options.length > 3) {
+            _onAnswerChanged(question.options[3]);
+          }
           return KeyEventResult.handled;
         }
       }
@@ -214,19 +203,29 @@ class _QuizViewState extends ConsumerState<QuizView> {
         children: [
           if (widget.isPractice)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.space16, vertical: AppConstants.space8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.space16,
+                vertical: AppConstants.space8,
+              ),
               child: Text(
                 'Practice Quiz',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.space16, vertical: AppConstants.space16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.space16,
+              vertical: AppConstants.space16,
+            ),
             child: ProgressBar(progress: state.progress),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.space24),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.space24,
+              ),
               child: content,
             ),
           ),
@@ -255,7 +254,10 @@ class _QuizViewState extends ConsumerState<QuizView> {
           children: [
             Icon(Icons.favorite_rounded, color: AppColors.heartRed, size: 28),
             SizedBox(width: 10),
-            Text('Out of Hearts! 💔', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Out of Hearts! 💔',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: const Text(
@@ -268,17 +270,29 @@ class _QuizViewState extends ConsumerState<QuizView> {
               Navigator.pop(context);
               context.go('/');
             },
-            child: const Text('Exit Quiz', style: TextStyle(color: Colors.grey)),
+            child: const Text(
+              'Exit Quiz',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
-            icon: const Icon(Icons.favorite_rounded, color: Colors.white, size: 18),
-            label: const Text('Refill Hearts (5 ❤️)', style: TextStyle(fontWeight: FontWeight.bold)),
+            icon: const Icon(
+              Icons.favorite_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+            label: const Text(
+              'Refill Hearts (5 ❤️)',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             onPressed: () {
               ref.read(gameStateProvider.notifier).refillHearts();
               Navigator.pop(context);

@@ -9,14 +9,17 @@ class ApiConfig {
       }
       return envUrl;
     }
-    
+
     if (kReleaseMode) {
-      // Production default URL on Render
-      return 'https://lingu-ai-backend.onrender.com/api/v1';
+      throw StateError(
+        'API_URL is required for release builds. Pass the deployed HTTPS API base with --dart-define.',
+      );
     }
 
     if (kIsWeb) return 'http://localhost:3000/api/v1';
-    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:3000/api/v1';
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:3000/api/v1';
+    }
     return 'http://localhost:3000/api/v1';
   }
 }

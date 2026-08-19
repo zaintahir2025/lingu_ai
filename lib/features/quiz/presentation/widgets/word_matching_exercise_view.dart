@@ -5,6 +5,7 @@ import '../../../../core/theme/app_constants.dart';
 import '../../../../core/audio/tts_service.dart';
 import '../../../../core/providers/target_language_provider.dart';
 import '../../../learn/domain/repositories/learn_repository.dart';
+import '../../../../core/local_storage/local_storage_provider.dart';
 
 class WordMatchingExerciseView extends ConsumerStatefulWidget {
   final int lessonId;
@@ -17,10 +18,12 @@ class WordMatchingExerciseView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<WordMatchingExerciseView> createState() => _WordMatchingExerciseViewState();
+  ConsumerState<WordMatchingExerciseView> createState() =>
+      _WordMatchingExerciseViewState();
 }
 
-class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseView> {
+class _WordMatchingExerciseViewState
+    extends ConsumerState<WordMatchingExerciseView> {
   String? _selectedTargetWord;
   String? _selectedTranslation;
   final Set<String> _matchedWords = {};
@@ -38,13 +41,34 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
   Future<void> _loadWords() async {
     final targetLang = ref.read(targetLanguageProvider);
     final repo = ref.read(learnRepositoryProvider);
-    final vocab = await repo.getVocabForLesson(widget.lessonId, targetLang: targetLang);
-    
+    final vocab = await repo.getVocabForLesson(
+      widget.lessonId,
+      targetLang: targetLang,
+    );
+
     if (vocab.isNotEmpty) {
       final sample = vocab.take(4).toList();
-      _wordPairs = sample.map((v) => {'word': v.word, 'translation': v.translation}).toList();
+      _wordPairs = sample
+          .map((v) => {'word': v.word, 'translation': v.translation})
+          .toList();
       _targetWords = _wordPairs.map((p) => p['word']!).toList()..shuffle();
-      _translations = _wordPairs.map((p) => p['translation']!).toList()..shuffle();
+      _translations = _wordPairs.map((p) => p['translation']!).toList()
+        ..shuffle();
+
+      final draft = ref
+          .read(localStorageProvider)
+          .get('matching_draft_lesson_${widget.lessonId}');
+      if (draft is Map) {
+        final validWords = _wordPairs.map((pair) => pair['word']).toSet();
+        final restored =
+            (draft['matchedWords'] as List?)?.whereType<String>().where(
+              validWords.contains,
+            ) ??
+            const <String>[];
+        _matchedWords
+          ..clear()
+          ..addAll(restored);
+      }
     }
 
     if (mounted) {
@@ -58,7 +82,9 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
     if (_selectedTargetWord == null || _selectedTranslation == null) return;
 
     final pair = _wordPairs.firstWhere(
-      (p) => p['word'] == _selectedTargetWord && p['translation'] == _selectedTranslation,
+      (p) =>
+          p['word'] == _selectedTargetWord &&
+          p['translation'] == _selectedTranslation,
       orElse: () => {},
     );
 
@@ -70,10 +96,14 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
         _selectedTargetWord = null;
         _selectedTranslation = null;
       });
+      _saveDraft();
 
       if (_matchedWords.length == _wordPairs.length) {
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) widget.onComplete();
+          if (mounted) {
+            _clearDraft();
+            widget.onComplete();
+          }
         });
       }
     } else {
@@ -90,6 +120,19 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
         _selectedTranslation = null;
       });
     }
+  }
+
+  void _saveDraft() {
+    ref.read(localStorageProvider).put(
+      'matching_draft_lesson_${widget.lessonId}',
+      {'matchedWords': _matchedWords.toList()},
+    );
+  }
+
+  void _clearDraft() {
+    ref
+        .read(localStorageProvider)
+        .delete('matching_draft_lesson_${widget.lessonId}');
   }
 
   @override
@@ -121,16 +164,16 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
           Text(
             'Stage 2: Word Matching',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Tap a target word on the left, then tap its matching meaning on the right to memorize it before sentence writing.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppConstants.space24),
           Expanded(
@@ -163,14 +206,16 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
                               color: isMatched
                                   ? AppColors.softSuccess
                                   : isSelected
-                                      ? AppColors.primaryGreen.withValues(alpha: 0.2)
-                                      : AppColors.surface,
+                                  ? AppColors.primaryGreen.withValues(
+                                      alpha: 0.2,
+                                    )
+                                  : AppColors.surface,
                               border: Border.all(
                                 color: isMatched
                                     ? AppColors.primaryGreen
                                     : isSelected
-                                        ? AppColors.primaryGreen
-                                        : AppColors.divider,
+                                    ? AppColors.primaryGreen
+                                    : AppColors.divider,
                                 width: 2,
                               ),
                               borderRadius: BorderRadius.circular(16),
@@ -183,12 +228,21 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: isMatched ? AppColors.primaryGreenDark : AppColors.textPrimary,
-                                      decoration: isMatched ? TextDecoration.lineThrough : null,
+                                      color: isMatched
+                                          ? AppColors.primaryGreenDark
+                                          : AppColors.textPrimary,
+                                      decoration: isMatched
+                                          ? TextDecoration.lineThrough
+                                          : null,
                                     ),
                                   ),
                                 ),
-                                if (isMatched) const Icon(Icons.check_circle, color: AppColors.primaryGreen, size: 20),
+                                if (isMatched)
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.primaryGreen,
+                                    size: 20,
+                                  ),
                               ],
                             ),
                           ),
@@ -204,7 +258,11 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
                     itemCount: _translations.length,
                     itemBuilder: (context, index) {
                       final trans = _translations[index];
-                      final isMatched = _wordPairs.any((p) => p['translation'] == trans && _matchedWords.contains(p['word']));
+                      final isMatched = _wordPairs.any(
+                        (p) =>
+                            p['translation'] == trans &&
+                            _matchedWords.contains(p['word']),
+                      );
                       final isSelected = _selectedTranslation == trans;
 
                       return Padding(
@@ -225,14 +283,16 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
                               color: isMatched
                                   ? AppColors.softSuccess
                                   : isSelected
-                                      ? AppColors.primaryGreen.withValues(alpha: 0.2)
-                                      : AppColors.surface,
+                                  ? AppColors.primaryGreen.withValues(
+                                      alpha: 0.2,
+                                    )
+                                  : AppColors.surface,
                               border: Border.all(
                                 color: isMatched
                                     ? AppColors.primaryGreen
                                     : isSelected
-                                        ? AppColors.primaryGreen
-                                        : AppColors.divider,
+                                    ? AppColors.primaryGreen
+                                    : AppColors.divider,
                                 width: 2,
                               ),
                               borderRadius: BorderRadius.circular(16),
@@ -242,8 +302,12 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
-                                color: isMatched ? AppColors.primaryGreenDark : AppColors.textPrimary,
-                                decoration: isMatched ? TextDecoration.lineThrough : null,
+                                color: isMatched
+                                    ? AppColors.primaryGreenDark
+                                    : AppColors.textPrimary,
+                                decoration: isMatched
+                                    ? TextDecoration.lineThrough
+                                    : null,
                               ),
                             ),
                           ),
@@ -257,7 +321,9 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: _matchedWords.length == _wordPairs.length ? widget.onComplete : null,
+            onPressed: _matchedWords.length == _wordPairs.length
+                ? widget.onComplete
+                : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: Colors.white,
@@ -266,7 +332,11 @@ class _WordMatchingExerciseViewState extends ConsumerState<WordMatchingExerciseV
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: Text(_matchedWords.length == _wordPairs.length ? 'Continue to Quiz' : 'Match All Words to Continue'),
+            child: Text(
+              _matchedWords.length == _wordPairs.length
+                  ? 'Continue to Quiz'
+                  : 'Match All Words to Continue',
+            ),
           ),
         ],
       ),

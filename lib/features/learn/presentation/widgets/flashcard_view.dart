@@ -8,13 +8,14 @@ import '../widgets/swipeable_flashcard.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../main.dart';
 import '../../../../core/providers/target_language_provider.dart';
+import '../../../../core/local_storage/local_storage_provider.dart';
 
 class FlashcardView extends ConsumerStatefulWidget {
   final int lessonId;
   final VoidCallback onComplete;
 
   const FlashcardView({
-    super.key, 
+    super.key,
     required this.lessonId,
     required this.onComplete,
   });
@@ -39,16 +40,43 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
   Future<void> _loadWords() async {
     final uiLocale = ref.read(localeProvider).languageCode;
     final targetLang = ref.read(targetLanguageProvider);
-    final words = await ref.read(learnRepositoryProvider).getVocabForLesson(
-      widget.lessonId,
-      targetLang: targetLang,
-      uiLocale: uiLocale,
-    );
+    final words = await ref
+        .read(learnRepositoryProvider)
+        .getVocabForLesson(
+          widget.lessonId,
+          targetLang: targetLang,
+          uiLocale: uiLocale,
+        );
+    final byId = {for (final word in words) word.id: word};
+    final draft = ref
+        .read(localStorageProvider)
+        .get('flashcard_draft_lesson_${widget.lessonId}');
+    final remainingIds = draft is Map
+        ? (draft['remainingIds'] as List?)?.whereType<int>().toList()
+        : null;
+    final historyIds = draft is Map
+        ? (draft['historyIds'] as List?)?.whereType<int>().toList()
+        : null;
+    final restoredRemaining = remainingIds
+        ?.map((id) => byId[id])
+        .whereType<VocabWord>()
+        .toList();
+    final restoredHistory = historyIds
+        ?.map((id) => byId[id])
+        .whereType<VocabWord>()
+        .toList();
+    final canRestore =
+        restoredRemaining != null &&
+        restoredRemaining.isNotEmpty &&
+        restoredRemaining.length == remainingIds?.length &&
+        restoredHistory?.length == historyIds?.length;
 
     if (mounted) {
       setState(() {
-        _words = List.from(words);
-        _history.clear();
+        _words = canRestore ? restoredRemaining : List.from(words);
+        _history
+          ..clear()
+          ..addAll(canRestore ? restoredHistory! : const <VocabWord>[]);
         _totalDeckCount = words.length;
         _isLoading = false;
       });
@@ -60,6 +88,7 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
     final currentWord = _words.removeAt(0);
     _history.add(currentWord);
     setState(() {});
+    _saveDraft();
 
     if (_words.isEmpty) {
       _showQuizPromptDialog();
@@ -70,17 +99,17 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
     if (_words.isEmpty) return;
     final currentWord = _words.removeAt(0);
     _history.add(currentWord);
-    
+
     try {
       final db = ref.read(databaseProvider);
-      (db.update(db.vocabWords)..where((t) => t.id.equals(currentWord.id))).write(
-        const VocabWordsCompanion(easinessFactor: Value(1.5)),
-      );
+      (db.update(db.vocabWords)..where((t) => t.id.equals(currentWord.id)))
+          .write(const VocabWordsCompanion(easinessFactor: Value(1.5)));
     } catch (_) {}
 
     setState(() {
       _words.add(currentWord);
     });
+    _saveDraft();
   }
 
   void _goPreviousCard() {
@@ -89,6 +118,22 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
     setState(() {
       _words.insert(0, lastWord);
     });
+    _saveDraft();
+  }
+
+  void _saveDraft() {
+    ref
+        .read(localStorageProvider)
+        .put('flashcard_draft_lesson_${widget.lessonId}', {
+          'remainingIds': _words.map((word) => word.id).toList(),
+          'historyIds': _history.map((word) => word.id).toList(),
+        });
+  }
+
+  void _clearDraft() {
+    ref
+        .read(localStorageProvider)
+        .delete('flashcard_draft_lesson_${widget.lessonId}');
   }
 
   void _showQuizPromptDialog() {
@@ -99,9 +144,16 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.check_circle_rounded, color: AppColors.primaryGreen, size: 28),
+            Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.primaryGreen,
+              size: 28,
+            ),
             SizedBox(width: 10),
-            Text('Deck Completed! 🎉', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Deck Completed! 🎉',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: const Text(
@@ -112,22 +164,32 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              _clearDraft();
               _loadWords();
             },
-            child: const Text('Review Again', style: TextStyle(color: Colors.grey)),
+            child: const Text(
+              'Review Again',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             onPressed: () {
               Navigator.pop(context);
+              _clearDraft();
               widget.onComplete();
             },
-            child: const Text('Start Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Start Quiz',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -137,10 +199,11 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
   void _handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        _markDone(); 
+        _markDone();
       } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        _markNotDone(); 
-      } else if (event.logicalKey == LogicalKeyboardKey.space || event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        _markNotDone();
+      } else if (event.logicalKey == LogicalKeyboardKey.space ||
+          event.logicalKey == LogicalKeyboardKey.arrowUp) {
         _cardKey.currentState?.flipCard();
       }
     }
@@ -163,7 +226,11 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.stars_rounded, size: 64, color: AppColors.primaryGreen),
+            const Icon(
+              Icons.stars_rounded,
+              size: 64,
+              color: AppColors.primaryGreen,
+            ),
             const SizedBox(height: 16),
             const Text(
               'All Flashcards Done!',
@@ -174,10 +241,16 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
               ),
               onPressed: widget.onComplete,
-              child: const Text('Proceed to Quiz', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Proceed to Quiz',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -190,19 +263,25 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Cards Remaining: ${_words.length}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryGreenDark,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreenDark,
+                  ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -210,7 +289,11 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
                   ),
                   child: Text(
                     'Deck Total: $_totalDeckCount',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -223,8 +306,8 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
                 child: SwipeableFlashcard(
                   key: ValueKey(_words.first.id),
                   word: _words.first,
-                  onSwipeLeft: _markNotDone, 
-                  onSwipeRight: _markDone, 
+                  onSwipeLeft: _markNotDone,
+                  onSwipeRight: _markDone,
                 ),
               ),
             ),
@@ -238,8 +321,13 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
                   backgroundColor: AppColors.surface,
                   foregroundColor: AppColors.textPrimary,
                   side: const BorderSide(color: AppColors.divider, width: 1.5),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
                 label: const Text(
@@ -254,8 +342,13 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
                   backgroundColor: Colors.red[50],
                   foregroundColor: Colors.red[700],
                   side: const BorderSide(color: Colors.red, width: 1.5),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 icon: const Icon(Icons.refresh_rounded, color: Colors.red),
                 label: const Text(
@@ -269,11 +362,19 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 2,
                 ),
-                icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                icon: const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                ),
                 label: const Text(
                   'Done',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),

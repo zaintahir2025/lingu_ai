@@ -22,11 +22,7 @@ class PremiumBadge extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.amber,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.amber, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Row(

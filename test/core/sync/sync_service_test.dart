@@ -21,14 +21,14 @@ void main() {
 
   test('logReview online does not queue to database', () async {
     await syncService.logReview(1, 4, true); // true = online
-    
+
     final logs = await db.select(db.offlineReviewLogs).get();
     expect(logs.isEmpty, true, reason: 'Online review should not queue.');
   });
 
   test('logReview offline queues to database', () async {
     await syncService.logReview(2, 3, false); // false = offline
-    
+
     final logs = await db.select(db.offlineReviewLogs).get();
     expect(logs.length, 1);
     expect(logs.first.vocabWordId, 2);
@@ -39,13 +39,13 @@ void main() {
     // Queue items offline
     await syncService.logReview(10, 2, false);
     await syncService.logReview(11, 4, false);
-    
+
     var logs = await db.select(db.offlineReviewLogs).get();
     expect(logs.length, 2);
 
     // Call syncData
     await syncService.syncData();
-    
+
     // Check queues are flushed
     logs = await db.select(db.offlineReviewLogs).get();
     expect(logs.isEmpty, true, reason: 'Sync should clear the offline queue.');

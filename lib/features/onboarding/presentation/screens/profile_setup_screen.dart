@@ -38,11 +38,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     if (_usernameController.text.trim().isEmpty) return;
     if (_selectedDob == null) return;
 
-    await ref.read(userControllerProvider.notifier).updateProfile(
-      username: _usernameController.text.trim(),
-      avatarId: _selectedAvatar,
-      dob: _selectedDob,
-    );
+    await ref
+        .read(userControllerProvider.notifier)
+        .updateProfile(
+          username: _usernameController.text.trim(),
+          avatarId: _selectedAvatar,
+          dob: _selectedDob,
+        );
     if (!mounted) return;
     context.go('/lang-choice');
   }
@@ -85,7 +87,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+                          color: isSelected
+                              ? AppColors.primaryGreen
+                              : Colors.transparent,
                           width: 4,
                         ),
                         color: AppColors.surface,
@@ -94,7 +98,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         radius: 40,
                         backgroundColor: AppColors.background,
                         child: Text(
-                          avatar == 'bird' ? '🐦' : avatar == 'cat' ? '🐱' : avatar == 'ninja' ? '🥷' : '🤖',
+                          avatar == 'bird'
+                              ? '🐦'
+                              : avatar == 'cat'
+                              ? '🐱'
+                              : avatar == 'ninja'
+                              ? '🥷'
+                              : '🤖',
                           style: const TextStyle(fontSize: 40),
                         ),
                       ),
@@ -110,7 +120,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       controller: _usernameController,
                       decoration: InputDecoration(
                         labelText: 'Username',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -119,7 +131,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: 'Age (Date of Birth)',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Text(
                           _selectedDob == null
@@ -133,7 +147,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               ),
               const SizedBox(height: 32),
               if (userState.error != null)
-                Text(userState.error!, style: const TextStyle(color: AppColors.softErrorText)),
+                Text(
+                  userState.error!,
+                  style: const TextStyle(color: AppColors.softErrorText),
+                ),
               const SizedBox(height: 16),
               PrimaryButton(
                 text: 'Continue',

@@ -27,7 +27,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuth = authState.status == AuthStatus.authenticated;
       final isInitial = authState.status == AuthStatus.initial;
       final hasCompletedOnboarding = onboardingStorage.hasCompletedOnboarding;
-      
+
       final goingToAuth = state.matchedLocation.startsWith('/auth');
 
       if (isInitial) {
@@ -37,7 +37,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (!isAuth) {
         if (!hasCompletedOnboarding) {
           if (state.matchedLocation != '/onboarding/tour' && !goingToAuth) {
-             return '/onboarding/tour'; // Start with Tour
+            return '/onboarding/tour'; // Start with Tour
           }
         } else {
           if (!goingToAuth) return '/auth/login';
@@ -46,13 +46,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         final user = authState.user;
         if (user != null) {
           if (user.username == null) {
-            if (state.matchedLocation != '/profile-setup') return '/profile-setup';
+            if (state.matchedLocation != '/profile-setup') {
+              return '/profile-setup';
+            }
           } else if (user.targetLanguage == null) {
-            if (state.matchedLocation != '/onboarding/lang') return '/onboarding/lang';
+            if (state.matchedLocation != '/onboarding/lang') {
+              return '/onboarding/lang';
+            }
           } else if (user.knowledgeLevel == null) {
-            if (state.matchedLocation != '/experience-choice' && state.matchedLocation != '/survey') return '/experience-choice';
+            if (state.matchedLocation != '/experience-choice' &&
+                state.matchedLocation != '/survey') {
+              return '/experience-choice';
+            }
           } else {
-            if (goingToAuth || state.matchedLocation.startsWith('/onboarding') || state.matchedLocation == '/profile-setup' || state.matchedLocation == '/experience-choice' || state.matchedLocation == '/survey') {
+            if (goingToAuth ||
+                state.matchedLocation.startsWith('/onboarding') ||
+                state.matchedLocation == '/profile-setup' ||
+                state.matchedLocation == '/experience-choice' ||
+                state.matchedLocation == '/survey') {
               return '/';
             }
           }
@@ -92,22 +103,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: ModuleFlowScreen(lessonId: lessonId),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
           );
         },
       ),
       GoRoute(
         path: '/review/session',
         name: 'review_session',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const ReviewSessionScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        ),
+        pageBuilder: (context, state) {
+          final levelStr = state.uri.queryParameters['level'] ?? '1';
+          final level = int.tryParse(levelStr) ?? 1;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: ReviewSessionScreen(level: level),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+          );
+        },
       ),
       GoRoute(
         path: '/auth/login',

@@ -38,7 +38,11 @@ class ProfileTab extends ConsumerWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -47,20 +51,24 @@ class ProfileTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final progressState = ref.watch(progressControllerProvider);
     final authState = ref.watch(authControllerProvider);
-    
+
     // Reactive Riverpod Premium state
     final isPremium = ref.watch(premiumStorageProvider);
     final premiumNotifier = ref.watch(premiumStorageProvider.notifier);
     final loc = AppLocalizations.of(context)!;
 
-    final username = authState.user?.username ?? authState.user?.name ?? 'Learner';
-    final email = authState.user?.email ?? 'learner@linguai.com';
+    final username =
+        authState.user?.username ?? authState.user?.name ?? 'Learner';
+    final email = authState.user?.email ?? 'Not signed in';
     final targetLangCode = ref.watch(targetLanguageProvider);
     final targetLangName = _languages[targetLangCode] ?? 'Spanish 🇪🇸';
 
     // Expiry check
     final expiryDate = premiumNotifier.expiryDate;
-    final isLastDay = isPremium && expiryDate != null && expiryDate.difference(DateTime.now()).inDays <= 1;
+    final isLastDay =
+        isPremium &&
+        expiryDate != null &&
+        expiryDate.difference(DateTime.now()).inDays <= 1;
 
     return progressState.when(
       data: (state) {
@@ -85,19 +93,30 @@ class ProfileTab extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 28),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.amber,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           loc.renewReminderMessage,
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber.shade900),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Colors.amber.shade900,
+                          ),
                         ),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.amber.shade900,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
                         onPressed: () => context.push('/payment'),
                         child: const Text('Reactivate'),
@@ -114,7 +133,10 @@ class ProfileTab extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isPremium ? Colors.amber : AppColors.divider, width: isPremium ? 2 : 1),
+                  border: Border.all(
+                    color: isPremium ? Colors.amber : AppColors.divider,
+                    width: isPremium ? 2 : 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
@@ -127,13 +149,17 @@ class ProfileTab extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 36,
-                      backgroundColor: isPremium ? Colors.amber.shade100 : AppColors.primaryGreen.withValues(alpha: 0.2),
+                      backgroundColor: isPremium
+                          ? Colors.amber.shade100
+                          : AppColors.primaryGreen.withValues(alpha: 0.2),
                       child: Text(
                         username.isNotEmpty ? username[0].toUpperCase() : 'U',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
-                          color: isPremium ? Colors.amber.shade900 : AppColors.primaryGreen,
+                          color: isPremium
+                              ? Colors.amber.shade900
+                              : AppColors.primaryGreen,
                         ),
                       ),
                     ),
@@ -147,29 +173,44 @@ class ProfileTab extends ConsumerWidget {
                               Flexible(
                                 child: Text(
                                   username,
-                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (isPremium) ...[
                                 const SizedBox(width: 8),
                                 const PremiumBadge(),
-                              ]
+                              ],
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
                             email,
-                            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(Icons.stars_rounded, size: 14, color: AppColors.primaryGreen),
+                              const Icon(
+                                Icons.stars_rounded,
+                                size: 14,
+                                color: AppColors.primaryGreen,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Level: ${authState.user?.knowledgeLevel?.toUpperCase() ?? "A1 (Beginner)"}',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
@@ -177,9 +218,13 @@ class ProfileTab extends ConsumerWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.edit_rounded, color: AppColors.primaryGreen),
+                      icon: const Icon(
+                        Icons.edit_rounded,
+                        color: AppColors.primaryGreen,
+                      ),
                       tooltip: 'Edit Profile Info',
-                      onPressed: () => _showEditProfileDialog(context, ref, username),
+                      onPressed: () =>
+                          _showEditProfileDialog(context, ref, username),
                     ),
                   ],
                 ),
@@ -196,15 +241,24 @@ class ProfileTab extends ConsumerWidget {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF4338CA)],
+                        colors: [
+                          Color(0xFF1E1B4B),
+                          Color(0xFF312E81),
+                          Color(0xFF4338CA),
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.amber.shade400, width: 2),
+                      border: Border.all(
+                        color: Colors.amber.shade400,
+                        width: 2,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF4338CA).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xFF4338CA,
+                          ).withValues(alpha: 0.35),
                           blurRadius: 15,
                           offset: const Offset(0, 6),
                         ),
@@ -217,9 +271,16 @@ class ProfileTab extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: Colors.amber.shade400.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.amber.shade400, width: 1.5),
+                            border: Border.all(
+                              color: Colors.amber.shade400,
+                              width: 1.5,
+                            ),
                           ),
-                          child: const Icon(Icons.workspace_premium_rounded, size: 36, color: Colors.amber),
+                          child: const Icon(
+                            Icons.workspace_premium_rounded,
+                            size: 36,
+                            color: Colors.amber,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -230,7 +291,12 @@ class ProfileTab extends ConsumerWidget {
                                 children: [
                                   Text(
                                     'LinguAI PRO',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white, letterSpacing: 0.5),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: Colors.white,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
                                   SizedBox(width: 8),
                                   PremiumBadge(),
@@ -239,7 +305,11 @@ class ProfileTab extends ConsumerWidget {
                               const SizedBox(height: 4),
                               const Text(
                                 'Unlock AI Tutor, Ad-Free Sessions, Unlimited Lives & Priority Support!',
-                                style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.3),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                  height: 1.3,
+                                ),
                               ),
                               const SizedBox(height: 10),
                               Wrap(
@@ -261,7 +331,11 @@ class ProfileTab extends ConsumerWidget {
                             color: Colors.amber.shade400,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.arrow_forward_rounded, color: Colors.black, size: 18),
+                          child: const Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.black,
+                            size: 18,
+                          ),
                         ),
                       ],
                     ),
@@ -295,7 +369,11 @@ class ProfileTab extends ConsumerWidget {
                           color: Colors.amber.shade600,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.workspace_premium_rounded, size: 30, color: Colors.white),
+                        child: const Icon(
+                          Icons.workspace_premium_rounded,
+                          size: 30,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -304,14 +382,22 @@ class ProfileTab extends ConsumerWidget {
                           children: [
                             const Text(
                               '👑 Active LinguAI PRO Membership',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
                             ),
                             const SizedBox(height: 3),
                             Text(
                               expiryDate != null
                                   ? 'Your 1-Month Pass is active • Expires ${expiryDate.day}/${expiryDate.month}/${expiryDate.year}'
                                   : 'Active Unlimited PRO Pass',
-                              style: TextStyle(fontSize: 12, color: Colors.amber.shade900, fontWeight: FontWeight.w700),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.amber.shade900,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ],
                         ),
@@ -329,18 +415,27 @@ class ProfileTab extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.language_rounded, color: AppColors.primaryGreen),
+                        const Icon(
+                          Icons.language_rounded,
+                          color: AppColors.primaryGreen,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           loc.enrolledLanguageCourse,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ],
                     ),
@@ -350,13 +445,25 @@ class ProfileTab extends ConsumerWidget {
                       children: [
                         Text(
                           targetLangName,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryGreenDark),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryGreenDark,
+                          ),
                         ),
                         PopupMenuButton<String>(
-                          icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.primaryGreen),
+                          icon: const Icon(
+                            Icons.swap_horiz_rounded,
+                            color: AppColors.primaryGreen,
+                          ),
                           tooltip: 'Switch or Enroll in New Language',
                           onSelected: (String langCode) {
-                            _switchCourseWithReset(context, ref, langCode, _languages[langCode] ?? langCode);
+                            _switchCourseWithReset(
+                              context,
+                              ref,
+                              langCode,
+                              _languages[langCode] ?? langCode,
+                            );
                           },
                           itemBuilder: (context) {
                             return _languages.entries.map((entry) {
@@ -373,12 +480,24 @@ class ProfileTab extends ConsumerWidget {
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red[700],
-                        side: BorderSide(color: Colors.red.withValues(alpha: 0.5)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(
+                          color: Colors.red.withValues(alpha: 0.5),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      icon: const Icon(Icons.remove_circle_outline_rounded, size: 18),
+                      icon: const Icon(
+                        Icons.remove_circle_outline_rounded,
+                        size: 18,
+                      ),
                       label: Text(loc.unenrollCourse),
-                      onPressed: () => _switchCourseWithReset(context, ref, 'es', 'Spanish 🇪🇸'),
+                      onPressed: () => _switchCourseWithReset(
+                        context,
+                        ref,
+                        'es',
+                        'Spanish 🇪🇸',
+                      ),
                     ),
                   ],
                 ),
@@ -388,7 +507,9 @@ class ProfileTab extends ConsumerWidget {
               // Level Progress Bar
               Text(
                 loc.levelProgress(level, level + 1),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppConstants.space8),
               LinearProgressIndicator(
@@ -401,7 +522,9 @@ class ProfileTab extends ConsumerWidget {
               const SizedBox(height: AppConstants.space8),
               Text(
                 loc.xpProgress(xp, nextThreshold),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
               ),
               const SizedBox(height: AppConstants.space32),
 
@@ -413,48 +536,68 @@ class ProfileTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppConstants.space16),
-              
-              // Admin Panel Navigation Card
-              InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AdminPanelScreen()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(AppConstants.radius16),
-                child: Container(
-                  padding: const EdgeInsets.all(AppConstants.space16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppConstants.radius16),
-                    border: Border.all(color: AppColors.primaryGreen),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.admin_panel_settings_rounded, color: AppColors.primaryGreen, size: 28),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              loc.adminPanelTitle,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primaryGreenDark),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              loc.adminPanelDesc,
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
+
+              // Admin tools are visible only to accounts authorized by the backend.
+              if (authState.user?.adminAccess == true)
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminPanelScreen(),
                       ),
-                      const Icon(Icons.chevron_right_rounded, color: AppColors.primaryGreen),
-                    ],
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(AppConstants.radius16),
+                  child: Container(
+                    padding: const EdgeInsets.all(AppConstants.space16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radius16,
+                      ),
+                      border: Border.all(color: AppColors.primaryGreen),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.admin_panel_settings_rounded,
+                          color: AppColors.primaryGreen,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                loc.adminPanelTitle,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: AppColors.primaryGreenDark,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                loc.adminPanelDesc,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppConstants.space16),
+              if (authState.user?.adminAccess == true)
+                const SizedBox(height: AppConstants.space16),
 
               _buildTtsSpeedSettings(context, ref),
               const SizedBox(height: AppConstants.space16),
@@ -466,7 +609,7 @@ class ProfileTab extends ConsumerWidget {
               const SizedBox(height: AppConstants.space16),
               _buildHeartsModeSettings(context, ref),
               const SizedBox(height: AppConstants.space16),
-              
+
               // Contact Us Button
               Container(
                 padding: const EdgeInsets.all(AppConstants.space16),
@@ -479,11 +622,17 @@ class ProfileTab extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.headset_mic_rounded, color: AppColors.primaryGreen),
+                        const Icon(
+                          Icons.headset_mic_rounded,
+                          color: AppColors.primaryGreen,
+                        ),
                         const SizedBox(width: 12),
                         Text(
                           loc.contactUsSupport,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
@@ -491,11 +640,15 @@ class ProfileTab extends ConsumerWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ContactUsScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const ContactUsScreen(),
+                          ),
                         );
                       },
                       child: Text(loc.contactButton),
@@ -514,7 +667,9 @@ class ProfileTab extends ConsumerWidget {
                       context: context,
                       builder: (context) => AlertDialog(
                         title: Text(loc.logOut),
-                        content: const Text('Are you sure you want to log out?'),
+                        content: const Text(
+                          'Are you sure you want to log out?',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
@@ -522,7 +677,9 @@ class ProfileTab extends ConsumerWidget {
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context, true),
-                            style: TextButton.styleFrom(foregroundColor: Colors.red),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
                             child: Text(loc.logOut),
                           ),
                         ],
@@ -536,12 +693,21 @@ class ProfileTab extends ConsumerWidget {
                   icon: const Icon(Icons.logout, color: Colors.red),
                   label: Text(
                     loc.logOut,
-                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: AppConstants.space16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppConstants.space16,
+                    ),
                     side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radius16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radius16,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -556,13 +722,17 @@ class ProfileTab extends ConsumerWidget {
 
   Widget _buildTtsSpeedSettings(BuildContext context, WidgetRef ref) {
     final ttsSpeed = ref.watch(ttsSpeechRateProvider);
+    final safeSpeed = ttsSpeed.clamp(0.225, 0.675);
+    final speedLabel = '${(safeSpeed / 0.45).toStringAsFixed(2)}x';
 
     return Container(
       padding: const EdgeInsets.all(AppConstants.space16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppConstants.radius16),
-        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -572,7 +742,10 @@ class ProfileTab extends ConsumerWidget {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.record_voice_over_rounded, color: AppColors.primaryGreen),
+                  Icon(
+                    Icons.record_voice_over_rounded,
+                    color: AppColors.primaryGreen,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Audio Pronunciation Speed 🔊',
@@ -587,35 +760,44 @@ class ProfileTab extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${(ttsSpeed * 2).toStringAsFixed(2)}x',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryGreenDark),
+                  speedLabel,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreenDark,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           const Text(
-            'Adjust speech speed for audio pronunciation on flashcards and quizzes.',
+            'LinguAI automatically prefers an installed neural or enhanced native voice. Adjust its pace for flashcards and quizzes.',
             style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              const Text('Slow (0.2x)', style: TextStyle(fontSize: 11, color: Colors.grey)),
+              const Text(
+                '0.5x',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
               Expanded(
                 child: Slider(
-                  value: ttsSpeed,
-                  min: 0.20,
-                  max: 0.80,
-                  divisions: 12,
+                  value: safeSpeed,
+                  min: 0.225,
+                  max: 0.675,
+                  divisions: 10,
                   activeColor: AppColors.primaryGreen,
-                  label: '${(ttsSpeed * 2).toStringAsFixed(2)}x',
+                  label: speedLabel,
                   onChanged: (newRate) {
                     ref.read(ttsSpeechRateProvider.notifier).setRate(newRate);
                   },
                 ),
               ),
-              const Text('Fast (1.0x)', style: TextStyle(fontSize: 11, color: Colors.grey)),
+              const Text(
+                '1.5x',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
             ],
           ),
         ],
@@ -631,7 +813,11 @@ class ProfileTab extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 32),
+            const Icon(
+              Icons.workspace_premium_rounded,
+              color: Colors.amber,
+              size: 32,
+            ),
             const SizedBox(width: 8),
             Text(loc.unlockPremiumTitle),
           ],
@@ -663,13 +849,18 @@ class ProfileTab extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () {
               Navigator.pop(context);
               context.push('/payment');
             },
-            child: Text(loc.proceedToPayment, style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              loc.proceedToPayment,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -677,13 +868,16 @@ class ProfileTab extends ConsumerWidget {
   }
 
   Widget _buildNotificationSettings(BuildContext context, WidgetRef ref) {
-    final isDesktop = Theme.of(context).platform == TargetPlatform.windows || 
-                      Theme.of(context).platform == TargetPlatform.macOS || 
-                      Theme.of(context).platform == TargetPlatform.linux;
-    
+    final isDesktop =
+        Theme.of(context).platform == TargetPlatform.windows ||
+        Theme.of(context).platform == TargetPlatform.macOS ||
+        Theme.of(context).platform == TargetPlatform.linux;
+
     final loc = AppLocalizations.of(context)!;
-    final label = isDesktop ? loc.receiveRemindersDesktop : loc.pushNotifications;
-    
+    final label = isDesktop
+        ? loc.receiveRemindersDesktop
+        : loc.pushNotifications;
+
     return Container(
       padding: const EdgeInsets.all(AppConstants.space16),
       decoration: BoxDecoration(
@@ -700,12 +894,16 @@ class ProfileTab extends ConsumerWidget {
               children: [
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   loc.getStreakReminders,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -717,21 +915,29 @@ class ProfileTab extends ConsumerWidget {
                 value: settings.notificationsEnabled,
                 onChanged: (val) async {
                   if (val) {
-                    final granted = await ref.read(notificationServiceProvider).requestPermission();
+                    final granted = await ref
+                        .read(notificationServiceProvider)
+                        .requestPermission();
                     if (!context.mounted) return;
                     if (granted) {
-                      ref.read(settingsProvider.notifier).toggleNotifications(true);
+                      ref
+                          .read(settingsProvider.notifier)
+                          .toggleNotifications(true);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Notifications enabled!')),
                       );
                     } else {
-                      ref.read(settingsProvider.notifier).toggleNotifications(false);
+                      ref
+                          .read(settingsProvider.notifier)
+                          .toggleNotifications(false);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Permission denied.')),
                       );
                     }
                   } else {
-                    ref.read(settingsProvider.notifier).toggleNotifications(false);
+                    ref
+                        .read(settingsProvider.notifier)
+                        .toggleNotifications(false);
                   }
                 },
                 activeThumbColor: AppColors.primaryGreen,
@@ -746,7 +952,7 @@ class ProfileTab extends ConsumerWidget {
   Widget _buildLanguageSettings(BuildContext context, WidgetRef ref) {
     final currentLocale = ref.watch(localeProvider);
     final loc = AppLocalizations.of(context)!;
-    
+
     return Container(
       padding: const EdgeInsets.all(AppConstants.space16),
       decoration: BoxDecoration(
@@ -763,12 +969,16 @@ class ProfileTab extends ConsumerWidget {
               children: [
                 Text(
                   loc.appInterfaceLanguage,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   loc.switchBetweenEnUr,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -802,7 +1012,9 @@ class ProfileTab extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppConstants.radius16),
-        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -813,14 +1025,21 @@ class ProfileTab extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 loc.studyDurationGoals,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             loc.selectDurationPlan,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 12),
 
@@ -828,7 +1047,13 @@ class ProfileTab extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(loc.dailyGoalLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Text(
+                loc.dailyGoalLabel,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
               DropdownButton<int>(
                 value: daily,
                 onChanged: (val) async {
@@ -852,7 +1077,13 @@ class ProfileTab extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(loc.weeklyTargetLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Text(
+                loc.weeklyTargetLabel,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
               DropdownButton<int>(
                 value: weekly,
                 onChanged: (val) async {
@@ -876,7 +1107,13 @@ class ProfileTab extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(loc.monthlyTargetLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Text(
+                loc.monthlyTargetLabel,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
               DropdownButton<int>(
                 value: monthly,
                 onChanged: (val) async {
@@ -923,13 +1160,21 @@ class ProfileTab extends ConsumerWidget {
                   children: [
                     Text(
                       loc.unlimitedHeartsMode,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: isPremium ? Colors.amber.shade100 : Colors.grey.shade200,
+                        color: isPremium
+                            ? Colors.amber.shade100
+                            : Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -937,7 +1182,9 @@ class ProfileTab extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: isPremium ? Colors.amber.shade900 : Colors.grey.shade700,
+                          color: isPremium
+                              ? Colors.amber.shade900
+                              : Colors.grey.shade700,
                         ),
                       ),
                     ),
@@ -946,7 +1193,10 @@ class ProfileTab extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   loc.unlimitedHeartsDesc,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -968,7 +1218,12 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
-  Future<void> _switchCourseWithReset(BuildContext context, WidgetRef ref, String newLangCode, String langName) async {
+  Future<void> _switchCourseWithReset(
+    BuildContext context,
+    WidgetRef ref,
+    String newLangCode,
+    String langName,
+  ) async {
     final onboardingStorage = ref.read(onboardingStorageProvider);
     final currentLangCode = onboardingStorage.targetLanguage ?? 'es';
 
@@ -998,10 +1253,15 @@ class ProfileTab extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes, Reset Everything', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Yes, Reset Everything',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -1010,21 +1270,31 @@ class ProfileTab extends ConsumerWidget {
     if (confirm == true) {
       try {
         final db = ref.read(databaseProvider);
-        await (db.update(db.lessons)..where((t) => t.id.isBiggerThanValue(1))).write(
-          const LessonsCompanion(isCompleted: Value(false), isLocked: Value(true)),
-        );
-        await (db.update(db.lessons)..where((t) => t.id.equals(1))).write(
-          const LessonsCompanion(isCompleted: Value(false), isLocked: Value(false)),
-        );
-        await db.update(db.vocabWords).write(
-          const VocabWordsCompanion(
-            repetitions: Value(0),
-            interval: Value(1),
-            easinessFactor: Value(2.5),
-            nextReviewDate: Value(null),
-            status: Value('learning'),
+        await (db.update(
+          db.lessons,
+        )..where((t) => t.id.isBiggerThanValue(1))).write(
+          const LessonsCompanion(
+            isCompleted: Value(false),
+            isLocked: Value(true),
           ),
         );
+        await (db.update(db.lessons)..where((t) => t.id.equals(1))).write(
+          const LessonsCompanion(
+            isCompleted: Value(false),
+            isLocked: Value(false),
+          ),
+        );
+        await db
+            .update(db.vocabWords)
+            .write(
+              const VocabWordsCompanion(
+                repetitions: Value(0),
+                interval: Value(1),
+                easinessFactor: Value(2.5),
+                nextReviewDate: Value(null),
+                status: Value('learning'),
+              ),
+            );
       } catch (_) {}
 
       await onboardingStorage.setTargetLanguage(newLangCode);
@@ -1034,7 +1304,9 @@ class ProfileTab extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Switched course to $langName! All lessons & SRS review cards reset.'),
+            content: Text(
+              'Switched course to $langName! All lessons & SRS review cards reset.',
+            ),
             backgroundColor: AppColors.primaryGreen,
           ),
         );
@@ -1042,7 +1314,11 @@ class ProfileTab extends ConsumerWidget {
     }
   }
 
-  void _showEditProfileDialog(BuildContext context, WidgetRef ref, String currentName) {
+  void _showEditProfileDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String currentName,
+  ) {
     final controller = TextEditingController(text: currentName);
     showDialog(
       context: context,
@@ -1050,7 +1326,11 @@ class ProfileTab extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.person_pin_rounded, color: AppColors.primaryGreen, size: 28),
+            Icon(
+              Icons.person_pin_rounded,
+              color: AppColors.primaryGreen,
+              size: 28,
+            ),
             SizedBox(width: 8),
             Text('Edit Profile Info'),
           ],
@@ -1079,16 +1359,23 @@ class ProfileTab extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () async {
               final newName = controller.text.trim();
               if (newName.isNotEmpty) {
-                await ref.read(userControllerProvider.notifier).updateProfile(username: newName);
+                await ref
+                    .read(userControllerProvider.notifier)
+                    .updateProfile(username: newName);
               }
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Save Changes',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

@@ -145,7 +145,8 @@ class VocabTranslator {
     'Mr. Garcia is not here.': 'مسٹر گارسیہ یہاں نہیں ہیں۔',
     'Good morning, Mrs. Lopez.': 'صبح بخیر، مسز لوپیز۔',
     'I speak a little Spanish.': 'میں تھوڑی سی زبان بولتا ہوں',
-    'I do not understand what you are saying.': 'میں نہیں سمجھا کہ آپ کیا کہہ رہے ہیں',
+    'I do not understand what you are saying.':
+        'میں نہیں سمجھا کہ آپ کیا کہہ رہے ہیں',
     'I am a medical student.': 'میں طب کا طالب علم ہوں',
     'My teacher is very strict.': 'میرے استاد بہت سخت ہیں',
     'I want to learn a new language.': 'میں ایک نئی زبان سیکھنا چاہتا ہوں',
@@ -159,7 +160,8 @@ class VocabTranslator {
     'I buy fresh bread every day.': 'میں ہر روز تازہ روٹی خریدتا ہوں',
     'I need to drink more water.': 'مجھے اور پانی پینا چاہیے',
     'I ate a red apple.': 'میں نے ایک سرخ سیب کھایا',
-    'I drink coffee with milk in the mornings.': 'میں صبح کے وقت دودھ کی کافی پیتا ہوں',
+    'I drink coffee with milk in the mornings.':
+        'میں صبح کے وقت دودھ کی کافی پیتا ہوں',
     'My mother is a teacher.': 'میری امی ایک استاد ہیں',
     'His father works in a bank.': 'ان کے ابو بینک میں کام کرتے ہیں',
     'I have an older brother.': 'میرا ایک بڑا بھائی ہے',
@@ -507,7 +509,8 @@ class VocabTranslator {
       '¡Bienvenido a nuestra casa!': 'Bienvenue dans notre maison!',
       'Muchas gracias por el regalo.': 'Merci beaucoup pour le cadeau.',
       'Ya es tarde, hasta mañana.': 'Il est tard, à demain.',
-      'Adiós amigo, cuídate mucho.': 'Au revoir mon ami, prends bien soin de toi.',
+      'Adiós amigo, cuídate mucho.':
+          'Au revoir mon ami, prends bien soin de toi.',
       '¡Hola Pedro! ¿Qué tal todo?': 'Bonjour Pedro! Comment ça va?',
       'Mucho gusto en conocerte.': 'Enchanté de faire votre connaissance.',
       'Hola, ¿cómo te llamas?': 'Bonjour, comment vous appelez-vous?',
@@ -521,7 +524,8 @@ class VocabTranslator {
       'No entiendo lo que dices.': 'Je ne comprends pas ce que vous dites.',
       'Soy estudiante de medicina.': 'Je suis étudiant en médecine.',
       'Mi profesor es muy estricto.': 'Mon professeur est très strict.',
-      'Quiero aprender un nuevo idioma.': 'Je veux apprendre une nouvelle langue.',
+      'Quiero aprender un nuevo idioma.':
+          'Je veux apprendre une nouvelle langue.',
       'México es un país hermoso.': 'Le Mexique est un beau pays.',
       'Vivo en una ciudad grande.': 'J\'habite dans une grande ville.',
       'Tengo un hermano.': 'J\'ai un frère.',
@@ -529,10 +533,12 @@ class VocabTranslator {
       'Son las tres de la tarde.': 'Il est trois heures de l\'après-midi.',
       'El coche tiene cuatro ruedas.': 'La voiture a quatre roues.',
       'Trabajo cinco días a la semana.': 'Je travaille cinq jours par semaine.',
-      'Compro pan fresco todos los días.': 'J\'achète du pain frais tous les jours.',
+      'Compro pan fresco todos los días.':
+          'J\'achète du pain frais tous les jours.',
       'Necesito beber más agua.': 'J\'ai besoin de boire plus d\'eau.',
       'Me comí una manzana roja.': 'J\'ai mangé une pomme rouge.',
-      'Tomo café con leche por las mañanas.': 'Je bois du café au lait le matin.',
+      'Tomo café con leche por las mañanas.':
+          'Je bois du café au lait le matin.',
       'Mi madre es profesora.': 'Ma mère est professeur.',
       'Su padre trabaja en un banco.': 'Son père travaille dans une banque.',
       'Tengo un hermano mayor.': 'J\'ai un frère aîné.',
@@ -582,7 +588,11 @@ class VocabTranslator {
     },
   };
 
-  static VocabWord translate(VocabWord word, String targetLang, String uiLocale) {
+  static VocabWord translate(
+    VocabWord word,
+    String targetLang,
+    String uiLocale,
+  ) {
     String finalWord = word.word;
     String? finalSentence = word.exampleSentence;
     String finalTranslation = word.translation;
@@ -595,7 +605,9 @@ class VocabTranslator {
         finalWord = langWords[word.word]!;
       }
       final langSentences = _targetSentenceMap[targetLangCode];
-      if (langSentences != null && word.exampleSentence != null && langSentences.containsKey(word.exampleSentence)) {
+      if (langSentences != null &&
+          word.exampleSentence != null &&
+          langSentences.containsKey(word.exampleSentence)) {
         finalSentence = langSentences[word.exampleSentence]!;
       }
     }
@@ -604,20 +616,30 @@ class VocabTranslator {
       if (_englishToUrduWordMap.containsKey(word.translation)) {
         finalTranslation = _englishToUrduWordMap[word.translation]!;
       }
-      if (word.exampleTranslation != null && _englishToUrduSentenceMap.containsKey(word.exampleTranslation)) {
-        finalExampleTranslation = _englishToUrduSentenceMap[word.exampleTranslation]!;
+      if (word.exampleTranslation != null &&
+          _englishToUrduSentenceMap.containsKey(word.exampleTranslation)) {
+        finalExampleTranslation =
+            _englishToUrduSentenceMap[word.exampleTranslation]!;
       }
     }
 
     return word.copyWith(
       word: finalWord,
-      exampleSentence: finalSentence != null ? Value(finalSentence) : const Value.absent(),
+      exampleSentence: finalSentence != null
+          ? Value(finalSentence)
+          : const Value.absent(),
       translation: finalTranslation,
-      exampleTranslation: finalExampleTranslation != null ? Value(finalExampleTranslation) : const Value.absent(),
+      exampleTranslation: finalExampleTranslation != null
+          ? Value(finalExampleTranslation)
+          : const Value.absent(),
     );
   }
 
-  static List<VocabWord> translateList(List<VocabWord> words, String targetLang, String uiLocale) {
+  static List<VocabWord> translateList(
+    List<VocabWord> words,
+    String targetLang,
+    String uiLocale,
+  ) {
     return words.map((w) => translate(w, targetLang, uiLocale)).toList();
   }
 }

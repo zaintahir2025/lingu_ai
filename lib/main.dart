@@ -7,28 +7,42 @@ import 'core/local_storage/local_storage_provider.dart';
 
 import 'core/widgets/shared/in_app_notification_banner.dart';
 import 'core/notifications/notification_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter/foundation.dart';
 
 final localeProvider = StateProvider<Locale>((ref) => const Locale('en'));
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize SQLite Drift Database
   // await DatabaseHelper.instance.database;
-  
+
   final box = await LocalStorageService.init();
+
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS)) {
+    const androidAdUnit = String.fromEnvironment('ADMOB_ANDROID_BANNER_ID');
+    const iosAdUnit = String.fromEnvironment('ADMOB_IOS_BANNER_ID');
+    final configured =
+        !kReleaseMode ||
+        (defaultTargetPlatform == TargetPlatform.android
+            ? androidAdUnit.isNotEmpty
+            : iosAdUnit.isNotEmpty);
+    if (configured) await MobileAds.instance.initialize();
+  }
 
   runApp(
     ProviderScope(
-      overrides: [
-        localStorageProvider.overrideWithValue(box),
-      ],
+      overrides: [localStorageProvider.overrideWithValue(box)],
       child: const LinguAiApp(),
     ),
   );
 }
 
-final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 class LinguAiApp extends ConsumerStatefulWidget {
   const LinguAiApp({super.key});

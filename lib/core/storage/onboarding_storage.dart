@@ -15,9 +15,11 @@ class OnboardingStorage {
 
   OnboardingStorage(this._box);
 
-  bool get hasCompletedOnboarding => _box.get(_onboardingCompleteKey, defaultValue: false) as bool;
+  bool get hasCompletedOnboarding =>
+      _box.get(_onboardingCompleteKey, defaultValue: false) as bool;
 
-  String? get lastOnboardingRoute => _box.get(_lastOnboardingRouteKey) as String?;
+  String? get lastOnboardingRoute =>
+      _box.get(_lastOnboardingRouteKey) as String?;
 
   String? get targetLanguage => _box.get(_targetLanguageKey) as String?;
 

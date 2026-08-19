@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../mascot/lingu_mascot.dart';
+import '../mascot/piko_mascot.dart';
 
 class LoadingIndicator extends StatelessWidget {
   const LoadingIndicator({super.key});
@@ -7,10 +7,7 @@ class LoadingIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: LinguMascot(
-        pose: MascotPose.celebrating,
-        size: 80.0,
-      ),
+      child: PikoMascot(pose: PikoPose.celebrating, size: 80),
     );
   }
 }

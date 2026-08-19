@@ -1,0 +1,18 @@
+class: UserProgressRecord
+table: user_progress
+fields:
+  userId: int
+  totalXp: int, default=0
+  level: int, default=1
+  currentStreak: int, default=0
+  lastActivityDate: DateTime?
+  streakFreezes: int, default=0
+  gemsCount: int, default=100
+  longestStreak: int, default=0
+  activeRoute: String?
+  activeStateJson: String?
+  updatedAt: DateTime
+indexes:
+  user_progress_user_unique_idx:
+    fields: userId
+    unique: true

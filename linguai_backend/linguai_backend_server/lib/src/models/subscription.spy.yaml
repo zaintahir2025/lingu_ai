@@ -1,0 +1,17 @@
+class: SubscriptionRecord
+table: subscription
+fields:
+  userId: int
+  provider: String
+  externalId: String
+  customerId: String?
+  status: String
+  expiresAt: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  subscription_external_unique_idx:
+    fields: externalId
+    unique: true
+  subscription_user_idx:
+    fields: userId

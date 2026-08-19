@@ -5,9 +5,9 @@ import '../controllers/auth_controller.dart';
 import '../../../../core/widgets/shared/app_card.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -31,10 +31,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _login() {
-    ref.read(authControllerProvider.notifier).login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      InAppNotificationBanner.show(
+        context: context,
+        title: 'Check your email',
+        message: 'Enter a valid email address.',
+        type: NotificationType.error,
+      );
+      return;
+    }
+    if (_passwordController.text.isEmpty) {
+      InAppNotificationBanner.show(
+        context: context,
+        title: 'Password required',
+        message: 'Enter your password to continue.',
+        type: NotificationType.error,
+      );
+      return;
+    }
+    ref
+        .read(authControllerProvider.notifier)
+        .login(email, _passwordController.text);
   }
 
   @override
@@ -44,7 +62,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (previous?.loginError != next.loginError && next.loginError != null) {
-        if (!context.mounted || ModalRoute.of(context)?.isCurrent != true) return;
+        if (!context.mounted || ModalRoute.of(context)?.isCurrent != true) {
+          return;
+        }
         InAppNotificationBanner.show(
           context: context,
           title: 'Login Error',
@@ -66,10 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SvgPicture.asset(
-                    'assets/images/svgs/mascot.svg',
-                    height: 120,
-                  ),
+                  const PikoMascot(size: 120),
                   const SizedBox(height: 16),
                   Text(
                     AppLocalizations.of(context)!.loginTitle,
@@ -84,11 +101,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _emailController,
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.emailLabel,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => FocusScope.of(context).requestFocus(_passwordFocus),
+                    onSubmitted: (_) =>
+                        FocusScope.of(context).requestFocus(_passwordFocus),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -96,10 +116,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     focusNode: _passwordFocus,
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.passwordLabel,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: AppColors.textSecondary,
                         ),
                         onPressed: () {
@@ -115,13 +139,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   PrimaryButton(
-                    text: isLoading ? AppLocalizations.of(context)!.loggingInLabel : AppLocalizations.of(context)!.loginTitle,
+                    text: isLoading
+                        ? AppLocalizations.of(context)!.loggingInLabel
+                        : AppLocalizations.of(context)!.loginTitle,
                     onPressed: isLoading ? null : _login,
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => context.push('/auth/register'),
-                    child: Text(AppLocalizations.of(context)!.noAccountRegisterLabel),
+                    child: Text(
+                      AppLocalizations.of(context)!.noAccountRegisterLabel,
+                    ),
                   ),
                 ],
               ),

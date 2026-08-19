@@ -54,14 +54,20 @@ class PersistentErrorsScreen extends ConsumerWidget {
                           children: [
                             Text(
                               word.word,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(word.translation),
                             const SizedBox(height: 4),
                             Text(
                               'Easiness: ${word.easinessFactor.toStringAsFixed(2)}',
-                              style: const TextStyle(color: AppColors.softErrorText, fontSize: 12),
+                              style: const TextStyle(
+                                color: AppColors.softErrorText,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -75,15 +81,18 @@ class PersistentErrorsScreen extends ConsumerWidget {
                         ),
                         onPressed: () {
                           // Send prompt to tutor and navigate to tutor tab
-                          final prompt = 'Can you explain why I keep struggling with the word "${word.word}" (${word.translation})? Break it down for me.';
-                          ref.read(tutorControllerProvider.notifier).sendMessage(prompt);
-                          
+                          final prompt =
+                              'Can you explain why I keep struggling with the word "${word.word}" (${word.translation})? Break it down for me.';
+                          ref
+                              .read(tutorControllerProvider.notifier)
+                              .sendMessage(prompt);
+
                           // Set home tab to Tutor (index 2)
                           ref.read(homeTabProvider.notifier).state = 2;
                           // Go back to home
                           context.go('/');
                         },
-                      )
+                      ),
                     ],
                   ),
                 ),

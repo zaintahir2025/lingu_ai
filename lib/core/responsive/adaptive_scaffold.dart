@@ -10,6 +10,7 @@ import '../game_state/heart_settings_storage.dart';
 import '../storage/premium_storage.dart';
 import '../game_state/game_state_provider.dart';
 import '../providers/target_language_provider.dart';
+import '../widgets/mascot/piko_mascot.dart';
 
 class AdaptiveScaffold extends ConsumerWidget {
   final Widget body;
@@ -38,7 +39,10 @@ class AdaptiveScaffold extends ConsumerWidget {
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(
+              vertical: 20.0,
+              horizontal: 24.0,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +52,11 @@ class AdaptiveScaffold extends ConsumerWidget {
                   children: [
                     const Text(
                       'Language Courses 🌍',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
@@ -70,25 +78,43 @@ class AdaptiveScaffold extends ConsumerWidget {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primaryGreen.withAlpha(20) : AppColors.surface,
+                      color: isSelected
+                          ? AppColors.primaryGreen.withAlpha(20)
+                          : AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isSelected ? AppColors.primaryGreen : AppColors.divider,
+                        color: isSelected
+                            ? AppColors.primaryGreen
+                            : AppColors.divider,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
                     child: ListTile(
-                      leading: Text(TargetLanguages.getFlag(code), style: const TextStyle(fontSize: 28)),
+                      leading: Text(
+                        TargetLanguages.getFlag(code),
+                        style: const TextStyle(fontSize: 28),
+                      ),
                       title: Text(
                         name,
                         style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          color: isSelected ? AppColors.primaryGreen : AppColors.textPrimary,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: isSelected
+                              ? AppColors.primaryGreen
+                              : AppColors.textPrimary,
                         ),
                       ),
                       trailing: isSelected
-                          ? const Icon(Icons.check_circle_rounded, color: AppColors.primaryGreen)
-                          : const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+                          ? const Icon(
+                              Icons.check_circle_rounded,
+                              color: AppColors.primaryGreen,
+                            )
+                          : const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
                       onTap: () async {
                         Navigator.pop(context);
                         if (code == currentLang) return;
@@ -96,10 +122,16 @@ class AdaptiveScaffold extends ConsumerWidget {
                         final confirm = await showDialog<bool>(
                           context: context,
                           builder: (context) => AlertDialog(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                             title: const Row(
                               children: [
-                                Icon(Icons.swap_horizontal_circle_rounded, color: AppColors.primaryGreen, size: 28),
+                                Icon(
+                                  Icons.swap_horizontal_circle_rounded,
+                                  color: AppColors.primaryGreen,
+                                  size: 28,
+                                ),
                                 SizedBox(width: 8),
                                 Text('Switch Course?'),
                               ],
@@ -111,23 +143,33 @@ class AdaptiveScaffold extends ConsumerWidget {
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
                               ),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primaryGreen,
                                   foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Switch Course', style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text(
+                                  'Switch Course',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                               ),
                             ],
                           ),
                         );
 
                         if (confirm == true) {
-                          await ref.read(targetLanguageProvider.notifier).switchLanguage(code, resetProgress: true);
+                          await ref
+                              .read(targetLanguageProvider.notifier)
+                              .switchLanguage(code, resetProgress: true);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -168,18 +210,39 @@ class AdaptiveScaffold extends ConsumerWidget {
             const SizedBox(width: 4),
             Text(
               gameState.xp.toString(),
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
+              ),
             ),
             const SizedBox(width: 12),
             Icon(
-              Icons.local_fire_department,
-              color: gameState.streak > 0 ? AppColors.streakOrange : Colors.grey,
-            ).animate(target: gameState.streak > 0 ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 1.seconds, curve: Curves.easeInOut).then().scale(begin: const Offset(1.2, 1.2), end: const Offset(1, 1), duration: 1.seconds, curve: Curves.easeInOut),
+                  Icons.local_fire_department,
+                  color: gameState.streak > 0
+                      ? AppColors.streakOrange
+                      : Colors.grey,
+                )
+                .animate(target: gameState.streak > 0 ? 1 : 0)
+                .scale(
+                  begin: const Offset(1, 1),
+                  end: const Offset(1.2, 1.2),
+                  duration: 1.seconds,
+                  curve: Curves.easeInOut,
+                )
+                .then()
+                .scale(
+                  begin: const Offset(1.2, 1.2),
+                  end: const Offset(1, 1),
+                  duration: 1.seconds,
+                  curve: Curves.easeInOut,
+                ),
             const SizedBox(width: 4),
             Text(
               gameState.streak.toString(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: gameState.streak > 0 ? AppColors.streakOrange : Colors.grey,
+                color: gameState.streak > 0
+                    ? AppColors.streakOrange
+                    : Colors.grey,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -216,11 +279,17 @@ class AdaptiveScaffold extends ConsumerWidget {
             child: SafeArea(
               bottom: false,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 16,
+                ),
                 alignment: Alignment.center,
                 child: const Text(
                   'You are offline. Progress is saved locally.',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -231,6 +300,8 @@ class AdaptiveScaffold extends ConsumerWidget {
 
     Widget appBarTitle = Row(
       children: [
+        const PikoMascot(size: 34),
+        const SizedBox(width: 6),
         Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(width: 8),
         InkWell(
@@ -241,14 +312,24 @@ class AdaptiveScaffold extends ConsumerWidget {
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primaryGreen.withAlpha(120), width: 1.5),
+              border: Border.all(
+                color: AppColors.primaryGreen.withAlpha(120),
+                width: 1.5,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(TargetLanguages.getFlag(targetLang), style: const TextStyle(fontSize: 18)),
+                Text(
+                  TargetLanguages.getFlag(targetLang),
+                  style: const TextStyle(fontSize: 18),
+                ),
                 const SizedBox(width: 2),
-                const Icon(Icons.arrow_drop_down_rounded, size: 20, color: AppColors.primaryGreen),
+                const Icon(
+                  Icons.arrow_drop_down_rounded,
+                  size: 20,
+                  color: AppColors.primaryGreen,
+                ),
               ],
             ),
           ),
@@ -277,7 +358,9 @@ class AdaptiveScaffold extends ConsumerWidget {
             NavigationRail(
               selectedIndex: selectedIndex,
               onDestinationSelected: onNavigationIndexChanged,
-              labelType: screenSize.isDesktop ? null : NavigationRailLabelType.all,
+              labelType: screenSize.isDesktop
+                  ? null
+                  : NavigationRailLabelType.all,
               destinations: destinations.map((d) {
                 return NavigationRailDestination(
                   icon: d.icon,

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 enum NotificationType { success, error, info }
 
-final GlobalKey<InAppNotificationBannerState> inAppBannerKey = GlobalKey<InAppNotificationBannerState>();
+final GlobalKey<InAppNotificationBannerState> inAppBannerKey =
+    GlobalKey<InAppNotificationBannerState>();
 
 class InAppNotificationBanner extends StatefulWidget {
   final Widget child;
@@ -19,7 +20,8 @@ class InAppNotificationBanner extends StatefulWidget {
   }
 
   @override
-  State<InAppNotificationBanner> createState() => InAppNotificationBannerState();
+  State<InAppNotificationBanner> createState() =>
+      InAppNotificationBannerState();
 }
 
 class InAppNotificationBannerState extends State<InAppNotificationBanner> {
@@ -80,13 +82,13 @@ class InAppNotificationBannerState extends State<InAppNotificationBanner> {
                       _notificationType == NotificationType.error
                           ? Icons.error_outline
                           : _notificationType == NotificationType.success
-                              ? Icons.check_circle_outline
-                              : Icons.notifications_active,
+                          ? Icons.check_circle_outline
+                          : Icons.notifications_active,
                       color: _notificationType == NotificationType.error
                           ? Colors.redAccent
                           : _notificationType == NotificationType.success
-                              ? Colors.green
-                              : Colors.blueAccent,
+                          ? Colors.green
+                          : Colors.blueAccent,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -95,7 +97,10 @@ class InAppNotificationBannerState extends State<InAppNotificationBanner> {
                         children: [
                           Text(
                             _notificationTitle!,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           if (_notificationBody != null)
                             Text(

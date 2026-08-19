@@ -8,7 +8,7 @@
 PRODUCT_NAME = lingu_ai
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.linguAi
+PRODUCT_BUNDLE_IDENTIFIER = com.linguai.linguai
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 LinguAI. All rights reserved.

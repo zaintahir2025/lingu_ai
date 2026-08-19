@@ -18,12 +18,25 @@ class TokenStorage {
 
   TokenStorage(this._box, this._secureStorage);
 
-  Future<void> saveTokens({required String jwt, required String refreshToken}) async {
-    await _box.put(_jwtKey, jwt);
+  Future<void> saveTokens({
+    required String jwt,
+    required String refreshToken,
+  }) async {
+    await _secureStorage.write(key: _jwtKey, value: jwt);
     await _secureStorage.write(key: _refreshKey, value: refreshToken);
+    await _box.delete(_jwtKey);
   }
 
-  String? get jwt => _box.get(_jwtKey) as String?;
+  Future<String?> getJwt() async {
+    final secureJwt = await _secureStorage.read(key: _jwtKey);
+    if (secureJwt != null) return secureJwt;
+    final legacyJwt = _box.get(_jwtKey) as String?;
+    if (legacyJwt != null) {
+      await _secureStorage.write(key: _jwtKey, value: legacyJwt);
+      await _box.delete(_jwtKey);
+    }
+    return legacyJwt;
+  }
 
   Future<String?> get refreshToken async {
     return await _secureStorage.read(key: _refreshKey);
@@ -39,5 +52,6 @@ class TokenStorage {
     await _box.delete(_jwtKey);
     await _box.delete(_usernameKey);
     await _secureStorage.delete(key: _refreshKey);
+    await _secureStorage.delete(key: _jwtKey);
   }
 }
