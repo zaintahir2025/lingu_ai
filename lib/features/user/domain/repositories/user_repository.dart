@@ -1,12 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/foundation.dart';
 import '../../../../core/network/dio_client.dart';
 import 'package:lingu_ai/features/auth/domain/repositories/auth_repository.dart';
 import 'package:dio/dio.dart';
+import '../../../../core/network/api_config.dart';
 
 abstract class UserRepository {
-  Future<User> updateProfile({String? username, String? avatarId, DateTime? dob, String? targetLanguage});
-  Future<User> submitSurvey({String? knowledgeLevel, int? fluencyScore, String? targetLanguage});
+  Future<User> updateProfile({
+    String? username,
+    String? avatarId,
+    DateTime? dob,
+    String? targetLanguage,
+  });
+  Future<User> submitSurvey({
+    String? knowledgeLevel,
+    int? fluencyScore,
+    String? targetLanguage,
+  });
 }
 
 class UserRepositoryImpl implements UserRepository {
@@ -15,50 +24,45 @@ class UserRepositoryImpl implements UserRepository {
   UserRepositoryImpl(this._dio);
 
   @override
-  Future<User> updateProfile({String? username, String? avatarId, DateTime? dob, String? targetLanguage}) async {
+  Future<User> updateProfile({
+    String? username,
+    String? avatarId,
+    DateTime? dob,
+    String? targetLanguage,
+  }) async {
     try {
-      final response = await _dio.put('/api/user/profile', data: {
-        'username': ?username,
-        'avatarId': ?avatarId,
-        'dob': ?dob?.toIso8601String(),
-        'targetLanguage': ?targetLanguage,
-      });
+      final response = await _dio.put(
+        '${ApiConfig.baseUrl}/user/profile',
+        data: {
+          'username': ?username,
+          'avatarId': ?avatarId,
+          'dob': ?dob?.toIso8601String(),
+          'targetLanguage': ?targetLanguage,
+        },
+      );
       return User.fromJson(response.data['user']);
     } on DioException catch (e) {
-      if (kIsWeb || e.response == null) {
-        return User(
-          id: 'demo_user_123',
-          email: 'demo@example.com',
-          name: 'Demo User',
-          username: username ?? 'DemoUser',
-          targetLanguage: targetLanguage,
-          knowledgeLevel: 'beginner',
-        );
-      }
       throw Exception(e.response?.data['error'] ?? 'Failed to update profile');
     }
   }
 
   @override
-  Future<User> submitSurvey({String? knowledgeLevel, int? fluencyScore, String? targetLanguage}) async {
+  Future<User> submitSurvey({
+    String? knowledgeLevel,
+    int? fluencyScore,
+    String? targetLanguage,
+  }) async {
     try {
-      final response = await _dio.post('/api/user/survey', data: {
-        'knowledgeLevel': ?knowledgeLevel,
-        'fluencyScore': ?fluencyScore,
-        'targetLanguage': ?targetLanguage,
-      });
+      final response = await _dio.post(
+        '${ApiConfig.baseUrl}/user/survey',
+        data: {
+          'knowledgeLevel': ?knowledgeLevel,
+          'fluencyScore': ?fluencyScore,
+          'targetLanguage': ?targetLanguage,
+        },
+      );
       return User.fromJson(response.data['user']);
     } on DioException catch (e) {
-      if (kIsWeb || e.response == null) {
-        return User(
-          id: 'demo_user_123',
-          email: 'demo@example.com',
-          name: 'Demo User',
-          username: 'DemoUser',
-          targetLanguage: targetLanguage ?? 'es',
-          knowledgeLevel: knowledgeLevel ?? 'beginner',
-        );
-      }
       throw Exception(e.response?.data['error'] ?? 'Failed to submit survey');
     }
   }

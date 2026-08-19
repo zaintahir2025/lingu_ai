@@ -1,0 +1,17 @@
+class: UserVocabRecord
+table: user_vocab
+fields:
+  userId: int
+  vocabWordId: int
+  status: String, default='new'
+  nextReviewDate: DateTime?
+  repetitions: int, default=0
+  easinessFactor: double, default=2.5
+  intervalDays: int, default=0
+  errorCount: int, default=0
+  lastReviewedAt: DateTime?
+  updatedAt: DateTime
+indexes:
+  user_vocab_unique_idx:
+    fields: userId, vocabWordId
+    unique: true

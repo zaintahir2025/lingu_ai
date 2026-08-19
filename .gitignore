@@ -44,10 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Temporary & Backend Node dependencies
+# Temporary files and local secrets
 duolingo_temp/
-node_modules/
-server/node_modules/
-server/dist/
 .env
 

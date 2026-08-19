@@ -3,6 +3,8 @@ import '../../../../core/database/database.dart';
 import '../../domain/models/chat_message.dart';
 import '../../data/repositories/tutor_repository.dart';
 import '../../../../core/providers/target_language_provider.dart';
+import '../../../../core/local_storage/local_storage_provider.dart';
+import '../../../../core/storage/premium_storage.dart';
 
 class TutorState {
   final List<ChatMessage> messages;
@@ -40,15 +42,32 @@ class TutorController extends Notifier<TutorState> {
     if (targetLang == 'ja') greeting = 'こんにちは !';
     if (targetLang == 'de') greeting = 'Hallo !';
 
-    return TutorState(
+    final initialState = TutorState(
       messages: [
         ChatMessage(
           id: '0',
-          content: '$greeting $flag I am your AI Language Tutor for $name. Ask me any questions about vocabulary, grammar, or daily conversation!',
+          content:
+              '$greeting $flag I am your AI Language Tutor for $name. Ask me any questions about vocabulary, grammar, or daily conversation!',
           isUser: false,
         ),
       ],
     );
+    final saved = ref.read(localStorageProvider).get('tutor_chat_draft');
+    if (saved is! List || saved.isEmpty) return initialState;
+
+    final restored = saved
+        .whereType<Map>()
+        .map(
+          (item) => ChatMessage(
+            id: item['id']?.toString() ?? '',
+            content: item['content']?.toString() ?? '',
+            isUser: item['isUser'] == true,
+          ),
+        )
+        .where((message) => message.id.isNotEmpty && message.content.isNotEmpty)
+        .take(40)
+        .toList();
+    return restored.isEmpty ? initialState : TutorState(messages: restored);
   }
 
   Future<void> sendMessage(String text, {String? customPrompt}) async {
@@ -77,24 +96,25 @@ class TutorController extends Notifier<TutorState> {
       messages: [...state.messages, userMessage, initialBotMessage],
       isStreaming: true,
     );
+    _saveDraft();
 
     try {
       // Tiered Context Window
-      final isPro = state.requiresPremium == false;
+      final isPro = ref.read(premiumStorageProvider);
       final maxContextMistakes = isPro ? 10 : 3;
       final maxMessageHistory = isPro ? 20 : 3;
 
       // Check context history limit for Free tier
       if (!isPro && state.messages.length > maxMessageHistory * 2) {
-        state = state.copyWith(
-          requiresPremium: true,
-          isStreaming: false,
-        );
+        state = state.copyWith(requiresPremium: true, isStreaming: false);
+        _saveDraft();
         return;
       }
 
       // 1. Fetch Context
-      final recentMistakes = await db.getRecentMistakes(limit: maxContextMistakes);
+      final recentMistakes = await db.getRecentMistakes(
+        limit: maxContextMistakes,
+      );
       final contextWords = recentMistakes.map((e) => e.word).toList();
 
       // 2. Start Streaming with AI Tutor
@@ -108,22 +128,27 @@ class TutorController extends Notifier<TutorState> {
         // Update the last message
         final messages = List<ChatMessage>.from(state.messages);
         final lastIndex = messages.length - 1;
-        
+
         final currentBotMessage = messages[lastIndex];
         messages[lastIndex] = currentBotMessage.copyWith(
           content: currentBotMessage.content + token,
         );
-        
+
         state = state.copyWith(messages: messages);
+        _saveDraft();
       }
     } catch (e) {
       final messages = List<ChatMessage>.from(state.messages);
       final lastIndex = messages.length - 1;
-      
+
       if (e.toString().contains('PREMIUM_REQUIRED')) {
         // Remove the initial bot message
         messages.removeLast();
-        state = state.copyWith(messages: messages, requiresPremium: true, isStreaming: false);
+        state = state.copyWith(
+          messages: messages,
+          requiresPremium: true,
+          isStreaming: false,
+        );
         return;
       } else {
         messages[lastIndex] = messages[lastIndex].copyWith(
@@ -136,16 +161,29 @@ class TutorController extends Notifier<TutorState> {
       final messages = List<ChatMessage>.from(state.messages);
       final lastIndex = messages.length - 1;
       messages[lastIndex] = messages[lastIndex].copyWith(isStreaming: false);
-      
-      state = state.copyWith(
-        messages: messages,
-        isStreaming: false,
-      );
+
+      state = state.copyWith(messages: messages, isStreaming: false);
+      _saveDraft();
     }
+  }
+
+  void _saveDraft() {
+    final serializable = state.messages
+        .where((message) => message.content.isNotEmpty)
+        .map(
+          (message) => {
+            'id': message.id,
+            'content': message.content,
+            'isUser': message.isUser,
+          },
+        )
+        .toList();
+    ref.read(localStorageProvider).put('tutor_chat_draft', serializable);
   }
 }
 
-final tutorControllerProvider = NotifierProvider<TutorController, TutorState>(() {
-  return TutorController();
-});
-
+final tutorControllerProvider = NotifierProvider<TutorController, TutorState>(
+  () {
+    return TutorController();
+  },
+);

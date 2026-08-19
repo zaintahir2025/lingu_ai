@@ -31,7 +31,11 @@ class PaywallScreen extends StatelessWidget {
                   color: AppColors.primaryGreen.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.auto_awesome, color: AppColors.primaryGreen, size: 64),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: AppColors.primaryGreen,
+                  size: 64,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
@@ -55,25 +59,26 @@ class PaywallScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     _buildFeatureItem('Personalized Feedback', Icons.feedback),
                     const SizedBox(height: 16),
-                    _buildFeatureItem('Smart Error Correction', Icons.fact_check),
+                    _buildFeatureItem(
+                      'Smart Error Correction',
+                      Icons.fact_check,
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 48),
               PrimaryButton(
                 text: 'Start Free Trial',
-                onPressed: () {
-                  // In a real app, integrate RevenueCat / IAP here
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Payments not implemented in this demo.')),
-                  );
-                },
+                onPressed: () => context.push('/payment'),
               ),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => context.pop(),
-                child: const Text('Maybe Later', style: TextStyle(color: AppColors.textSecondary)),
-              )
+                child: const Text(
+                  'Maybe Later',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
             ],
           ),
         ),
@@ -86,7 +91,10 @@ class PaywallScreen extends StatelessWidget {
       children: [
         Icon(icon, color: AppColors.primaryGreen),
         const SizedBox(width: 16),
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }

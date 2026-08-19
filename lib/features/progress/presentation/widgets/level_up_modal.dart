@@ -3,8 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
-import '../../../../core/widgets/shared/mascot_widget.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
+import '../../../../core/audio/sound_service.dart';
 
 class LevelUpModal extends StatefulWidget {
   final int newLevel;
@@ -21,7 +22,10 @@ class _LevelUpModalState extends State<LevelUpModal> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
+    SoundService.playAchievement();
     _confettiController.play();
   }
 
@@ -55,7 +59,7 @@ class _LevelUpModalState extends State<LevelUpModal> {
               ],
             ),
           ),
-          
+
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppConstants.space32),
@@ -66,11 +70,14 @@ class _LevelUpModalState extends State<LevelUpModal> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const MascotWidget(
-                  pose: MascotPose.celebrating,
-                  width: 150,
-                  height: 150,
-                ).animate().scale(delay: 200.ms, duration: 600.ms, curve: Curves.elasticOut),
+                const PikoMascot(
+                  size: 150,
+                  pose: PikoPose.celebrating,
+                ).animate().scale(
+                  delay: 200.ms,
+                  duration: 600.ms,
+                  curve: Curves.elasticOut,
+                ),
                 const SizedBox(height: AppConstants.space24),
                 Text(
                   'Level Up!',

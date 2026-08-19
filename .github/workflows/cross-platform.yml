@@ -1,0 +1,139 @@
+name: Cross-platform verification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  dart-backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test-password
+          POSTGRES_DB: linguai_backend_test
+        ports:
+          - 9090:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Configure test database password
+        working-directory: linguai_backend/linguai_backend_server
+        run: |
+          mkdir -p config
+          printf "test:\n  database: 'test-password'\n" > config/passwords.yaml
+      - name: Install Dart backend dependencies
+        working-directory: linguai_backend
+        run: dart pub get
+      - name: Analyze Dart backend
+        working-directory: linguai_backend/linguai_backend_server
+        run: dart analyze --fatal-infos
+      - name: Test Dart backend
+        working-directory: linguai_backend/linguai_backend_server
+        run: dart test
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: >-
+          flutter build web --release --no-wasm-dry-run
+          --dart-define=API_URL=${{ secrets.API_URL }}
+          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --debug
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native dependencies
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          ninja-build libgtk-3-dev libgstreamer1.0-dev
+          libgstreamer-plugins-base1.0-dev libwebkit2gtk-4.1-dev
+          libsecret-1-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-linux-desktop
+      - run: flutter pub get
+      - run: >-
+          flutter build linux --release
+          --dart-define=API_URL=${{ secrets.API_URL }}
+          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+      - run: >-
+          flutter build windows --release
+          --dart-define=API_URL=${{ secrets.API_URL }}
+          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
+
+  apple:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-macos-desktop
+      - run: flutter pub get
+      - run: >-
+          flutter build macos --release
+          --dart-define=API_URL=${{ secrets.API_URL }}
+          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
+      - run: >-
+          flutter build ios --release --no-codesign
+          --dart-define=API_URL=${{ secrets.API_URL }}
+          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}

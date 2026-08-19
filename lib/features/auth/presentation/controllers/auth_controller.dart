@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/token_storage.dart';
-import '../../../../core/storage/user_registry_storage.dart';
 import '../../../../core/storage/premium_storage.dart';
+import '../../../payment/data/payment_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 enum AuthStatus { initial, unauthenticated, authenticating, authenticated }
@@ -45,57 +45,61 @@ class AuthController extends StateNotifier<AuthState> {
   final TokenStorage _tokenStorage;
   final Ref _ref;
 
-  AuthController(this._repository, this._tokenStorage, this._ref) : super(const AuthState()) {
+  AuthController(this._repository, this._tokenStorage, this._ref)
+    : super(const AuthState()) {
     _init();
   }
 
+  Future<void> _syncPremium() async {
+    await _ref
+        .read(premiumStorageProvider.notifier)
+        .applyVerifiedSubscription(active: false);
+    try {
+      await _ref.read(paymentRepositoryProvider).refreshSubscription();
+    } catch (_) {
+      // Premium remains disabled unless the backend verifies an active subscription.
+    }
+  }
+
   Future<void> _init() async {
-    final token = _tokenStorage.jwt;
-    final savedName = _tokenStorage.username ?? 'Learner';
+    final token = await _tokenStorage.getJwt();
     if (token != null) {
-      final user = User(
-        id: 'restored', 
-        email: 'user@example.com', 
-        name: savedName,
-        username: savedName,
-        targetLanguage: 'es',
-        knowledgeLevel: 'A1',
-      );
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-      );
-      _registerUserInAdminRegistry(user);
+      try {
+        final user = await _repository.getCurrentUser();
+        await _syncPremium();
+        state = state.copyWith(status: AuthStatus.authenticated, user: user);
+      } catch (_) {
+        await _tokenStorage.clearTokens();
+        state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
+      }
     } else {
       state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
     }
   }
 
-  void _registerUserInAdminRegistry(User user) {
-    try {
-      final isPremium = _ref.read(premiumStorageProvider);
-      _ref.read(userRegistryStorageProvider).registerOrUpdateUser(
-        RegisteredUserAccount(
-          id: user.id,
-          email: user.email,
-          username: user.username ?? user.name ?? 'Learner',
-          registeredAt: DateTime.now().toIso8601String().substring(0, 10),
-          isPremium: isPremium,
-        ),
-      );
-    } catch (_) {}
-  }
-
   Future<void> login(String email, String password) async {
-    state = state.copyWith(status: AuthStatus.authenticating, loginError: null, errorMessage: null);
+    state = state.copyWith(
+      status: AuthStatus.authenticating,
+      loginError: null,
+      errorMessage: null,
+    );
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        state = state.copyWith(status: AuthStatus.unauthenticated, loginError: 'You are offline. Please connect to the internet to login.');
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          loginError:
+              'You are offline. Please connect to the internet to login.',
+        );
         return;
       }
       final user = await _repository.login(email, password);
-      final savedName = _tokenStorage.username ?? user.username ?? user.name ?? email.split('@').first;
+      await _syncPremium();
+      final savedName =
+          _tokenStorage.username ??
+          user.username ??
+          user.name ??
+          email.split('@').first;
       final updatedUser = User(
         id: user.id,
         email: user.email,
@@ -103,45 +107,66 @@ class AuthController extends StateNotifier<AuthState> {
         username: savedName,
         targetLanguage: user.targetLanguage,
         knowledgeLevel: user.knowledgeLevel,
+        role: user.role,
+        adminAccess: user.adminAccess,
       );
-      state = state.copyWith(status: AuthStatus.authenticated, user: updatedUser);
-      _registerUserInAdminRegistry(updatedUser);
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: updatedUser,
+      );
     } catch (e) {
-      state = state.copyWith(status: AuthStatus.unauthenticated, loginError: e.toString().replaceAll('Exception: ', ''));
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        loginError: e.toString().replaceAll('Exception: ', ''),
+      );
     }
   }
 
-  Future<void> register(String email, String password) async {
-    state = state.copyWith(status: AuthStatus.authenticating, registerError: null, errorMessage: null);
+  Future<void> register(
+    String email,
+    String password,
+    String turnstileToken,
+  ) async {
+    state = state.copyWith(
+      status: AuthStatus.authenticating,
+      registerError: null,
+      errorMessage: null,
+    );
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        state = state.copyWith(status: AuthStatus.unauthenticated, registerError: 'You are offline. Please connect to the internet to sign up.');
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          registerError:
+              'You are offline. Please connect to the internet to sign up.',
+        );
         return;
       }
-      await _repository.register(email, password);
-      final newUser = RegisteredUserAccount(
-        id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
-        email: email,
-        username: email.split('@').first,
-        registeredAt: DateTime.now().toIso8601String().substring(0, 10),
-        isPremium: false,
+      await _repository.register(
+        email,
+        password,
+        turnstileToken: turnstileToken,
       );
-      await _ref.read(userRegistryStorageProvider).registerOrUpdateUser(newUser);
-
       state = state.copyWith(
-        status: AuthStatus.unauthenticated, 
-        user: null, 
-        registerError: 'Registration successful! You can now log in.'
+        status: AuthStatus.unauthenticated,
+        user: null,
+        registerError:
+            'Registration successful! Check your email to verify the account before logging in.',
       );
     } catch (e) {
-      state = state.copyWith(status: AuthStatus.unauthenticated, registerError: e.toString().replaceAll('Exception: ', ''));
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        registerError: e.toString().replaceAll('Exception: ', ''),
+      );
     }
   }
 
   Future<void> logout() async {
     await _repository.logout();
     await _tokenStorage.clearTokens();
+    await _ref
+        .read(premiumStorageProvider.notifier)
+        .applyVerifiedSubscription(active: false);
     state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
   }
 
@@ -149,12 +174,13 @@ class AuthController extends StateNotifier<AuthState> {
     final nameToSave = user.username ?? user.name ?? 'Learner';
     _tokenStorage.saveUsername(nameToSave);
     state = state.copyWith(user: user);
-    _registerUserInAdminRegistry(user);
   }
 }
 
-final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
-  final repository = ref.watch(authRepositoryProvider);
-  final tokenStorage = ref.watch(tokenStorageProvider);
-  return AuthController(repository, tokenStorage, ref);
-});
+final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
+  (ref) {
+    final repository = ref.watch(authRepositoryProvider);
+    final tokenStorage = ref.watch(tokenStorageProvider);
+    return AuthController(repository, tokenStorage, ref);
+  },
+);

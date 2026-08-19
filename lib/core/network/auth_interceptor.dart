@@ -8,8 +8,11 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._tokenStorage, this._originalDio);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final jwt = _tokenStorage.jwt;
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final jwt = await _tokenStorage.getJwt();
     if (jwt != null) {
       options.headers['Authorization'] = 'Bearer $jwt';
     }
@@ -23,18 +26,25 @@ class AuthInterceptor extends Interceptor {
       if (refreshToken != null) {
         try {
           // Use a new Dio instance to avoid interceptor loops
-          final refreshDio = Dio(BaseOptions(baseUrl: _originalDio.options.baseUrl));
-          final response = await refreshDio.post('/auth/refresh-token', data: {
-            'token': refreshToken,
-          });
-          
-          final newJwt = response.data['token'];
-          
-          await _tokenStorage.saveTokens(jwt: newJwt, refreshToken: refreshToken);
-          
+          final refreshDio = Dio(
+            BaseOptions(baseUrl: _originalDio.options.baseUrl),
+          );
+          final response = await refreshDio.post(
+            '/auth/refresh-token',
+            data: {'token': refreshToken},
+          );
+
+          final newJwt = response.data['accessToken'] ?? response.data['token'];
+          final newRefreshToken = response.data['refreshToken'] ?? refreshToken;
+
+          await _tokenStorage.saveTokens(
+            jwt: newJwt,
+            refreshToken: newRefreshToken,
+          );
+
           // Retry original request
           err.requestOptions.headers['Authorization'] = 'Bearer $newJwt';
-          
+
           final retryDio = Dio(_originalDio.options);
           final retryResponse = await retryDio.fetch(err.requestOptions);
           return handler.resolve(retryResponse);
@@ -48,4 +58,3 @@ class AuthInterceptor extends Interceptor {
     return handler.next(err);
   }
 }
-

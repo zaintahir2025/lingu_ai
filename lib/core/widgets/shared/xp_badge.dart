@@ -4,10 +4,7 @@ import '../../theme/app_colors.dart';
 class XpBadge extends StatelessWidget {
   final int amount;
 
-  const XpBadge({
-    super.key,
-    required this.amount,
-  });
+  const XpBadge({super.key, required this.amount});
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +16,9 @@ class XpBadge extends StatelessWidget {
         Text(
           '$amount XP',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.xpGold,
-                fontWeight: FontWeight.w800,
-              ),
+            color: AppColors.xpGold,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );

@@ -9,7 +9,8 @@ final heartSettingsStorageProvider = Provider<HeartSettingsStorage>((ref) {
 
 class HeartSettingsStorage {
   final Box? _boxInstance;
-  static const String _heartsModeKey = 'hearts_mode'; // 'unlimited' vs 'challenge'
+  static const String _heartsModeKey =
+      'hearts_mode'; // 'unlimited' vs 'challenge'
 
   HeartSettingsStorage([this._boxInstance]);
 
@@ -21,11 +22,15 @@ class HeartSettingsStorage {
 
   /// Default is 'unlimited' for beginner friendliness
   bool get isUnlimitedMode {
-    final mode = (_box?.get(_heartsModeKey, defaultValue: 'unlimited') as String?) ?? 'unlimited';
+    final mode =
+        (_box?.get(_heartsModeKey, defaultValue: 'unlimited') as String?) ??
+        'unlimited';
     return mode == 'unlimited';
   }
 
-  String get heartsMode => (_box?.get(_heartsModeKey, defaultValue: 'unlimited') as String?) ?? 'unlimited';
+  String get heartsMode =>
+      (_box?.get(_heartsModeKey, defaultValue: 'unlimited') as String?) ??
+      'unlimited';
 
   Future<void> setHeartsMode(String mode) async {
     final box = _box;

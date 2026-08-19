@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class SoundService {
   static final AudioPlayer _player = AudioPlayer();
@@ -28,6 +29,24 @@ class SoundService {
       await _player.play(AssetSource('sounds/finish.mp3'));
     } catch (e) {
       debugPrint('Error playing finish sound: $e');
+    }
+  }
+
+  static Future<void> playTap() async {
+    try {
+      await SystemSound.play(SystemSoundType.click);
+      await HapticFeedback.selectionClick();
+    } catch (e) {
+      debugPrint('Error playing tap feedback: $e');
+    }
+  }
+
+  static Future<void> playAchievement() async {
+    await playFinish();
+    try {
+      await HapticFeedback.mediumImpact();
+    } catch (e) {
+      debugPrint('Error playing achievement haptic: $e');
     }
   }
 }

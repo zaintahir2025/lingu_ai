@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
-import '../../../../core/widgets/shared/offline_gate.dart';
 import '../providers/tutor_controller.dart';
 import '../../domain/models/chat_message.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import 'paywall_screen.dart';
 import 'ai_settings_screen.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
 
 class TutorTab extends ConsumerStatefulWidget {
   const TutorTab({super.key});
@@ -47,9 +47,16 @@ class _TutorTabState extends ConsumerState<TutorTab> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.psychology_rounded, color: AppColors.primaryGreen, size: 28),
+            Icon(
+              Icons.psychology_rounded,
+              color: AppColors.primaryGreen,
+              size: 28,
+            ),
             SizedBox(width: 10),
-            Text('AI Tutor Instructions 🤖', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'AI Tutor Instructions 🤖',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: const Column(
@@ -61,9 +68,13 @@ class _TutorTabState extends ConsumerState<TutorTab> {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 12),
-            Text('1. 🔑 Google Gemini API Key:\nTap the Key icon at the top right to paste your free Gemini API key from Google AI Studio (aistudio.google.com).'),
+            Text(
+              '1. 🔑 Google Gemini API Key:\nTap the Key icon at the top right to paste your free Gemini API key from Google AI Studio (aistudio.google.com).',
+            ),
             SizedBox(height: 8),
-            Text('2. ⚡ Smart Offline Fallback:\nEven without an API key or internet connection, your AI Tutor provides instant grammar & vocabulary help!'),
+            Text(
+              '2. ⚡ Smart Offline Fallback:\nEven without an API key or internet connection, your AI Tutor provides instant grammar & vocabulary help!',
+            ),
           ],
         ),
         actions: [
@@ -71,7 +82,9 @@ class _TutorTabState extends ConsumerState<TutorTab> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () => Navigator.pop(context),
             child: const Text('Got it!'),
@@ -97,71 +110,82 @@ class _TutorTabState extends ConsumerState<TutorTab> {
       if (previous?.messages.length != next.messages.length) {
         Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
       }
-      
+
       if (next.requiresPremium && (previous?.requiresPremium != true)) {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => Dialog.fullscreen(
-            child: const PaywallScreen(),
-          ),
+          builder: (context) => Dialog.fullscreen(child: const PaywallScreen()),
         );
       }
     });
 
-    return OfflineGate(
-      title: AppLocalizations.of(context)!.tutorSleepingTitle,
-      message: AppLocalizations.of(context)!.tutorSleepingMessage,
-      child: Column(
-        children: [
-          // Top Bar with Gemini Key Settings & Help
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: AppColors.primaryGreen.withValues(alpha: 0.1),
-            child: Row(
-              children: [
-                const Icon(Icons.auto_awesome_rounded, size: 20, color: AppColors.primaryGreen),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'AI Language Tutor • Powered by Gemini',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryGreenDark),
+    final activeProvider = ref.watch(aiSettingsStorageProvider).provider;
+    return Column(
+      children: [
+        // Top Bar with Gemini Key Settings & Help
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: AppColors.primaryGreen.withValues(alpha: 0.1),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.auto_awesome_rounded,
+                size: 20,
+                color: AppColors.primaryGreen,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'AI Language Tutor • $activeProvider',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreenDark,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.help_outline_rounded, size: 20, color: AppColors.textSecondary),
-                  tooltip: 'AI Tutor Instructions & Help',
-                  onPressed: _showHelpInstructions,
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.help_outline_rounded,
+                  size: 20,
+                  color: AppColors.textSecondary,
                 ),
-                IconButton(
-                  icon: const Icon(Icons.key_rounded, size: 20, color: AppColors.textSecondary),
-                  tooltip: 'Google Gemini API Key Settings',
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
-                    );
-                  },
+                tooltip: 'AI Tutor Instructions & Help',
+                onPressed: _showHelpInstructions,
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.key_rounded,
+                  size: 20,
+                  color: AppColors.textSecondary,
                 ),
-              ],
-            ),
+                tooltip: 'Google Gemini API Key Settings',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AiSettingsScreen()),
+                  );
+                },
+              ),
+            ],
           ),
-          const Divider(height: 1, thickness: 1),
+        ),
+        const Divider(height: 1, thickness: 1),
 
-          // Message Stream
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(AppConstants.space16),
-              itemCount: tutorState.messages.length,
-              itemBuilder: (context, index) {
-                final message = tutorState.messages[index];
-                return _buildMessageBubble(message);
-              },
-            ),
+        // Message Stream
+        Expanded(
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(AppConstants.space16),
+            itemCount: tutorState.messages.length,
+            itemBuilder: (context, index) {
+              final message = tutorState.messages[index];
+              return _buildMessageBubble(message);
+            },
           ),
-          _buildInputArea(context, tutorState.isStreaming),
-        ],
-      ),
+        ),
+        _buildInputArea(context, tutorState.isStreaming),
+      ],
     );
   }
 
@@ -170,15 +194,13 @@ class _TutorTabState extends ConsumerState<TutorTab> {
     return Padding(
       padding: const EdgeInsetsDirectional.only(bottom: AppConstants.space16),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser) ...[
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
-              child: const Icon(Icons.smart_toy_rounded, size: 20, color: AppColors.primaryGreen),
-            ),
+            const PikoMascot(size: 38),
             const SizedBox(width: 8),
           ],
           Flexible(
@@ -189,15 +211,19 @@ class _TutorTabState extends ConsumerState<TutorTab> {
                 borderRadius: BorderRadiusDirectional.only(
                   topStart: const Radius.circular(16),
                   topEnd: const Radius.circular(16),
-                  bottomStart: isUser ? const Radius.circular(16) : const Radius.circular(0),
-                  bottomEnd: isUser ? const Radius.circular(0) : const Radius.circular(16),
+                  bottomStart: isUser
+                      ? const Radius.circular(16)
+                      : const Radius.circular(0),
+                  bottomEnd: isUser
+                      ? const Radius.circular(0)
+                      : const Radius.circular(16),
                 ).resolve(Directionality.of(context)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ],
               ),
               child: message.isStreaming && message.content.isEmpty
@@ -231,7 +257,7 @@ class _TutorTabState extends ConsumerState<TutorTab> {
             color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, -4),
             blurRadius: 10,
-          )
+          ),
         ],
       ),
       child: Row(
@@ -241,14 +267,19 @@ class _TutorTabState extends ConsumerState<TutorTab> {
               controller: _textController,
               enabled: !isStreaming,
               decoration: InputDecoration(
-                hintText: isStreaming ? AppLocalizations.of(context)!.tutorIsTyping : 'Ask AI Tutor...',
+                hintText: isStreaming
+                    ? AppLocalizations.of(context)!.tutorIsTyping
+                    : 'Ask AI Tutor...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
                 fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
               ),
               onSubmitted: (_) => _sendMessage(),
             ),
@@ -266,4 +297,3 @@ class _TutorTabState extends ConsumerState<TutorTab> {
     );
   }
 }
-

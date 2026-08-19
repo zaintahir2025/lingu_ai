@@ -25,7 +25,8 @@ class SwipeableFlashcard extends ConsumerStatefulWidget {
   ConsumerState<SwipeableFlashcard> createState() => SwipeableFlashcardState();
 }
 
-class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with SingleTickerProviderStateMixin {
+class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _flipController;
   late FocusNode _focusNode;
   bool _isFront = true;
@@ -115,7 +116,8 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
             } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
               widget.onSwipeRight();
               return KeyEventResult.handled;
-            } else if (event.logicalKey == LogicalKeyboardKey.space || event.logicalKey == LogicalKeyboardKey.enter) {
+            } else if (event.logicalKey == LogicalKeyboardKey.space ||
+                event.logicalKey == LogicalKeyboardKey.enter) {
               flipCard();
               return KeyEventResult.handled;
             }
@@ -173,7 +175,10 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                           fit: BoxFit.scaleDown,
                           child: Text(
                             widget.word.word,
-                            style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: fontSize,
+                              fontWeight: FontWeight.bold,
+                            ),
                             textAlign: TextAlign.center,
                             maxLines: 2,
                           ),
@@ -181,7 +186,11 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                       ),
                       const SizedBox(width: 8),
                       IconButton(
-                        icon: const Icon(Icons.volume_up_rounded, size: 28, color: AppColors.primaryGreen),
+                        icon: const Icon(
+                          Icons.volume_up_rounded,
+                          size: 28,
+                          color: AppColors.primaryGreen,
+                        ),
                         tooltip: 'Listen to word',
                         onPressed: () => _speakTarget(widget.word.word),
                       ),
@@ -193,16 +202,27 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                       onTap: () => _speakTarget(widget.word.exampleSentence!),
                       borderRadius: BorderRadius.circular(12),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.volume_up_outlined, size: 22, color: AppColors.primaryGreenDark),
+                            const Icon(
+                              Icons.volume_up_outlined,
+                              size: 22,
+                              color: AppColors.primaryGreenDark,
+                            ),
                             const SizedBox(width: 8),
                             Flexible(
                               child: Text(
                                 widget.word.exampleSentence!,
-                                style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Colors.black87),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.black87,
+                                ),
                                 textAlign: TextAlign.center,
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
@@ -225,16 +245,26 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
               decoration: BoxDecoration(
                 color: AppColors.primaryGreen.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.flip_camera_android_rounded, size: 14, color: AppColors.primaryGreen),
+                  const Icon(
+                    Icons.flip_camera_android_rounded,
+                    size: 14,
+                    color: AppColors.primaryGreen,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     loc.tapCardToReveal,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryGreenDark,
+                    ),
                   ),
                 ],
               ),
@@ -248,11 +278,22 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                 backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.1),
                 foregroundColor: AppColors.primaryGreenDark,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               icon: const Icon(Icons.volume_up_rounded, size: 18),
-              label: Text(loc.readAll, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+              label: Text(
+                loc.readAll,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                ),
+              ),
               onPressed: () {
                 final sentence = widget.word.exampleSentence;
                 if (sentence != null && sentence.isNotEmpty) {
@@ -293,7 +334,10 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                             fit: BoxFit.scaleDown,
                             child: Text(
                               widget.word.translation,
-                              style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: fontSize,
+                                fontWeight: FontWeight.bold,
+                              ),
                               textAlign: TextAlign.center,
                               maxLines: 2,
                             ),
@@ -301,28 +345,45 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const Icon(Icons.volume_up_rounded, size: 28, color: AppColors.primaryGreen),
+                          icon: const Icon(
+                            Icons.volume_up_rounded,
+                            size: 28,
+                            color: AppColors.primaryGreen,
+                          ),
                           tooltip: 'Listen to translation',
-                          onPressed: () => _speakEnglish(widget.word.translation),
+                          onPressed: () =>
+                              _speakEnglish(widget.word.translation),
                         ),
                       ],
                     ),
                     if (widget.word.exampleTranslation != null) ...[
                       const SizedBox(height: 16),
                       InkWell(
-                        onTap: () => _speakEnglish(widget.word.exampleTranslation!),
+                        onTap: () =>
+                            _speakEnglish(widget.word.exampleTranslation!),
                         borderRadius: BorderRadius.circular(12),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.volume_up_outlined, size: 22, color: AppColors.primaryGreenDark),
+                              const Icon(
+                                Icons.volume_up_outlined,
+                                size: 22,
+                                color: AppColors.primaryGreenDark,
+                              ),
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
                                   widget.word.exampleTranslation!,
-                                  style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Colors.black87),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.black87,
+                                  ),
                                   textAlign: TextAlign.center,
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
@@ -341,7 +402,10 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
               bottom: 16,
               left: 16,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGreen.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -349,11 +413,19 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.touch_app_rounded, size: 14, color: AppColors.primaryGreenDark),
+                    const Icon(
+                      Icons.touch_app_rounded,
+                      size: 14,
+                      color: AppColors.primaryGreenDark,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       loc.tapToFlipBack,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primaryGreenDark),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryGreenDark,
+                      ),
                     ),
                   ],
                 ),
@@ -364,14 +436,27 @@ class SwipeableFlashcardState extends ConsumerState<SwipeableFlashcard> with Sin
               right: 16,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
+                  backgroundColor: AppColors.primaryGreen.withValues(
+                    alpha: 0.2,
+                  ),
                   foregroundColor: AppColors.primaryGreenDark,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
                 icon: const Icon(Icons.volume_up_rounded, size: 18),
-                label: Text(loc.readAll, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                label: Text(
+                  loc.readAll,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
                 onPressed: () {
                   final sentence = widget.word.exampleTranslation;
                   if (sentence != null && sentence.isNotEmpty) {

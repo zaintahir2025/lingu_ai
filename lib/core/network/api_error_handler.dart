@@ -10,9 +10,13 @@ class ApiErrorHandler {
           return 'Connection timed out. Please check your internet.';
         case DioExceptionType.badResponse:
           final statusCode = error.response?.statusCode;
-          if (statusCode == 400) return 'Invalid request. Please check your input.';
+          if (statusCode == 400) {
+            return 'Invalid request. Please check your input.';
+          }
           if (statusCode == 401) return 'Unauthorized. Please log in again.';
-          if (statusCode == 403) return 'You do not have permission to perform this action.';
+          if (statusCode == 403) {
+            return 'You do not have permission to perform this action.';
+          }
           if (statusCode == 404) return 'Resource not found.';
           if (statusCode == 500) return 'Server error. Please try again later.';
           return 'Received invalid response from the server.';

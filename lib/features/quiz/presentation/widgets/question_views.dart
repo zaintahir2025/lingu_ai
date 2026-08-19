@@ -33,9 +33,13 @@ class MultipleChoiceView extends ConsumerWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.volume_up_rounded, color: AppColors.primaryGreen, size: 28),
+              icon: const Icon(
+                Icons.volume_up_rounded,
+                color: AppColors.primaryGreen,
+                size: 28,
+              ),
               tooltip: 'Listen to question',
-              onPressed: () => tts.speak(question.prompt),
+              onPressed: () => tts.speakEnglish(question.prompt),
             ),
           ],
         ),
@@ -58,7 +62,9 @@ class MultipleChoiceView extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.softSuccess : AppColors.surface,
                   border: Border.all(
-                    color: isSelected ? AppColors.primaryGreen : AppColors.divider,
+                    color: isSelected
+                        ? AppColors.primaryGreen
+                        : AppColors.divider,
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(AppConstants.radius16),
@@ -69,14 +75,20 @@ class MultipleChoiceView extends ConsumerWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primaryGreen : AppColors.divider,
-                        borderRadius: BorderRadius.circular(AppConstants.radius8),
+                        color: isSelected
+                            ? AppColors.primaryGreen
+                            : AppColors.divider,
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.radius8,
+                        ),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         '${index + 1}',
                         style: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -86,12 +98,18 @@ class MultipleChoiceView extends ConsumerWidget {
                       child: Text(
                         option,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: isSelected ? AppColors.primaryGreenDark : AppColors.textPrimary,
-                            ),
+                          color: isSelected
+                              ? AppColors.primaryGreenDark
+                              : AppColors.textPrimary,
+                        ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.volume_up_outlined, size: 20, color: AppColors.textSecondary),
+                      icon: const Icon(
+                        Icons.volume_up_outlined,
+                        size: 20,
+                        color: AppColors.textSecondary,
+                      ),
                       onPressed: () => tts.speak(option),
                     ),
                   ],
@@ -110,6 +128,7 @@ class FillBlankView extends ConsumerWidget {
   final String answer;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmit;
+  final bool promptIsEnglish;
 
   const FillBlankView({
     super.key,
@@ -117,6 +136,7 @@ class FillBlankView extends ConsumerWidget {
     required this.answer,
     required this.onChanged,
     required this.onSubmit,
+    this.promptIsEnglish = false,
   });
 
   @override
@@ -140,8 +160,14 @@ class FillBlankView extends ConsumerWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.volume_up_rounded, color: AppColors.primaryGreen, size: 32),
-              onPressed: () => tts.speak(question.prompt),
+              icon: const Icon(
+                Icons.volume_up_rounded,
+                color: AppColors.primaryGreen,
+                size: 32,
+              ),
+              onPressed: () => promptIsEnglish
+                  ? tts.speakEnglish(question.prompt)
+                  : tts.speakTarget(question.prompt),
             ),
           ],
         ),
@@ -156,7 +182,10 @@ class FillBlankView extends ConsumerWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.radius16),
-              borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+              borderSide: const BorderSide(
+                color: AppColors.primaryGreen,
+                width: 2,
+              ),
             ),
           ),
           onChanged: onChanged,
@@ -188,6 +217,7 @@ class TranslationView extends ConsumerWidget {
       answer: answer,
       onChanged: onChanged,
       onSubmit: onSubmit,
+      promptIsEnglish: true,
     );
   }
 }
@@ -262,7 +292,10 @@ class _ListeningViewState extends ConsumerState<ListeningView> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.radius16),
-              borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+              borderSide: const BorderSide(
+                color: AppColors.primaryGreen,
+                width: 2,
+              ),
             ),
           ),
           onChanged: widget.onChanged,

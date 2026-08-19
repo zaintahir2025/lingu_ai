@@ -9,12 +9,9 @@ import '../../../../core/theme/app_colors.dart';
 
 import '../../../quiz/presentation/widgets/word_matching_exercise_view.dart';
 
-enum ModuleStage {
-  flashcards,
-  wordMatching,
-  finalQuiz,
-  scoreboard,
-}
+import '../../../../core/local_storage/local_storage_provider.dart';
+
+enum ModuleStage { flashcards, wordMatching, finalQuiz, scoreboard }
 
 class ModuleFlowScreen extends ConsumerStatefulWidget {
   final int lessonId;
@@ -33,8 +30,33 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(quizControllerProvider(widget.lessonId).notifier).restartQuiz();
+      _restoreSavedStage();
     });
+  }
+
+  void _restoreSavedStage() {
+    try {
+      final box = ref.read(localStorageProvider);
+      final savedIdx =
+          box.get('module_flow_stage_lesson_${widget.lessonId}') as int?;
+      final savedScore =
+          box.get('module_flow_score_lesson_${widget.lessonId}') as num?;
+      if (savedIdx != null &&
+          savedIdx >= 0 &&
+          savedIdx < ModuleStage.values.length) {
+        setState(() {
+          _currentStage = ModuleStage.values[savedIdx];
+          _finalScore = savedScore?.toDouble() ?? 0;
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _saveStage(ModuleStage stage) {
+    try {
+      final box = ref.read(localStorageProvider);
+      box.put('module_flow_stage_lesson_${widget.lessonId}', stage.index);
+    } catch (_) {}
   }
 
   void _advanceStage() {
@@ -45,7 +67,6 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
           break;
         case ModuleStage.wordMatching:
           _currentStage = ModuleStage.finalQuiz;
-          ref.read(quizControllerProvider(widget.lessonId).notifier).restartQuiz();
           break;
         case ModuleStage.finalQuiz:
           _currentStage = ModuleStage.scoreboard;
@@ -53,11 +74,15 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
         case ModuleStage.scoreboard:
           break;
       }
+      _saveStage(_currentStage);
     });
   }
 
   void _onFinalQuizComplete(double score) {
     _finalScore = score;
+    ref
+        .read(localStorageProvider)
+        .put('module_flow_score_lesson_${widget.lessonId}', score);
     _advanceStage();
   }
 
@@ -67,9 +92,15 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
       _currentStage = ModuleStage.wordMatching;
       _finalScore = 0.0;
     });
+    _saveStage(_currentStage);
   }
 
   void _onFinish() {
+    try {
+      final box = ref.read(localStorageProvider);
+      box.delete('module_flow_stage_lesson_${widget.lessonId}');
+      box.delete('module_flow_score_lesson_${widget.lessonId}');
+    } catch (_) {}
     context.go('/');
   }
 

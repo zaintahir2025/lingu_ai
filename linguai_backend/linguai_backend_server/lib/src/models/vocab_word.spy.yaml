@@ -1,0 +1,16 @@
+class: VocabWordRecord
+table: vocab_word
+fields:
+  lessonId: int
+  word: String
+  translation: String
+  audioUrl: String?
+  exampleSentence: String?
+  exampleTranslation: String?
+  partOfSpeech: String, default='phrase'
+  ipa: String?
+  cefrLevel: String, default='A1'
+  orderIndex: int, default=0
+indexes:
+  vocab_word_lesson_idx:
+    fields: lessonId

@@ -5,6 +5,8 @@ import '../../../../core/storage/onboarding_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
+import '../../../../core/audio/sound_service.dart';
 
 class TourScreen extends ConsumerStatefulWidget {
   const TourScreen({super.key});
@@ -25,6 +27,7 @@ class _TourScreenState extends ConsumerState<TourScreen> {
   }
 
   void _nextPage() async {
+    SoundService.playTap();
     if (_currentPage < _totalPages - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -57,18 +60,21 @@ class _TourScreenState extends ConsumerState<TourScreen> {
                   _buildTourSlide(
                     context,
                     Icons.language,
+                    PikoPose.encouraging,
                     AppLocalizations.of(context)!.tourLearnFastTitle,
                     AppLocalizations.of(context)!.tourLearnFastDesc,
                   ),
                   _buildTourSlide(
                     context,
                     Icons.trending_up,
+                    PikoPose.thinking,
                     AppLocalizations.of(context)!.tourTrackProgressTitle,
                     AppLocalizations.of(context)!.tourTrackProgressDesc,
                   ),
                   _buildTourSlide(
                     context,
                     Icons.emoji_events,
+                    PikoPose.celebrating,
                     AppLocalizations.of(context)!.tourStayMotivatedTitle,
                     AppLocalizations.of(context)!.tourStayMotivatedDesc,
                   ),
@@ -89,7 +95,9 @@ class _TourScreenState extends ConsumerState<TourScreen> {
                         height: 8,
                         width: _currentPage == index ? 24 : 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index ? AppColors.primaryGreen : AppColors.divider,
+                          color: _currentPage == index
+                              ? AppColors.primaryGreen
+                              : AppColors.divider,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
@@ -97,7 +105,9 @@ class _TourScreenState extends ConsumerState<TourScreen> {
                   ),
                   const SizedBox(height: 32),
                   PrimaryButton(
-                    text: _currentPage < _totalPages - 1 ? AppLocalizations.of(context)!.nextButton : AppLocalizations.of(context)!.getStartedButton,
+                    text: _currentPage < _totalPages - 1
+                        ? AppLocalizations.of(context)!.nextButton
+                        : AppLocalizations.of(context)!.getStartedButton,
                     onPressed: _nextPage,
                   ),
                 ],
@@ -109,14 +119,55 @@ class _TourScreenState extends ConsumerState<TourScreen> {
     );
   }
 
-  Widget _buildTourSlide(BuildContext context, IconData icon, String title, String description) {
+  Widget _buildTourSlide(
+    BuildContext context,
+    IconData icon,
+    PikoPose pose,
+    String title,
+    String description,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 100, color: AppColors.primaryGreen),
-          const SizedBox(height: 32),
+          SizedBox(
+            width: 230,
+            height: 230,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PikoMascot(size: 220, pose: pose),
+                Positioned(
+                  right: 0,
+                  bottom: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primaryGreen,
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 28,
+                      color: AppColors.primaryGreenDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
           Text(
             title,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -128,9 +179,9 @@ class _TourScreenState extends ConsumerState<TourScreen> {
           Text(
             description,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),

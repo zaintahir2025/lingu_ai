@@ -24,7 +24,8 @@ class PlacementTestScreen extends ConsumerStatefulWidget {
   const PlacementTestScreen({super.key});
 
   @override
-  ConsumerState<PlacementTestScreen> createState() => _PlacementTestScreenState();
+  ConsumerState<PlacementTestScreen> createState() =>
+      _PlacementTestScreenState();
 }
 
 class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
@@ -158,29 +159,31 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
                 Text(
                   'Placement Complete!',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: AppConstants.space12),
                 Text(
                   'Your Starting Level: $_assignedCefrLevel',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.primaryGreen,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: AppColors.primaryGreen,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: AppConstants.space12),
                 Text(
                   'Score: $_score / ${_questions.length} correct',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: AppConstants.space32),
                 ElevatedButton(
                   onPressed: () async {
-                    await ref.read(onboardingStorageProvider).setCompletedOnboarding();
+                    await ref
+                        .read(onboardingStorageProvider)
+                        .setCompletedOnboarding();
                     if (context.mounted) {
                       context.go('/main');
                     }
@@ -206,7 +209,9 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Placement Test (${_currentIndex + 1}/${_questions.length})'),
+        title: Text(
+          'Placement Test (${_currentIndex + 1}/${_questions.length})',
+        ),
         elevation: 0,
       ),
       body: Padding(
@@ -226,14 +231,18 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
                   child: Text(
                     question.prompt,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.volume_up_rounded, color: AppColors.primaryGreen),
-                  onPressed: () => ref.read(ttsServiceProvider).speak(question.prompt),
+                  icon: const Icon(
+                    Icons.volume_up_rounded,
+                    color: AppColors.primaryGreen,
+                  ),
+                  onPressed: () =>
+                      ref.read(ttsServiceProvider).speak(question.prompt),
                 ),
               ],
             ),
@@ -253,9 +262,13 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.softSuccess : AppColors.surface,
+                      color: isSelected
+                          ? AppColors.softSuccess
+                          : AppColors.surface,
                       border: Border.all(
-                        color: isSelected ? AppColors.primaryGreen : AppColors.divider,
+                        color: isSelected
+                            ? AppColors.primaryGreen
+                            : AppColors.divider,
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(16),
@@ -264,8 +277,12 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
                       option,
                       style: TextStyle(
                         fontSize: 18,
-                        color: isSelected ? AppColors.primaryGreenDark : AppColors.textPrimary,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected
+                            ? AppColors.primaryGreenDark
+                            : AppColors.textPrimary,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -283,7 +300,11 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: Text(_currentIndex == _questions.length - 1 ? 'Finish Test' : 'Next Question'),
+              child: Text(
+                _currentIndex == _questions.length - 1
+                    ? 'Finish Test'
+                    : 'Next Question',
+              ),
             ),
           ],
         ),

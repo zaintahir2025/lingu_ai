@@ -9,6 +9,9 @@ import '../../../../core/widgets/shared/duolingo_streak_widget.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../../../progress/presentation/providers/progress_controller.dart';
 import '../../domain/repositories/learn_repository.dart';
+import '../../../../core/ads/ad_service.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
+import '../../../../core/audio/sound_service.dart';
 
 class LearnTab extends ConsumerWidget {
   const LearnTab({super.key});
@@ -21,15 +24,9 @@ class LearnTab extends ConsumerWidget {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                flex: 2,
-                child: _buildMainContent(context, ref),
-              ),
+              Expanded(flex: 2, child: _buildMainContent(context, ref)),
               Container(width: 1, color: AppColors.divider),
-              Expanded(
-                flex: 1,
-                child: _buildSidebar(context, ref),
-              ),
+              Expanded(flex: 1, child: _buildSidebar(context, ref)),
             ],
           );
         }
@@ -61,7 +58,9 @@ class LearnTab extends ConsumerWidget {
         final bannerSubtitle = isNewUser
             ? 'Let\'s get started with your very first lecture!'
             : 'Pick up right where you left off: Lesson $highestUnlockedId';
-        final buttonText = isNewUser ? AppLocalizations.of(context)!.getStartedButton : AppLocalizations.of(context)!.continueButton;
+        final buttonText = isNewUser
+            ? AppLocalizations.of(context)!.getStartedButton
+            : AppLocalizations.of(context)!.continueButton;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,12 +81,12 @@ class LearnTab extends ConsumerWidget {
                       color: AppColors.primaryGreen.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ],
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 44),
+                    const PikoMascot(size: 76, pose: PikoPose.celebrating),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -95,31 +94,56 @@ class LearnTab extends ConsumerWidget {
                         children: [
                           Text(
                             bannerTitle,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             bannerSubtitle,
-                            style: const TextStyle(color: Colors.white70, fontSize: 14),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     ElevatedButton(
                       onPressed: () {
+                        SoundService.playTap();
                         context.push('/module/$highestUnlockedId');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: AppColors.primaryGreen,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                       ),
-                      child: Text(buttonText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      child: Text(
+                        buttonText,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ref
+                  .read(adServiceProvider)
+                  .buildBannerAdContainer(context),
             ),
             const Expanded(child: LessonPathView()),
           ],
@@ -139,10 +163,7 @@ class LearnTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DuolingoStreakWidget(
-            streakCount: streakDays,
-            hasStreakFreeze: true,
-          ),
+          DuolingoStreakWidget(streakCount: streakDays, hasStreakFreeze: true),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -163,12 +184,20 @@ class LearnTab extends ConsumerWidget {
               children: [
                 Text(
                   AppLocalizations.of(context)!.dailyQuests,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                _buildQuestItem(AppLocalizations.of(context)!.earn50Xp, (totalXp % 50) / 50.0),
+                _buildQuestItem(
+                  AppLocalizations.of(context)!.earn50Xp,
+                  (totalXp % 50) / 50.0,
+                ),
                 const SizedBox(height: 12),
-                _buildQuestItem(AppLocalizations.of(context)!.complete2Lessons, (completedCount / 2.0).clamp(0.0, 1.0)),
+                _buildQuestItem(
+                  AppLocalizations.of(context)!.complete2Lessons,
+                  (completedCount / 2.0).clamp(0.0, 1.0),
+                ),
               ],
             ),
           ),
@@ -179,14 +208,19 @@ class LearnTab extends ConsumerWidget {
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.primaryGreen,
               side: const BorderSide(color: AppColors.primaryGreen, width: 2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             icon: const Icon(Icons.list_alt),
-            label: Text(AppLocalizations.of(context)!.vocabularyList, style: const TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(
+              AppLocalizations.of(context)!.vocabularyList,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             onPressed: () {
               context.push('/learn/vocabulary');
             },
-          )
+          ),
         ],
       ),
     );
@@ -196,7 +230,13 @@ class LearnTab extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 8),
         LinearProgressIndicator(
           value: progress.clamp(0.0, 1.0),

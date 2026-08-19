@@ -1,51 +1,118 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+import '../storage/premium_storage.dart';
+import 'banner_ad_widget.dart';
 
 final adServiceProvider = Provider<AdService>((ref) {
-  return AdService();
+  final service = AdService(enabled: !ref.watch(premiumStorageProvider));
+  unawaited(service.preloadInterstitial());
+  ref.onDispose(service.dispose);
+  return service;
 });
 
 class AdService {
-  bool _isAdEnabled = true;
+  AdService({required this.enabled});
 
-  bool get isAdEnabled => _isAdEnabled;
+  final bool enabled;
+  InterstitialAd? _interstitialAd;
+  bool _isLoadingInterstitial = false;
 
-  void toggleAds(bool enabled) {
-    _isAdEnabled = enabled;
+  bool get isSupported =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  Widget buildBannerAdContainer(BuildContext context) =>
+      const BannerAdWidget(placement: AdPlacement.learnHome);
+
+  Widget buildLessonAdBanner(BuildContext context) =>
+      const BannerAdWidget(placement: AdPlacement.vocabulary);
+
+  Widget buildReviewAdBanner(BuildContext context) =>
+      const BannerAdWidget(placement: AdPlacement.review);
+
+  Future<bool> showInterstitialAd() async {
+    if (!enabled || !isSupported) return false;
+
+    final ad = _interstitialAd ?? await _loadInterstitial();
+    if (ad == null) return false;
+
+    _interstitialAd = null;
+    final completer = Completer<bool>();
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (shownAd) {
+        shownAd.dispose();
+        if (!completer.isCompleted) completer.complete(true);
+        unawaited(_loadInterstitial());
+      },
+      onAdFailedToShowFullScreenContent: (shownAd, error) {
+        shownAd.dispose();
+        if (!completer.isCompleted) completer.complete(false);
+        unawaited(_loadInterstitial());
+      },
+    );
+    ad.show();
+    return completer.future;
   }
 
-  /// Renders a responsive AdMob Banner Container placeholder
-  Widget buildBannerAdContainer(BuildContext context) {
-    if (!_isAdEnabled) return const SizedBox.shrink();
+  Future<void> preloadInterstitial() async {
+    await _loadInterstitial();
+  }
 
-    return Container(
-      width: double.infinity,
-      height: 60,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.ads_click_rounded, color: Colors.grey, size: 20),
-          SizedBox(width: 8),
-          Text(
-            'Google AdMob Banner (Ad Placeholder)',
-            style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
-          ),
-        ],
+  Future<InterstitialAd?> _loadInterstitial() async {
+    if (_isLoadingInterstitial || !enabled || !isSupported) {
+      return _interstitialAd;
+    }
+
+    final adUnitId = _interstitialAdUnitId;
+    if (adUnitId.isEmpty) return null;
+
+    _isLoadingInterstitial = true;
+    final completer = Completer<InterstitialAd?>();
+    InterstitialAd.load(
+      adUnitId: adUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _isLoadingInterstitial = false;
+          _interstitialAd = ad;
+          completer.complete(ad);
+        },
+        onAdFailedToLoad: (error) {
+          _isLoadingInterstitial = false;
+          debugPrint('AdMob interstitial failed to load: $error');
+          completer.complete(null);
+        },
       ),
     );
+    return completer.future;
   }
 
-  /// Simulates triggering an Interstitial Ad after quiz completion
-  void showInterstitialAd(BuildContext context) {
-    if (!_isAdEnabled) return;
-    
-    debugPrint('AdMob: Interstitial Ad triggered for Free tier user.');
+  String get _interstitialAdUnitId {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      const production = String.fromEnvironment(
+        'ADMOB_ANDROID_INTERSTITIAL_ID',
+      );
+      return production.isNotEmpty || kReleaseMode
+          ? production
+          : 'ca-app-pub-3940256099942544/1033173712';
+    }
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      const production = String.fromEnvironment('ADMOB_IOS_INTERSTITIAL_ID');
+      return production.isNotEmpty || kReleaseMode
+          ? production
+          : 'ca-app-pub-3940256099942544/4411468910';
+    }
+    return '';
+  }
+
+  void dispose() {
+    _interstitialAd?.dispose();
+    _interstitialAd = null;
   }
 }

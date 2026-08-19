@@ -34,12 +34,9 @@ class ProgressTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppConstants.space24),
-              
+
               // Duolingo-style Streak Widget
-              DuolingoStreakWidget(
-                streakCount: streak,
-                hasStreakFreeze: true,
-              ),
+              DuolingoStreakWidget(streakCount: streak, hasStreakFreeze: true),
               const SizedBox(height: AppConstants.space24),
 
               // Weekly XP Chart
@@ -53,18 +50,21 @@ class ProgressTab extends ConsumerWidget {
               // Extended Stat Grid
               Text(
                 AppLocalizations.of(context)!.statistics,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppConstants.space16),
               LayoutBuilder(
                 builder: (context, constraints) {
                   int crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
-                  
-                  final masteredWords = ref.watch(masteredWordsCountProvider).value ?? 0;
-                  final completedLessons = ref.watch(completedLessonsCountProvider).value ?? 0;
-                  final minutesSpent = ref.watch(minutesSpentProvider).value ?? 0;
+
+                  final masteredWords =
+                      ref.watch(masteredWordsCountProvider).value ?? 0;
+                  final completedLessons =
+                      ref.watch(completedLessonsCountProvider).value ?? 0;
+                  final minutesSpent =
+                      ref.watch(minutesSpentProvider).value ?? 0;
 
                   return GridView.count(
                     crossAxisCount: crossAxisCount,
@@ -74,12 +74,48 @@ class ProgressTab extends ConsumerWidget {
                     mainAxisSpacing: AppConstants.space16,
                     childAspectRatio: 1.2,
                     children: [
-                      _buildStatCard(context, AppLocalizations.of(context)!.totalXp, xp.toString(), Icons.star, AppColors.xpGold),
-                      _buildStatCard(context, AppLocalizations.of(context)!.levelTitle, level.toString(), Icons.military_tech, AppColors.primaryGreen),
-                      _buildStatCard(context, AppLocalizations.of(context)!.dayStreak, streak.toString(), Icons.local_fire_department, AppColors.streakOrange),
-                      _buildStatCard(context, AppLocalizations.of(context)!.masteredWords, masteredWords.toString(), Icons.school, Colors.blue),
-                      _buildStatCard(context, AppLocalizations.of(context)!.completedLessons, completedLessons.toString(), Icons.menu_book, Colors.purple),
-                      _buildStatCard(context, AppLocalizations.of(context)!.minutesSpent, minutesSpent.toString(), Icons.timer, Colors.teal),
+                      _buildStatCard(
+                        context,
+                        AppLocalizations.of(context)!.totalXp,
+                        xp.toString(),
+                        Icons.star,
+                        AppColors.xpGold,
+                      ),
+                      _buildStatCard(
+                        context,
+                        AppLocalizations.of(context)!.levelTitle,
+                        level.toString(),
+                        Icons.military_tech,
+                        AppColors.primaryGreen,
+                      ),
+                      _buildStatCard(
+                        context,
+                        AppLocalizations.of(context)!.dayStreak,
+                        streak.toString(),
+                        Icons.local_fire_department,
+                        AppColors.streakOrange,
+                      ),
+                      _buildStatCard(
+                        context,
+                        AppLocalizations.of(context)!.masteredWords,
+                        masteredWords.toString(),
+                        Icons.school,
+                        Colors.blue,
+                      ),
+                      _buildStatCard(
+                        context,
+                        AppLocalizations.of(context)!.completedLessons,
+                        completedLessons.toString(),
+                        Icons.menu_book,
+                        Colors.purple,
+                      ),
+                      _buildStatCard(
+                        context,
+                        AppLocalizations.of(context)!.minutesSpent,
+                        minutesSpent.toString(),
+                        Icons.timer,
+                        Colors.teal,
+                      ),
                     ],
                   );
                 },
@@ -111,7 +147,7 @@ class ProgressTab extends ConsumerWidget {
     for (final xp in weeklyXp) {
       if (xp > maxY) maxY = xp + 20;
     }
-    
+
     return Container(
       height: 200,
       padding: const EdgeInsets.all(AppConstants.space16),
@@ -123,7 +159,7 @@ class ProgressTab extends ConsumerWidget {
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -131,7 +167,9 @@ class ProgressTab extends ConsumerWidget {
         children: [
           Text(
             AppLocalizations.of(context)!.weeklyXp,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppConstants.space16),
           Expanded(
@@ -146,25 +184,51 @@ class ProgressTab extends ConsumerWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (double value, TitleMeta meta) {
-                        const style = TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12);
+                        const style = TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        );
                         Widget text;
                         switch (value.toInt()) {
-                          case 0: text = const Text('M', style: style); break;
-                          case 1: text = const Text('T', style: style); break;
-                          case 2: text = const Text('W', style: style); break;
-                          case 3: text = const Text('T', style: style); break;
-                          case 4: text = const Text('F', style: style); break;
-                          case 5: text = const Text('S', style: style); break;
-                          case 6: text = const Text('S', style: style); break;
-                          default: text = const Text('', style: style); break;
+                          case 0:
+                            text = const Text('M', style: style);
+                            break;
+                          case 1:
+                            text = const Text('T', style: style);
+                            break;
+                          case 2:
+                            text = const Text('W', style: style);
+                            break;
+                          case 3:
+                            text = const Text('T', style: style);
+                            break;
+                          case 4:
+                            text = const Text('F', style: style);
+                            break;
+                          case 5:
+                            text = const Text('S', style: style);
+                            break;
+                          case 6:
+                            text = const Text('S', style: style);
+                            break;
+                          default:
+                            text = const Text('', style: style);
+                            break;
                         }
                         return SideTitleWidget(meta: meta, child: text);
                       },
                     ),
                   ),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
@@ -182,7 +246,7 @@ class ProgressTab extends ConsumerWidget {
                           toY: maxY,
                           color: AppColors.surface.withValues(alpha: 0.5),
                         ),
-                      )
+                      ),
                     ],
                   );
                 }).toList(),
@@ -221,7 +285,11 @@ class ProgressTab extends ConsumerWidget {
             alignment: Alignment.center,
             child: Text(
               currentCefr,
-              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: AppConstants.space16),
@@ -246,13 +314,19 @@ class ProgressTab extends ConsumerWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(AppConstants.space16),
       decoration: BoxDecoration(

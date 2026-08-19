@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../network/connectivity_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_constants.dart';
-import 'mascot_widget.dart';
+import '../mascot/piko_mascot.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 
 class OfflineGate extends ConsumerWidget {
@@ -11,12 +11,7 @@ class OfflineGate extends ConsumerWidget {
   final String? title;
   final String? message;
 
-  const OfflineGate({
-    super.key,
-    required this.child,
-    this.title,
-    this.message,
-  });
+  const OfflineGate({super.key, required this.child, this.title, this.message});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,11 +24,7 @@ class OfflineGate extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const MascotWidget(
-                pose: MascotPose.idle, // Represents sleeping/resting
-                width: 150,
-                height: 150,
-              ),
+              const PikoMascot(pose: PikoPose.sad, size: 150),
               const SizedBox(height: AppConstants.space32),
               Text(
                 title ?? AppLocalizations.of(context)!.offlineTitleDefault,
@@ -46,9 +37,9 @@ class OfflineGate extends ConsumerWidget {
               Text(
                 message ?? AppLocalizations.of(context)!.offlineMessageDefault,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
               ),
             ],
           ),

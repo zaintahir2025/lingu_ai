@@ -4,7 +4,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
-    "theme_color": "#58CC02",
+    "theme_color": "#20C997",
     "description": "Learn languages faster with AI-powered spaced repetition, personalized lessons, and a friendly tutor.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,

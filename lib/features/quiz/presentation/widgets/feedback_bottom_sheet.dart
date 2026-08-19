@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/audio/sound_service.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_constants.dart';
-import '../../../../../core/widgets/mascot/lingu_mascot.dart';
+import '../../../../../core/widgets/mascot/piko_mascot.dart';
 import '../../../../../core/widgets/shared/primary_button.dart';
 
 class FeedbackBottomSheet extends StatefulWidget {
@@ -36,7 +36,8 @@ class FeedbackBottomSheet extends StatefulWidget {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.transparent, // Allow interaction below? No, it's a bottom sheet.
+      barrierColor: Colors
+          .transparent, // Allow interaction below? No, it's a bottom sheet.
       builder: (context) => FeedbackBottomSheet(
         isCorrect: isCorrect,
         correctAnswer: correctAnswer,
@@ -81,8 +82,12 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = widget.isCorrect ? AppColors.softSuccess : AppColors.softError;
-    final textColor = widget.isCorrect ? AppColors.softSuccessText : AppColors.softErrorText;
+    final bgColor = widget.isCorrect
+        ? AppColors.softSuccess
+        : AppColors.softError;
+    final textColor = widget.isCorrect
+        ? AppColors.softSuccessText
+        : AppColors.softErrorText;
 
     Widget content = Container(
       padding: const EdgeInsets.all(AppConstants.space24),
@@ -99,8 +104,10 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
           children: [
             Row(
               children: [
-                LinguMascot(
-                  pose: widget.isCorrect ? MascotPose.celebrating : MascotPose.encouraging,
+                PikoMascot(
+                  pose: widget.isCorrect
+                      ? PikoPose.celebrating
+                      : PikoPose.encouraging,
                   size: 60,
                 ),
                 const SizedBox(width: AppConstants.space16),
@@ -110,15 +117,16 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
                     children: [
                       Text(
                         widget.isCorrect ? 'Excellent!' : 'Good try!',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: textColor,
-                            ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleLarge?.copyWith(color: textColor),
                       ),
                       if (!widget.isCorrect) ...[
                         const SizedBox(height: 4),
                         Text(
                           'Correct answer: ${widget.correctAnswer}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: textColor,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -126,9 +134,9 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
                         const SizedBox(height: 4),
                         Text(
                           widget.explanation,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: textColor,
-                              ),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(color: textColor),
                         ),
                       ],
                     ],
@@ -154,9 +162,7 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
                 child: TextButton.icon(
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: const Text('Ask Tutor Why'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: textColor,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: textColor),
                   onPressed: widget.onAskTutor,
                 ),
               ),
@@ -171,9 +177,14 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
         animation: _shakeController,
         builder: (context, child) {
           final sineValue =
-              (1 - _shakeController.value) * 10 * (1 - _shakeController.value); // Decaying shake
+              (1 - _shakeController.value) *
+              10 *
+              (1 - _shakeController.value); // Decaying shake
           return Transform.translate(
-            offset: Offset(sineValue * (1 - _shakeController.value % 0.2 < 0.1 ? 1 : -1), 0),
+            offset: Offset(
+              sineValue * (1 - _shakeController.value % 0.2 < 0.1 ? 1 : -1),
+              0,
+            ),
             child: child,
           );
         },

@@ -21,9 +21,12 @@ class StudyGoalStorage {
     return null;
   }
 
-  int get dailyGoalMinutes => (_box?.get(_dailyGoalKey, defaultValue: 15) as int?) ?? 15;
-  int get weeklyGoalHours => (_box?.get(_weeklyGoalKey, defaultValue: 2) as int?) ?? 2;
-  int get monthlyGoalHours => (_box?.get(_monthlyGoalKey, defaultValue: 10) as int?) ?? 10;
+  int get dailyGoalMinutes =>
+      (_box?.get(_dailyGoalKey, defaultValue: 15) as int?) ?? 15;
+  int get weeklyGoalHours =>
+      (_box?.get(_weeklyGoalKey, defaultValue: 2) as int?) ?? 2;
+  int get monthlyGoalHours =>
+      (_box?.get(_monthlyGoalKey, defaultValue: 10) as int?) ?? 10;
 
   Future<void> setDailyGoalMinutes(int minutes) async {
     final box = _box;

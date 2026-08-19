@@ -9,6 +9,7 @@ import '../../data/vocab_translator.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/providers/target_language_provider.dart';
+import '../../../../core/ads/ad_service.dart';
 
 final vocabularyListProvider = FutureProvider<List<VocabWord>>((ref) async {
   final db = ref.read(databaseProvider);
@@ -22,10 +23,12 @@ class VocabularyListScreen extends ConsumerStatefulWidget {
   const VocabularyListScreen({super.key});
 
   @override
-  ConsumerState<VocabularyListScreen> createState() => _VocabularyListScreenState();
+  ConsumerState<VocabularyListScreen> createState() =>
+      _VocabularyListScreenState();
 }
 
-class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> with SingleTickerProviderStateMixin {
+class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -74,12 +77,16 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> wit
                   const SizedBox(height: AppConstants.space16),
                   Text(
                     AppLocalizations.of(context)!.noVocabFound,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: AppConstants.space8),
                   Text(
                     'Complete lessons to unlock vocabulary.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                   ),
                 ],
               ),
@@ -90,7 +97,10 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> wit
             children: [
               _buildList(context, words),
               _buildList(context, words.where((w) => w.interval < 21).toList()),
-              _buildList(context, words.where((w) => w.interval >= 21).toList()),
+              _buildList(
+                context,
+                words.where((w) => w.interval >= 21).toList(),
+              ),
             ],
           );
         },
@@ -114,6 +124,12 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> wit
         ),
         error: (e, s) => Center(child: Text('Error: $e')),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ref.read(adServiceProvider).buildLessonAdBanner(context),
+        ),
+      ),
     );
   }
 
@@ -128,7 +144,7 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> wit
       itemBuilder: (context, index) {
         final word = words[index];
         final isMastered = word.interval >= 21;
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: AppConstants.space8),
           child: ListTile(
@@ -140,13 +156,19 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen> wit
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: isMastered ? AppColors.primaryGreen.withAlpha(25) : AppColors.streakOrange.withAlpha(25),
+                color: isMastered
+                    ? AppColors.primaryGreen.withAlpha(25)
+                    : AppColors.streakOrange.withAlpha(25),
                 borderRadius: BorderRadius.circular(AppConstants.radius12),
               ),
               child: Text(
-                isMastered ? AppLocalizations.of(context)!.masteredTab : AppLocalizations.of(context)!.learningTab,
+                isMastered
+                    ? AppLocalizations.of(context)!.masteredTab
+                    : AppLocalizations.of(context)!.learningTab,
                 style: TextStyle(
-                  color: isMastered ? AppColors.primaryGreen : AppColors.streakOrange,
+                  color: isMastered
+                      ? AppColors.primaryGreen
+                      : AppColors.streakOrange,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),

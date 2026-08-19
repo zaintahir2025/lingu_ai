@@ -26,13 +26,21 @@ class _PrimaryButtonState extends State<PrimaryButton> {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = widget.isSecondary ? AppColors.surface : AppColors.primaryGreen;
-    final shadowColor = widget.isSecondary ? AppColors.divider : AppColors.primaryGreenDark;
+    final baseColor = widget.isSecondary
+        ? AppColors.surface
+        : AppColors.primaryGreen;
+    final shadowColor = widget.isSecondary
+        ? AppColors.divider
+        : AppColors.primaryGreenDark;
     final textColor = widget.isSecondary ? AppColors.textPrimary : Colors.white;
-    final hoverColor = widget.isSecondary ? Colors.grey[50] : const Color(0xFF6DE010);
+    final hoverColor = widget.isSecondary
+        ? Colors.grey[50]
+        : const Color(0xFF6DE010);
 
     return MouseRegion(
-      cursor: widget.onPressed == null ? SystemMouseCursors.basic : SystemMouseCursors.click,
+      cursor: widget.onPressed == null
+          ? SystemMouseCursors.basic
+          : SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
@@ -48,30 +56,32 @@ class _PrimaryButtonState extends State<PrimaryButton> {
           decoration: BoxDecoration(
             color: _isHovered ? hoverColor : baseColor,
             borderRadius: BorderRadius.circular(AppConstants.radius16),
-            border: widget.isSecondary ? Border.all(color: AppColors.divider, width: 2) : null,
+            border: widget.isSecondary
+                ? Border.all(color: AppColors.divider, width: 2)
+                : null,
             boxShadow: _isPressed || widget.onPressed == null
                 ? []
-                : [
-                    BoxShadow(
-                      color: shadowColor,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
+                : [BoxShadow(color: shadowColor, offset: const Offset(0, 4))],
           ),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           child: Center(
-            child: widget.isLoading 
-              ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                )
-              : Text(
-                  widget.text.toUpperCase(),
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: widget.onPressed == null ? AppColors.textSecondary : textColor,
-                      ),
-                ),
+            child: widget.isLoading
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                  )
+                : Text(
+                    widget.text.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: widget.onPressed == null
+                          ? AppColors.textSecondary
+                          : textColor,
+                    ),
+                  ),
           ),
         ),
       ),

@@ -9,17 +9,9 @@ class GameState {
   final int xp;
   final int streak;
 
-  const GameState({
-    this.hearts = 5,
-    this.xp = 0,
-    this.streak = 0,
-  });
+  const GameState({this.hearts = 5, this.xp = 0, this.streak = 0});
 
-  GameState copyWith({
-    int? hearts,
-    int? xp,
-    int? streak,
-  }) {
+  GameState copyWith({int? hearts, int? xp, int? streak}) {
     return GameState(
       hearts: hearts ?? this.hearts,
       xp: xp ?? this.xp,
@@ -58,7 +50,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
           shouldReset = true;
         } else {
           final lastResetDate = DateTime.tryParse(lastResetIso);
-          if (lastResetDate == null || DateTime.now().difference(lastResetDate).inHours >= 24) {
+          if (lastResetDate == null ||
+              DateTime.now().difference(lastResetDate).inHours >= 24) {
             shouldReset = true;
           }
         }
@@ -70,11 +63,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
         }
       }
 
-      state = GameState(
-        hearts: savedHearts,
-        xp: xp,
-        streak: streak,
-      );
+      state = GameState(hearts: savedHearts, xp: xp, streak: streak);
     } catch (_) {
       // Keep default values if storage is not initialized
     }
@@ -113,21 +102,21 @@ class GameStateNotifier extends StateNotifier<GameState> {
       final rows = await db.select(db.userProgress).get();
       if (rows.isNotEmpty) {
         final progress = rows.first;
-        await db.update(db.userProgress).replace(
-          progress.copyWith(hearts: hearts),
-        );
+        await db
+            .update(db.userProgress)
+            .replace(progress.copyWith(hearts: hearts));
       } else {
         // Create an entry if it doesn't exist
-        await db.into(db.userProgress).insert(
-          UserProgressCompanion.insert(
-            hearts: Value(hearts),
-          ),
-        );
+        await db
+            .into(db.userProgress)
+            .insert(UserProgressCompanion.insert(hearts: Value(hearts)));
       }
     } catch (_) {}
   }
 }
 
-final gameStateProvider = StateNotifierProvider<GameStateNotifier, GameState>((ref) {
+final gameStateProvider = StateNotifierProvider<GameStateNotifier, GameState>((
+  ref,
+) {
   return GameStateNotifier(ref);
 });

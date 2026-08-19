@@ -28,7 +28,11 @@ class LessonNode extends StatelessWidget {
       nodeIcon = const Icon(Icons.check, color: Colors.white, size: 40);
     } else {
       nodeColor = AppColors.primaryGreen;
-      nodeIcon = const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 48);
+      nodeIcon = const Icon(
+        Icons.play_arrow_rounded,
+        color: Colors.white,
+        size: 48,
+      );
     }
 
     Widget node = GestureDetector(
@@ -59,8 +63,13 @@ class LessonNode extends StatelessWidget {
     }
 
     if (isCurrent) {
-      node = node.animate(onPlay: (controller) => controller.repeat(reverse: true))
-          .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1), duration: 800.ms);
+      node = node
+          .animate(onPlay: (controller) => controller.repeat(reverse: true))
+          .scale(
+            begin: const Offset(1, 1),
+            end: const Offset(1.1, 1.1),
+            duration: 800.ms,
+          );
     }
 
     return Column(
@@ -72,7 +81,9 @@ class LessonNode extends StatelessWidget {
           lesson.topic,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: lesson.isLocked ? AppColors.textSecondary : AppColors.textPrimary,
+            color: lesson.isLocked
+                ? AppColors.textSecondary
+                : AppColors.textPrimary,
           ),
         ),
       ],

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/responsive/adaptive_scaffold.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/storage/premium_storage.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -17,74 +15,13 @@ import '../../progress/presentation/providers/progress_controller.dart';
 import '../../progress/presentation/screens/progress_tab.dart';
 import '../../progress/presentation/screens/profile_tab.dart';
 import '../../tutor/presentation/screens/tutor_tab.dart';
+import '../../../../core/widgets/mascot/piko_mascot.dart';
+import '../../../../core/audio/sound_service.dart';
 
 final homeTabProvider = StateProvider<int>((ref) => 0);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
-  void _showAiTutorPremiumModal(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 28),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                loc.aiTutorPremiumOnlyTitle,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              loc.aiTutorPremiumOnlyDesc,
-              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
-            ),
-            const SizedBox(height: 16),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('✨ Included Perks:', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 6),
-                Text('• Unlimited 24/7 AI Tutor Chat'),
-                Text('• Ad-Free Learning Experience'),
-                Text('• Unlimited Hearts Mode (∞)'),
-                Text('• Priority Customer Support ⚡'),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Maybe Later', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              context.push('/payment');
-            },
-            child: Text(loc.proceedToPayment, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -107,39 +44,62 @@ class HomeScreen extends ConsumerWidget {
       title: 'LinguAI',
       selectedIndex: selectedIndex,
       onNavigationIndexChanged: (index) {
-        if (index == 2) {
-          final isPremium = ref.read(premiumStorageProvider);
-          if (!isPremium) {
-            _showAiTutorPremiumModal(context);
-            return;
-          }
-        }
+        SoundService.playTap();
         ref.read(homeTabProvider.notifier).state = index;
       },
       destinations: [
         NavigationDestination(
-          icon: SvgPicture.asset('assets/images/svgs/learn.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
-          selectedIcon: SvgPicture.asset('assets/images/svgs/learn.svg', height: 28),
+          icon: SvgPicture.asset(
+            'assets/images/svgs/learn.svg',
+            height: 24,
+            colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+          ),
+          selectedIcon: SvgPicture.asset(
+            'assets/images/svgs/learn.svg',
+            height: 28,
+          ),
           label: AppLocalizations.of(context)!.learnTab,
         ),
         NavigationDestination(
-          icon: SvgPicture.asset('assets/images/svgs/quests.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
-          selectedIcon: SvgPicture.asset('assets/images/svgs/quests.svg', height: 28),
+          icon: SvgPicture.asset(
+            'assets/images/svgs/quests.svg',
+            height: 24,
+            colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+          ),
+          selectedIcon: SvgPicture.asset(
+            'assets/images/svgs/quests.svg',
+            height: 28,
+          ),
           label: AppLocalizations.of(context)!.reviewTab,
         ),
         NavigationDestination(
-          icon: SvgPicture.asset('assets/images/svgs/mascot.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
-          selectedIcon: SvgPicture.asset('assets/images/svgs/mascot.svg', height: 28),
+          icon: const PikoMascot(size: 26, animated: false),
+          selectedIcon: const PikoMascot(size: 30),
           label: AppLocalizations.of(context)!.tutorTab,
         ),
         NavigationDestination(
-          icon: SvgPicture.asset('assets/images/svgs/leaderboard.svg', height: 24, colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
-          selectedIcon: SvgPicture.asset('assets/images/svgs/leaderboard.svg', height: 28),
+          icon: SvgPicture.asset(
+            'assets/images/svgs/leaderboard.svg',
+            height: 24,
+            colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
+          ),
+          selectedIcon: SvgPicture.asset(
+            'assets/images/svgs/leaderboard.svg',
+            height: 28,
+          ),
           label: AppLocalizations.of(context)!.progressTab,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.person_outline_rounded, size: 26, color: Colors.grey),
-          selectedIcon: Icon(Icons.person_rounded, size: 28, color: AppColors.primaryGreen),
+          icon: const Icon(
+            Icons.person_outline_rounded,
+            size: 26,
+            color: Colors.grey,
+          ),
+          selectedIcon: Icon(
+            Icons.person_rounded,
+            size: 28,
+            color: AppColors.primaryGreen,
+          ),
           label: AppLocalizations.of(context)!.profileTab,
         ),
       ],

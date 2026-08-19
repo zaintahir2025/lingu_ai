@@ -14,17 +14,21 @@ class ExperienceChoiceScreen extends ConsumerWidget {
     final userState = ref.watch(userControllerProvider);
 
     void submitBeginner() {
-      final targetLanguage = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
-      ref.read(userControllerProvider.notifier).submitSurvey(
-        knowledgeLevel: 'beginner',
-        fluencyScore: 10,
-        targetLanguage: targetLanguage,
-      ).then((_) {
-        // Need to refetch user or let auth controller handle it
-        if (context.mounted) {
-          context.go('/');
-        }
-      });
+      final targetLanguage =
+          ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+      ref
+          .read(userControllerProvider.notifier)
+          .submitSurvey(
+            knowledgeLevel: 'beginner',
+            fluencyScore: 10,
+            targetLanguage: targetLanguage,
+          )
+          .then((_) {
+            // Need to refetch user or let auth controller handle it
+            if (context.mounted) {
+              context.go('/');
+            }
+          });
     }
 
     return Scaffold(
@@ -62,15 +66,20 @@ class ExperienceChoiceScreen extends ConsumerWidget {
                         title: 'I know some words',
                         subtitle: 'Take a short survey',
                         icon: Icons.school,
-                        onTap: userState.isLoading ? null : () => context.go('/survey'),
+                        onTap: userState.isLoading
+                            ? null
+                            : () => context.go('/survey'),
                       ),
                     ],
                   ),
                 ),
                 if (userState.error != null) ...[
                   const SizedBox(height: 16),
-                  Text(userState.error!, style: const TextStyle(color: AppColors.softErrorText)),
-                ]
+                  Text(
+                    userState.error!,
+                    style: const TextStyle(color: AppColors.softErrorText),
+                  ),
+                ],
               ],
             ),
           ),
@@ -79,7 +88,13 @@ class ExperienceChoiceScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildOption(BuildContext context, {required String title, required String subtitle, required IconData icon, required VoidCallback? onTap}) {
+  Widget _buildOption(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -100,13 +115,30 @@ class ExperienceChoiceScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: AppColors.textSecondary, size: 16),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.textSecondary,
+              size: 16,
+            ),
           ],
         ),
       ),

@@ -4,10 +4,7 @@ import '../../theme/app_colors.dart';
 class StreakFlame extends StatelessWidget {
   final int streakDays;
 
-  const StreakFlame({
-    super.key,
-    required this.streakDays,
-  });
+  const StreakFlame({super.key, required this.streakDays});
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +21,9 @@ class StreakFlame extends StatelessWidget {
         Text(
           '$streakDays',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: hasStreak ? AppColors.streakOrange : AppColors.textSecondary,
-                fontWeight: FontWeight.w800,
-              ),
+            color: hasStreak ? AppColors.streakOrange : AppColors.textSecondary,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );

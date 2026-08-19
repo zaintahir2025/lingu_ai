@@ -17,7 +17,8 @@ class DuolingoStreakWidget extends StatefulWidget {
   State<DuolingoStreakWidget> createState() => _DuolingoStreakWidgetState();
 }
 
-class _DuolingoStreakWidgetState extends State<DuolingoStreakWidget> with SingleTickerProviderStateMixin {
+class _DuolingoStreakWidgetState extends State<DuolingoStreakWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _flameController;
   late Animation<double> _scaleAnimation;
 
@@ -49,7 +50,10 @@ class _DuolingoStreakWidgetState extends State<DuolingoStreakWidget> with Single
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.streakOrange.withValues(alpha: 0.3), width: 2),
+        border: Border.all(
+          color: AppColors.streakOrange.withValues(alpha: 0.3),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.streakOrange.withValues(alpha: 0.1),
@@ -105,7 +109,10 @@ class _DuolingoStreakWidgetState extends State<DuolingoStreakWidget> with Single
                 Tooltip(
                   message: 'Streak Freeze Active 🧊',
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.lightBlue.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
@@ -113,11 +120,19 @@ class _DuolingoStreakWidgetState extends State<DuolingoStreakWidget> with Single
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.ac_unit_rounded, size: 14, color: Colors.lightBlue),
+                        Icon(
+                          Icons.ac_unit_rounded,
+                          size: 14,
+                          color: Colors.lightBlue,
+                        ),
                         SizedBox(width: 4),
                         Text(
                           '1 Freeze',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.lightBlue),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.lightBlue,
+                          ),
                         ),
                       ],
                     ),
@@ -128,35 +143,51 @@ class _DuolingoStreakWidgetState extends State<DuolingoStreakWidget> with Single
           const SizedBox(height: 16),
           const Divider(height: 1),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (index) {
-              final isActive = index < widget.weeklyActivity.length && widget.weeklyActivity[index];
-              return Column(
-                children: [
-                  Text(
-                    _weekDays[index],
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isActive ? AppColors.streakOrange : AppColors.textSecondary,
-                    ),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(7, (index) {
+                final isActive =
+                    index < widget.weeklyActivity.length &&
+                    widget.weeklyActivity[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    children: [
+                      Text(
+                        _weekDays[index],
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isActive
+                              ? AppColors.streakOrange
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isActive
+                              ? AppColors.streakOrange
+                              : AppColors.divider.withValues(alpha: 0.5),
+                        ),
+                        child: isActive
+                            ? const Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              )
+                            : null,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isActive ? AppColors.streakOrange : AppColors.divider.withValues(alpha: 0.5),
-                    ),
-                    child: isActive
-                        ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
-                        : null,
-                  ),
-                ],
-              );
-            }),
+                );
+              }),
+            ),
           ),
         ],
       ),

@@ -1,0 +1,15 @@
+class: LessonRecord
+table: lesson
+fields:
+  topic: String
+  cefrLevel: String
+  orderIndex: int
+  languageCode: String, default='es'
+  unitNumber: int, default=1
+  grammarNote: String, default=''
+  status: String, default='approved'
+indexes:
+  lesson_order_idx:
+    fields: orderIndex
+  lesson_language_idx:
+    fields: languageCode

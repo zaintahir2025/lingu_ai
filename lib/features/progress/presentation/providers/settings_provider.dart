@@ -9,10 +9,7 @@ class SettingsState {
     this.soundEnabled = true,
   });
 
-  SettingsState copyWith({
-    bool? notificationsEnabled,
-    bool? soundEnabled,
-  }) {
+  SettingsState copyWith({bool? notificationsEnabled, bool? soundEnabled}) {
     return SettingsState(
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,

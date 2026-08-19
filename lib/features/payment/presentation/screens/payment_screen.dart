@@ -1,14 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_constants.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../../core/storage/premium_storage.dart';
-import '../../../../core/storage/user_registry_storage.dart';
-import '../../../admin/presentation/screens/admin_panel_screen.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/shared/app_card.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
-import 'package:lingu_ai/l10n/app_localizations.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../data/payment_repository.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   const PaymentScreen({super.key});
@@ -18,238 +19,187 @@ class PaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _PaymentScreenState extends ConsumerState<PaymentScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _cardNumberController = TextEditingController();
-  final _expiryController = TextEditingController();
-  final _cvvController = TextEditingController();
-  bool _isProcessing = false;
+  bool _busy = false;
+  VerifiedSubscription? _subscription;
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    _cardNumberController.dispose();
-    _expiryController.dispose();
-    _cvvController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    Future.microtask(_refresh);
   }
 
-  void _processPayment() async {
-    if (!_formKey.currentState!.validate()) return;
+  String _message(Object error) =>
+      error.toString().replaceFirst('Exception: ', '');
 
-    setState(() => _isProcessing = true);
+  void _notify(String title, String message, NotificationType type) {
+    if (!mounted) return;
+    InAppNotificationBanner.show(
+      context: context,
+      title: title,
+      message: message,
+      type: type,
+    );
+  }
 
-    // Simulate bank transaction processing
-    await Future.delayed(const Duration(seconds: 2));
-
-    // 1. Mark local user as Premium for 1 Month (30 days)
-    await ref.read(premiumStorageProvider.notifier).grantOneMonthPremium();
-
-    // 2. Sync to Admin User Registry
-    final authState = ref.read(authControllerProvider);
-    final email = authState.user?.email ?? 'learner@linguai.com';
-    await ref.read(userRegistryStorageProvider).setPremiumStatus(email, true);
-
-    if (mounted) {
-      setState(() => _isProcessing = false);
-
-      InAppNotificationBanner.show(
-        context: context,
-        title: 'Payment Successful! 🎉',
-        message: 'Congratulations! Your 1-Month Premium Pass is active. Enjoy AI Tutor & Unlimited Hearts!',
-        type: NotificationType.success,
+  Future<void> _refresh() async {
+    if (ref.read(authControllerProvider).status != AuthStatus.authenticated) {
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final result = await ref
+          .read(paymentRepositoryProvider)
+          .refreshSubscription();
+      if (mounted) setState(() => _subscription = result);
+    } catch (error) {
+      _notify(
+        'Subscription check failed',
+        _message(error),
+        NotificationType.error,
       );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
-      Future.delayed(const Duration(milliseconds: 1200), () {
-        if (mounted) context.go('/');
-      });
+  Future<void> _openCheckout() async {
+    if (ref.read(authControllerProvider).status != AuthStatus.authenticated) {
+      _notify(
+        'Sign in required',
+        'Sign in before purchasing Premium.',
+        NotificationType.error,
+      );
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final url = await ref
+          .read(paymentRepositoryProvider)
+          .createCheckoutSession();
+      final opened = await launchUrl(
+        url,
+        mode: kIsWeb
+            ? LaunchMode.platformDefault
+            : LaunchMode.externalApplication,
+        webOnlyWindowName: '_self',
+      );
+      if (!opened) {
+        throw Exception('Could not open the secure Stripe checkout.');
+      }
+    } catch (error) {
+      _notify('Checkout unavailable', _message(error), NotificationType.error);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _manageSubscription() async {
+    setState(() => _busy = true);
+    try {
+      final url = await ref
+          .read(paymentRepositoryProvider)
+          .createPortalSession();
+      final opened = await launchUrl(
+        url,
+        mode: kIsWeb
+            ? LaunchMode.platformDefault
+            : LaunchMode.externalApplication,
+        webOnlyWindowName: '_self',
+      );
+      if (!opened) throw Exception('Could not open the Stripe billing portal.');
+    } catch (error) {
+      _notify(
+        'Billing portal unavailable',
+        _message(error),
+        NotificationType.error,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final adminState = ref.watch(adminSettingsProvider);
-    final loc = AppLocalizations.of(context)!;
+    final authenticated =
+        ref.watch(authControllerProvider).status == AuthStatus.authenticated;
+    final premium = ref.watch(premiumStorageProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.paymentScreenTitle),
+        title: const Text('LinguAI Premium'),
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppConstants.space24),
-        child: Center(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Form(
-              key: _formKey,
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: AppCard(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Premium Plan Summary Header
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.amber.withValues(alpha: 0.4),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.workspace_premium_rounded, size: 44, color: Colors.black),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'LinguAI 1-Month Premium Pass 👑',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Includes AI Tutor, Ad-Free experience, Unlimited Hearts (∞) & Priority Support.',
-                                style: TextStyle(fontSize: 13, color: Colors.black87),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  const Icon(
+                    Icons.workspace_premium_rounded,
+                    size: 72,
+                    color: Colors.amber,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    premium ? 'Premium is active' : 'Unlock LinguAI Premium',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Admin Payout Banking Info Banner
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.account_balance_rounded, color: AppColors.primaryGreen),
-                            const SizedBox(width: 8),
-                            Text(
-                              loc.adminBankingDetails,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primaryGreenDark),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text('${loc.bankNameLabel} ${adminState.bankName}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                        Text('${loc.accountHolderLabel} ${adminState.accountHolderName}', style: const TextStyle(fontSize: 13)),
-                        Text('${loc.ibanLabel} ${adminState.ibanNumber}', style: const TextStyle(fontSize: 13)),
-                        Text('${loc.swiftLabel} ${adminState.swiftCode}', style: const TextStyle(fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Credit / Debit Card Form
+                  const SizedBox(height: 12),
                   const Text(
-                    'Card Payment Details 💳',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    'Unlimited AI tutoring, no ads, unlimited hearts, and priority support.',
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _nameController,
-                    validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter cardholder name' : null,
-                    decoration: InputDecoration(
-                      labelText: loc.cardHolderName,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      prefixIcon: const Icon(Icons.person_outline_rounded),
+                  if (_subscription?.expiresAt != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Current period ends ${_subscription!.expiresAt!.toLocal().toString().split(' ').first}.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _cardNumberController,
-                    keyboardType: TextInputType.number,
-                    validator: (val) {
-                      if (val == null || val.replaceAll(' ', '').length < 12) {
-                        return 'Enter a valid 16-digit card number';
-                      }
-                      return null;
-                    },
-                    decoration: InputDecoration(
-                      labelText: loc.cardNumber,
-                      hintText: '4532 •••• •••• 8912',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      prefixIcon: const Icon(Icons.credit_card_rounded),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _expiryController,
-                          keyboardType: TextInputType.datetime,
-                          validator: (val) => (val == null || !val.contains('/')) ? 'MM/YY' : null,
-                          decoration: InputDecoration(
-                            labelText: loc.expiryDate,
-                            hintText: '12/28',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            prefixIcon: const Icon(Icons.calendar_today_rounded),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _cvvController,
-                          keyboardType: TextInputType.number,
-                          obscureText: true,
-                          validator: (val) => (val == null || val.length < 3) ? '3 digits' : null,
-                          decoration: InputDecoration(
-                            labelText: loc.cvvCode,
-                            hintText: '•••',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            prefixIcon: const Icon(Icons.lock_outline_rounded),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Pay Action Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        elevation: 4,
-                      ),
-                      icon: _isProcessing
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.verified_rounded),
+                  ],
+                  const SizedBox(height: 28),
+                  if (!authenticated)
+                    ElevatedButton(
+                      onPressed: _busy ? null : () => context.go('/auth/login'),
+                      child: const Text('SIGN IN TO CONTINUE'),
+                    )
+                  else if (premium)
+                    ElevatedButton.icon(
+                      onPressed: _busy ? null : _manageSubscription,
+                      icon: const Icon(Icons.settings),
+                      label: const Text('MANAGE SUBSCRIPTION'),
+                    )
+                  else
+                    ElevatedButton.icon(
+                      onPressed: _busy ? null : _openCheckout,
+                      icon: const Icon(Icons.lock),
                       label: Text(
-                        _isProcessing ? 'Processing Payment...' : loc.payAndUnlock,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        _busy
+                            ? 'OPENING SECURE CHECKOUT…'
+                            : 'CONTINUE TO SECURE CHECKOUT',
                       ),
-                      onPressed: _isProcessing ? null : _processPayment,
+                    ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _busy || !authenticated ? null : _refresh,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('REFRESH PURCHASE STATUS'),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Payments are processed by Stripe. LinguAI never receives or stores your card number, expiry date, or security code.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],

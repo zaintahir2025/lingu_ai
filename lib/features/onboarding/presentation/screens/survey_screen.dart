@@ -19,12 +19,15 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
   String _knowledgeLevel = 'intermediate';
 
   Future<void> _submit() async {
-    final targetLanguage = ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
-    await ref.read(userControllerProvider.notifier).submitSurvey(
-      knowledgeLevel: _knowledgeLevel,
-      fluencyScore: _fluencyScore,
-      targetLanguage: targetLanguage,
-    );
+    final targetLanguage =
+        ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
+    await ref
+        .read(userControllerProvider.notifier)
+        .submitSurvey(
+          knowledgeLevel: _knowledgeLevel,
+          fluencyScore: _fluencyScore,
+          targetLanguage: targetLanguage,
+        );
     await ref.read(onboardingStorageProvider).setCompletedOnboarding();
     if (!mounted) return;
     context.go('/');
@@ -60,25 +63,40 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
               ),
               const SizedBox(height: 32),
-              
+
               AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('How would you describe your level?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    const Text(
+                      'How would you describe your level?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
                     const SizedBox(height: 16),
-                    _buildRadio('intermediate', 'I know basic words and phrases'),
+                    _buildRadio(
+                      'intermediate',
+                      'I know basic words and phrases',
+                    ),
                     _buildRadio('advanced', 'I can hold a conversation'),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('How confident are you? ($_fluencyScore%)', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    Text(
+                      'How confident are you? ($_fluencyScore%)',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     Slider(
                       value: _fluencyScore.toDouble(),
@@ -86,17 +104,21 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
                       max: 100,
                       divisions: 9,
                       activeColor: AppColors.primaryGreen,
-                      onChanged: (val) => setState(() => _fluencyScore = val.toInt()),
+                      onChanged: (val) =>
+                          setState(() => _fluencyScore = val.toInt()),
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
               if (userState.error != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(userState.error!, style: const TextStyle(color: AppColors.softErrorText)),
+                  child: Text(
+                    userState.error!,
+                    style: const TextStyle(color: AppColors.softErrorText),
+                  ),
                 ),
               PrimaryButton(
                 text: 'Complete Setup',
@@ -118,7 +140,9 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
         onTap: () {
           setState(() => _knowledgeLevel = value);
         },
-        color: isSelected ? AppColors.primaryGreen.withValues(alpha: 0.1) : AppColors.surface,
+        color: isSelected
+            ? AppColors.primaryGreen.withValues(alpha: 0.1)
+            : AppColors.surface,
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
@@ -128,7 +152,9 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primaryGreen : AppColors.divider,
+                  color: isSelected
+                      ? AppColors.primaryGreen
+                      : AppColors.divider,
                   width: 2,
                 ),
               ),

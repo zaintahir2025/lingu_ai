@@ -52,7 +52,8 @@ class SrsService {
     }
 
     // SM-2 Ease Factor calculation
-    newEaseFactor = currentEaseFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    newEaseFactor =
+        currentEaseFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
     if (newEaseFactor < 1.3) {
       newEaseFactor = 1.3;
     }
@@ -60,7 +61,7 @@ class SrsService {
     // PERSISTENT_ERROR override per REQ-SRS-007 (errorCount >= 3)
     final isPersistentError = newErrorCount >= 3;
     if (isPersistentError) {
-      newIntervalDays = max(newIntervalDays, 2);
+      newIntervalDays = min(newIntervalDays, 2);
     }
 
     final nextReviewDate = DateTime.now().add(Duration(days: newIntervalDays));

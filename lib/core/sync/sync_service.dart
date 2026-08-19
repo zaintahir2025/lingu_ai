@@ -30,7 +30,7 @@ class SyncService {
 
       await _pushLocalData();
       await _pullServerData();
-      
+
       debugPrint('SyncService: All caught up!');
       _notifyUser();
     } catch (e) {
@@ -74,34 +74,46 @@ class SyncService {
       debugPrint('SyncService: Pushing ${logs.length} SM-2 review logs...');
       try {
         if (!isTesting) {
-          await _dio.post('$baseUrl/reviews', 
+          await _dio.post(
+            '$baseUrl/reviews',
             data: {
-              'logs': logs.map((l) => {'vocabWordId': l.vocabWordId, 'quality': l.quality}).toList(),
+              'logs': logs
+                  .map(
+                    (l) => {'vocabWordId': l.vocabWordId, 'quality': l.quality},
+                  )
+                  .toList(),
             },
-            options: Options(headers: {'Authorization': 'Bearer $token'})
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
           );
         }
         for (final log in logs) {
-          await (_db.delete(_db.offlineReviewLogs)..where((t) => t.id.equals(log.id))).go();
+          await (_db.delete(
+            _db.offlineReviewLogs,
+          )..where((t) => t.id.equals(log.id))).go();
         }
       } catch (e) {
         debugPrint('Failed to sync reviews: $e');
       }
     }
-    
+
     // Sync XP Logs
     final xpLogs = await _db.select(_db.offlineXpLogs).get();
     if (xpLogs.isNotEmpty) {
       debugPrint('SyncService: Pushing ${xpLogs.length} XP logs...');
       try {
-        await _dio.post('$baseUrl/xp', 
+        await _dio.post(
+          '$baseUrl/xp',
           data: {
-            'logs': xpLogs.map((l) => {'amount': l.xpAmount, 'reason': l.reason}).toList(),
+            'logs': xpLogs
+                .map((l) => {'amount': l.xpAmount, 'reason': l.reason})
+                .toList(),
           },
-          options: Options(headers: {'Authorization': 'Bearer $token'})
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
         for (final log in xpLogs) {
-          await (_db.delete(_db.offlineXpLogs)..where((t) => t.id.equals(log.id))).go();
+          await (_db.delete(
+            _db.offlineXpLogs,
+          )..where((t) => t.id.equals(log.id))).go();
         }
       } catch (e) {
         debugPrint('Failed to sync XP: $e');
@@ -129,30 +141,34 @@ class SyncService {
   }
 
   Future<void> _queueOfflineReview(int vocabWordId, int quality) async {
-    await _db.into(_db.offlineReviewLogs).insert(
-      OfflineReviewLogsCompanion.insert(
-        vocabWordId: vocabWordId,
-        quality: quality,
-        timestamp: DateTime.now(),
-      ),
-    );
+    await _db
+        .into(_db.offlineReviewLogs)
+        .insert(
+          OfflineReviewLogsCompanion.insert(
+            vocabWordId: vocabWordId,
+            quality: quality,
+            timestamp: DateTime.now(),
+          ),
+        );
   }
 
   Future<void> _queueOfflineXp(int amount, String reason) async {
-    await _db.into(_db.offlineXpLogs).insert(
-      OfflineXpLogsCompanion.insert(
-        xpAmount: amount,
-        reason: reason,
-        timestamp: DateTime.now(),
-      ),
-    );
+    await _db
+        .into(_db.offlineXpLogs)
+        .insert(
+          OfflineXpLogsCompanion.insert(
+            xpAmount: amount,
+            reason: reason,
+            timestamp: DateTime.now(),
+          ),
+        );
   }
 }
 
 final syncServiceProvider = Provider<SyncService>((ref) {
   final db = ref.read(databaseProvider);
   final service = SyncService(db);
-  
+
   ref.listen(connectivityProvider, (previous, next) {
     if (next.value == true && (previous?.value == false || previous == null)) {
       service.syncData();

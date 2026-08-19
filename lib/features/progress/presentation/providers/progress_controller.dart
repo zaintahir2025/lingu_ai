@@ -29,14 +29,16 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
     final db = ref.read(databaseProvider);
     final list = await db.select(db.userProgress).get();
     if (list.isEmpty) {
-      final entry = await db.into(db.userProgress).insertReturning(
-        UserProgressCompanion.insert(
-          totalXp: const Value(0),
-          level: const Value(1),
-          currentStreak: const Value(0),
-          streakFreezes: const Value(0),
-        ),
-      );
+      final entry = await db
+          .into(db.userProgress)
+          .insertReturning(
+            UserProgressCompanion.insert(
+              totalXp: const Value(0),
+              level: const Value(1),
+              currentStreak: const Value(0),
+              streakFreezes: const Value(0),
+            ),
+          );
       return ProgressState(entry);
     }
     return ProgressState(list.first);
@@ -47,7 +49,7 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
     if (totalXp < 150) return 2;
     if (totalXp < 300) return 3;
     if (totalXp < 500) return 4;
-    
+
     int level = 4;
     int threshold = 500;
     while (totalXp >= threshold) {
@@ -58,22 +60,22 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
   }
 
   int getThresholdForNextLevel(int currentLevel) {
-     if (currentLevel == 1) return 50;
-     if (currentLevel == 2) return 150;
-     if (currentLevel == 3) return 300;
-     if (currentLevel == 4) return 500;
+    if (currentLevel == 1) return 50;
+    if (currentLevel == 2) return 150;
+    if (currentLevel == 3) return 300;
+    if (currentLevel == 4) return 500;
 
-     int threshold = 500;
-     for (int i = 5; i <= currentLevel; i++) {
-        threshold += (i * 100);
-     }
-     return threshold;
+    int threshold = 500;
+    for (int i = 5; i <= currentLevel; i++) {
+      threshold += (i * 100);
+    }
+    return threshold;
   }
 
   Future<void> addXp(int amount) async {
     final currentState = state.value;
     if (currentState == null) return;
-    
+
     final db = ref.read(databaseProvider);
     final now = _clock();
     int newTotalXp = currentState.progress.totalXp;
@@ -84,11 +86,15 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
     int newStreak = currentState.progress.currentStreak;
     int freezes = currentState.progress.streakFreezes;
     DateTime? lastActivity = currentState.progress.lastActivityDate;
-    
+
     bool appliedDailyBonus = false;
 
     if (lastActivity != null) {
-      final lastDate = DateTime(lastActivity.year, lastActivity.month, lastActivity.day);
+      final lastDate = DateTime(
+        lastActivity.year,
+        lastActivity.month,
+        lastActivity.day,
+      );
       final currentDate = DateTime(now.year, now.month, now.day);
       final daysBetween = currentDate.difference(lastDate).inDays;
 
@@ -138,30 +144,39 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
     );
 
     await db.update(db.userProgress).replace(updated);
-    
+
     // Insert into DailyXp
     final dailyDate = DateTime(now.year, now.month, now.day);
     // Find if daily entry exists
-    final dailyEntry = await (db.select(db.dailyXp)..where((t) => t.date.equals(dailyDate))).getSingleOrNull();
+    final dailyEntry = await (db.select(
+      db.dailyXp,
+    )..where((t) => t.date.equals(dailyDate))).getSingleOrNull();
     if (dailyEntry != null) {
-      await db.update(db.dailyXp).replace(dailyEntry.copyWith(xpEarned: dailyEntry.xpEarned + amount));
+      await db
+          .update(db.dailyXp)
+          .replace(dailyEntry.copyWith(xpEarned: dailyEntry.xpEarned + amount));
     } else {
-      await db.into(db.dailyXp).insert(DailyXpCompanion.insert(
-        date: dailyDate,
-        xpEarned: Value(amount),
-      ));
+      await db
+          .into(db.dailyXp)
+          .insert(
+            DailyXpCompanion.insert(date: dailyDate, xpEarned: Value(amount)),
+          );
     }
 
     // Sync XP
     final isOnline = ref.read(connectivityProvider).value ?? false;
     await ref.read(syncServiceProvider).logXp(amount, 'activity', isOnline);
 
-    state = AsyncData(ProgressState(updated, hasLevelUp: leveledUp, addedXp: amount));
+    state = AsyncData(
+      ProgressState(updated, hasLevelUp: leveledUp, addedXp: amount),
+    );
   }
 
   void clearFlags() {
     if (state.value != null) {
-      state = AsyncData(ProgressState(state.value!.progress, hasLevelUp: false, addedXp: 0));
+      state = AsyncData(
+        ProgressState(state.value!.progress, hasLevelUp: false, addedXp: 0),
+      );
     }
   }
 
@@ -169,26 +184,30 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
     final db = ref.read(databaseProvider);
     final now = _clock();
     final today = DateTime(now.year, now.month, now.day);
-    
+
     // We want the last 7 days including today.
     // Index 6 = today, Index 5 = yesterday, ..., Index 0 = 6 days ago.
     final List<double> weeklyXp = List.filled(7, 0.0);
-    
+
     for (int i = 0; i < 7; i++) {
       final targetDate = today.subtract(Duration(days: 6 - i));
-      final entry = await (db.select(db.dailyXp)..where((t) => t.date.equals(targetDate))).getSingleOrNull();
+      final entry = await (db.select(
+        db.dailyXp,
+      )..where((t) => t.date.equals(targetDate))).getSingleOrNull();
       if (entry != null) {
         weeklyXp[i] = entry.xpEarned.toDouble();
       }
     }
-    
+
     return weeklyXp;
   }
 
   Future<int> getMasteredWordsCount() async {
     final db = ref.read(databaseProvider);
     final countExp = db.vocabWords.id.count();
-    final query = db.selectOnly(db.vocabWords)..addColumns([countExp])..where(db.vocabWords.status.equals('mastered'));
+    final query = db.selectOnly(db.vocabWords)
+      ..addColumns([countExp])
+      ..where(db.vocabWords.status.equals('mastered'));
     final result = await query.getSingle();
     return result.read(countExp) ?? 0;
   }
@@ -196,7 +215,9 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
   Future<int> getCompletedLessonsCount() async {
     final db = ref.read(databaseProvider);
     final countExp = db.lessons.id.count();
-    final query = db.selectOnly(db.lessons)..addColumns([countExp])..where(db.lessons.isCompleted.equals(true));
+    final query = db.selectOnly(db.lessons)
+      ..addColumns([countExp])
+      ..where(db.lessons.isCompleted.equals(true));
     final result = await query.getSingle();
     return result.read(countExp) ?? 0;
   }
@@ -209,9 +230,10 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
   }
 }
 
-final progressControllerProvider = AsyncNotifierProvider.autoDispose<ProgressController, ProgressState>(() {
-  return ProgressController();
-});
+final progressControllerProvider =
+    AsyncNotifierProvider.autoDispose<ProgressController, ProgressState>(() {
+      return ProgressController();
+    });
 
 final weeklyXpProvider = FutureProvider.autoDispose<List<double>>((ref) async {
   final controller = ref.read(progressControllerProvider.notifier);
@@ -223,7 +245,9 @@ final masteredWordsCountProvider = FutureProvider.autoDispose<int>((ref) async {
   return await controller.getMasteredWordsCount();
 });
 
-final completedLessonsCountProvider = FutureProvider.autoDispose<int>((ref) async {
+final completedLessonsCountProvider = FutureProvider.autoDispose<int>((
+  ref,
+) async {
   final controller = ref.read(progressControllerProvider.notifier);
   return await controller.getCompletedLessonsCount();
 });
