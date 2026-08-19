@@ -46,54 +46,54 @@ class ApiRoute extends Route {
         });
       }
       if (path == '/webhooks/stripe' && request.method == Method.post) {
-        return _stripeWebhook(session, request, bodyText, body);
+        return await _stripeWebhook(session, request, bodyText, body);
       }
       if (path.startsWith('/auth/')) {
         _checkRateLimit(request.remoteInfo, 'auth', max: 50);
-        return _auth(session, request, path, body, auth);
+        return await _auth(session, request, path, body, auth);
       }
 
       final user = await _authenticatedUser(session, auth);
       if (user == null) return _error(401, 'Authentication is required.');
 
       if (path == '/user/profile' && request.method == Method.put) {
-        return _updateProfile(session, user, body);
+        return await _updateProfile(session, user, body);
       }
       if (path == '/user/profile' && request.method == Method.get) {
-        return _legacyProfile(session, user);
+        return await _legacyProfile(session, user);
       }
       if (path == '/user/profile' && request.method == Method.patch) {
-        return _updateProfile(session, user, body);
+        return await _updateProfile(session, user, body);
       }
       if (path == '/user/survey' && request.method == Method.post) {
-        return _survey(session, user, body);
+        return await _survey(session, user, body);
       }
       if (path == '/lessons' && request.method == Method.get) {
-        return _lessons(session, request, user);
+        return await _lessons(session, request, user);
       }
       if (path == '/progress' && request.method == Method.get) {
-        return _legacyProgress(session, user);
+        return await _legacyProgress(session, user);
       }
       if (path == '/progress/sync' && request.method == Method.post) {
-        return _legacyProgressSync(session, user, body);
+        return await _legacyProgressSync(session, user, body);
       }
       if (path == '/leaderboard' && request.method == Method.get) {
-        return _leaderboard(session, user);
+        return await _leaderboard(session, user);
       }
       if (path.startsWith('/support')) {
-        return _support(session, request, path, body, user);
+        return await _support(session, request, path, body, user);
       }
       if (path.startsWith('/admin')) {
-        return _admin(session, request, path, body, user);
+        return await _admin(session, request, path, body, user);
       }
       if (path == '/ai/tutor' && request.method == Method.post) {
-        return _tutor(session, body, user);
+        return await _tutor(session, body, user);
       }
       if (path.startsWith('/payments')) {
-        return _payments(session, request, path, user);
+        return await _payments(session, request, path, user);
       }
       if (path.startsWith('/sync')) {
-        return _sync(session, request, path, body, user);
+        return await _sync(session, request, path, body, user);
       }
       return _error(404, 'Endpoint not found.');
     } on _RateLimitException catch (e) {
