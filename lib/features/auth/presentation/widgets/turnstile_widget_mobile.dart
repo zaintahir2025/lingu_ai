@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:webview_all/webview_all.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class TurnstileWidget extends StatefulWidget {
   final String siteKey;
@@ -24,9 +24,7 @@ class _TurnstileWidgetState extends State<TurnstileWidget> {
   bool get _hasEmbeddedWebView =>
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.macOS ||
-      defaultTargetPlatform == TargetPlatform.windows ||
-      defaultTargetPlatform == TargetPlatform.linux;
+      defaultTargetPlatform == TargetPlatform.macOS;
 
   @override
   void initState() {
