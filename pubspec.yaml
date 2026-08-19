@@ -49,7 +49,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.6.0+eol
   path_provider: ^2.1.6
   path: ^1.9.1
-  audioplayers: ^6.7.1
+  audioplayers: ^6.8.1
   drift_flutter: ^0.3.1
   connectivity_plus: ^7.2.0
   confetti: ^0.8.0
