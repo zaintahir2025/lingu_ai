@@ -9,6 +9,8 @@ import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../widgets/turnstile_widget.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
 import '../../../../core/widgets/mascot/piko_mascot.dart';
+import '../../../../core/network/api_config.dart';
+import '../../domain/registration_availability.dart';
 import 'package:flutter/foundation.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -19,6 +21,10 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  static const _productionTurnstileSiteKey = String.fromEnvironment(
+    'TURNSTILE_SITE_KEY',
+  );
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -66,7 +72,29 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   bool _isAbove13 = false;
 
+  String get _turnstileSiteKey => _productionTurnstileSiteKey.isNotEmpty
+      ? _productionTurnstileSiteKey
+      : (kDebugMode ? '1x00000000000000000000AA' : '');
+
+  String? get _registrationConfigurationMessage {
+    return registrationConfigurationMessage(
+      backendConfigured: ApiConfig.isConfigured || kDebugMode,
+      captchaConfigured: _turnstileSiteKey.isNotEmpty,
+    );
+  }
+
   void _register() {
+    final configurationMessage = _registrationConfigurationMessage;
+    if (configurationMessage != null) {
+      InAppNotificationBanner.show(
+        context: context,
+        title: 'Registration unavailable',
+        message: configurationMessage,
+        type: NotificationType.error,
+      );
+      return;
+    }
+
     if (!_hasMinLength || !_hasNumber || !_hasSpecialChar || !_hasUppercase) {
       return;
     }
@@ -135,12 +163,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.status == AuthStatus.authenticating;
-    const productionTurnstileSiteKey = String.fromEnvironment(
-      'TURNSTILE_SITE_KEY',
-    );
-    final turnstileSiteKey = productionTurnstileSiteKey.isNotEmpty
-        ? productionTurnstileSiteKey
-        : (kDebugMode ? '1x00000000000000000000AA' : '');
+    final turnstileSiteKey = _turnstileSiteKey;
+    final registrationConfigurationMessage = _registrationConfigurationMessage;
 
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (previous?.registerError != next.registerError &&
@@ -314,19 +338,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           _turnstileToken = null;
                         });
                       },
-                    )
-                  else
-                    const Text(
-                      'Registration is temporarily unavailable: CAPTCHA is not configured.',
-                      style: TextStyle(color: AppColors.heartRed),
-                      textAlign: TextAlign.center,
+                    ),
+                  if (registrationConfigurationMessage != null)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: turnstileSiteKey.isNotEmpty ? 12 : 0,
+                      ),
+                      child: Text(
+                        registrationConfigurationMessage,
+                        style: const TextStyle(color: AppColors.heartRed),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   const SizedBox(height: 16),
                   PrimaryButton(
                     text: isLoading
                         ? AppLocalizations.of(context)!.registeringLabel
                         : AppLocalizations.of(context)!.registerTitle,
-                    onPressed: isLoading ? null : _register,
+                    onPressed:
+                        isLoading || registrationConfigurationMessage != null
+                        ? null
+                        : _register,
                   ),
                   const SizedBox(height: 16),
                   TextButton(
