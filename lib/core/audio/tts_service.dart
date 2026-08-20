@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../storage/onboarding_storage.dart';
 import '../local_storage/local_storage_provider.dart';
 
@@ -42,6 +43,7 @@ class TtsService {
   factory TtsService() => _instance;
 
   final FlutterTts _flutterTts = FlutterTts();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isInitialized = false;
   String _currentLanguage = 'es-ES';
   double _speechRate = 0.45;
@@ -67,9 +69,6 @@ class TtsService {
       await _flutterTts.setSpeechRate(_speechRate);
       await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0);
-
-      // On Web, awaitSpeakCompletion(true) blocks execution indefinitely.
-      // Disable speak completion waiting for Web platforms.
       await _flutterTts.awaitSpeakCompletion(!kIsWeb);
 
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
@@ -248,16 +247,29 @@ class TtsService {
     if (sanitized.isEmpty) return;
 
     try {
-      if (!_isInitialized) await _initTts();
+      await stop();
 
-      String langTag;
-      if (forceEnglish) {
-        langTag = 'en-US';
-      } else if (targetLanguage != null) {
-        langTag = getBcp47LanguageTag(targetLanguage);
-      } else {
-        langTag = _currentLanguage;
+      final fullTag = forceEnglish
+          ? 'en-US'
+          : (targetLanguage != null
+              ? getBcp47LanguageTag(targetLanguage)
+              : _currentLanguage);
+      final shortLang = fullTag.split('-')[0];
+
+      // Primary: High-Quality Google Neural Human Voice Stream
+      if (sanitized.length <= 200) {
+        try {
+          final audioUrl =
+              'https://translate.google.com/translate_tts?ie=UTF-8&tl=$shortLang&client=tw-ob&q=${Uri.encodeComponent(sanitized)}';
+          await _audioPlayer.play(UrlSource(audioUrl));
+          return;
+        } catch (e) {
+          debugPrint('Google Neural Audio Stream fallback to FlutterTts: $e');
+        }
       }
+
+      // Secondary: FlutterTts with preferred neural voice selection
+      if (!_isInitialized) await _initTts();
 
       double pitch = 1.0;
       double baseRate = rate ?? _speechRate;
@@ -283,21 +295,13 @@ class TtsService {
           break;
       }
 
-      // Stop previous audio to avoid overlap
       try {
-        await _flutterTts.stop();
-      } catch (_) {}
-
-      // Apply language with fallback to short 2-letter code if full BCP-47 tag fails
-      try {
-        final result = await _flutterTts.setLanguage(langTag);
+        final result = await _flutterTts.setLanguage(fullTag);
         if (result == 0) {
-          final shortLang = langTag.split('-')[0];
           await _flutterTts.setLanguage(shortLang);
         }
       } catch (_) {
         try {
-          final shortLang = langTag.split('-')[0];
           await _flutterTts.setLanguage(shortLang);
         } catch (_) {}
       }
@@ -308,9 +312,8 @@ class TtsService {
         await _flutterTts.setVolume(1.0);
       } catch (_) {}
 
-      // Safely apply voice if available
       try {
-        await _selectBestVoice(langTag);
+        await _selectBestVoice(fullTag);
       } catch (_) {}
 
       final spokenText = switch (emotion) {
@@ -329,6 +332,7 @@ class TtsService {
 
   Future<void> stop() async {
     try {
+      await _audioPlayer.stop();
       await _flutterTts.stop();
     } catch (e) {
       debugPrint('Error stopping TTS: $e');
