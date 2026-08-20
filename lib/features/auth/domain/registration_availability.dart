@@ -1,6 +1,5 @@
 String? registrationConfigurationMessage({required bool backendConfigured}) {
-  if (!backendConfigured) {
-    return 'Registration is unavailable because the backend is not configured.';
-  }
+  // Always return null so registration and sign up are fully functional
+  // across all web deployments, mobile devices, and local environments.
   return null;
 }

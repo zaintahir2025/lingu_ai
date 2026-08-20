@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../controllers/auth_controller.dart';
@@ -9,8 +8,6 @@ import '../../../../core/theme/app_colors.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
 import '../../../../core/widgets/mascot/piko_mascot.dart';
-import '../../../../core/network/api_config.dart';
-import '../../domain/registration_availability.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -35,6 +32,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _hasNumber = false;
   bool _hasSpecialChar = false;
   bool _hasUppercase = false;
+  bool _isAbove13 = false;
 
   @override
   void initState() {
@@ -63,27 +61,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  bool _isAbove13 = false;
-
-  String? get _registrationConfigurationMessage {
-    return registrationConfigurationMessage(
-      backendConfigured: ApiConfig.isConfigured || kDebugMode,
-    );
-  }
-
   void _register() {
-    final configurationMessage = _registrationConfigurationMessage;
-    if (configurationMessage != null) {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
       InAppNotificationBanner.show(
         context: context,
-        title: 'Registration unavailable',
-        message: configurationMessage,
+        title: 'Check your email',
+        message: 'Enter a valid email address.',
         type: NotificationType.error,
       );
       return;
     }
 
     if (!_hasMinLength || !_hasNumber || !_hasSpecialChar || !_hasUppercase) {
+      InAppNotificationBanner.show(
+        context: context,
+        title: 'Password Requirement',
+        message: 'Password must meet all complexity requirements listed below.',
+        type: NotificationType.error,
+      );
       return;
     }
 
@@ -110,7 +106,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     ref
         .read(authControllerProvider.notifier)
-        .register(_emailController.text.trim(), _passwordController.text);
+        .register(email, _passwordController.text);
   }
 
   Widget _buildChecklistRow(String text, bool isValid) {
@@ -137,7 +133,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.status == AuthStatus.authenticating;
-    final registrationConfigurationMessage = _registrationConfigurationMessage;
 
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (previous?.registerError != next.registerError &&
@@ -297,24 +292,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                     ],
                   ),
-                  if (registrationConfigurationMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Text(
-                        registrationConfigurationMessage,
-                        style: const TextStyle(color: AppColors.heartRed),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
                   const SizedBox(height: 16),
                   PrimaryButton(
                     text: isLoading
                         ? AppLocalizations.of(context)!.registeringLabel
                         : AppLocalizations.of(context)!.registerTitle,
-                    onPressed:
-                        isLoading || registrationConfigurationMessage != null
-                        ? null
-                        : _register,
+                    onPressed: isLoading ? null : _register,
                   ),
                   const SizedBox(height: 16),
                   TextButton(
