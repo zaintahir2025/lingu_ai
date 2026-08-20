@@ -8,6 +8,7 @@ plugins {
 android {
     namespace = "com.linguai.linguai"
     compileSdk = 34
+    buildToolsVersion = "34.0.0"
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -22,8 +23,6 @@ android {
 
     defaultConfig {
         applicationId = "com.linguai.linguai"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 21
         targetSdk = 34
         versionCode = flutter.versionCode
