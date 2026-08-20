@@ -83,7 +83,7 @@ class _ViewPagerCardsState extends State<ViewPagerCards> {
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppConstants.radius20),
+                    borderRadius: BorderRadius.circular(20.0),
                     border: Border.all(
                       color: isSelected
                           ? AppColors.primaryGreen
@@ -101,7 +101,7 @@ class _ViewPagerCardsState extends State<ViewPagerCards> {
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppConstants.radius20),
+                    borderRadius: BorderRadius.circular(20.0),
                     child: widget.itemBuilder(context, index, isSelected),
                   ),
                 ),

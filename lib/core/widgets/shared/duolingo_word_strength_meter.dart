@@ -33,7 +33,7 @@ class DuolingoWordStrengthMeter extends StatelessWidget {
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: List.generate(4, (index) {
             final isFilled = index < activeCount;
             final height = 8.0 + (index * 4.0);
