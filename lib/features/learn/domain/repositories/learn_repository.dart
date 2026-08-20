@@ -162,6 +162,7 @@ class LearnRepository {
   }
 
   Stream<List<Lesson>> watchLessons() {
+    syncLessonsIfEmpty();
     return (_db.select(
       _db.lessons,
     )..orderBy([(t) => OrderingTerm(expression: t.orderIndex)])).watch();

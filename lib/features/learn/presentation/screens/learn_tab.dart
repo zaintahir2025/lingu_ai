@@ -58,9 +58,10 @@ class LearnTab extends ConsumerWidget {
         final bannerSubtitle = isNewUser
             ? 'Let\'s get started with your very first lecture!'
             : 'Pick up right where you left off: Lesson $highestUnlockedId';
+        final loc = AppLocalizations.of(context);
         final buttonText = isNewUser
-            ? AppLocalizations.of(context)!.getStartedButton
-            : AppLocalizations.of(context)!.continueButton;
+            ? (loc?.getStartedButton ?? 'Get Started')
+            : (loc?.continueButton ?? 'Continue');
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -158,6 +159,7 @@ class LearnTab extends ConsumerWidget {
     final streakDays = progressState.value?.progress.currentStreak ?? 0;
     final completedCount = ref.watch(completedLessonsCountProvider).value ?? 0;
 
+    final loc = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -183,19 +185,19 @@ class LearnTab extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context)!.dailyQuests,
+                  loc?.dailyQuests ?? 'Daily Quests',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 _buildQuestItem(
-                  AppLocalizations.of(context)!.earn50Xp,
+                  loc?.earn50Xp ?? 'Earn 50 XP',
                   (totalXp % 50) / 50.0,
                 ),
                 const SizedBox(height: 12),
                 _buildQuestItem(
-                  AppLocalizations.of(context)!.complete2Lessons,
+                  loc?.complete2Lessons ?? 'Complete 2 Lessons',
                   (completedCount / 2.0).clamp(0.0, 1.0),
                 ),
               ],
@@ -214,7 +216,7 @@ class LearnTab extends ConsumerWidget {
             ),
             icon: const Icon(Icons.list_alt),
             label: Text(
-              AppLocalizations.of(context)!.vocabularyList,
+              loc?.vocabularyList ?? 'Vocabulary List',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             onPressed: () {
