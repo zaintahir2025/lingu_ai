@@ -169,7 +169,7 @@ class AdaptiveScaffold extends ConsumerWidget {
                         if (confirm == true) {
                           await ref
                               .read(targetLanguageProvider.notifier)
-                              .switchLanguage(code, resetProgress: true);
+                              .switchLanguage(code);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(

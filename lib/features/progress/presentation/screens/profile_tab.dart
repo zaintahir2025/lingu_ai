@@ -1380,6 +1380,8 @@ class ProfileTab extends ConsumerWidget {
         ],
       ),
     );
+  }
+
   Widget _buildResetProgressButton(BuildContext context, WidgetRef ref) {
     final currentLang = ref.watch(targetLanguageProvider);
     final langName = TargetLanguages.getName(currentLang);

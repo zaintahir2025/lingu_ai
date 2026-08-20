@@ -106,7 +106,7 @@ class LangPickerScreen extends ConsumerWidget {
               // Save locally & sync
               await ref
                   .read(targetLanguageProvider.notifier)
-                  .switchLanguage(code, resetProgress: false);
+                  .switchLanguage(code);
               if (context.mounted) {
                 context.go('/experience-choice');
               }
