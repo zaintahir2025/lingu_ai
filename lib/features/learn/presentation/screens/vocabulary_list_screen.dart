@@ -32,6 +32,8 @@ class VocabularyListScreen extends ConsumerStatefulWidget {
 class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -69,64 +72,120 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen>
           ],
         ),
       ),
-      body: vocabAsync.when(
-        data: (words) {
-          if (words.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.menu_book, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: AppConstants.space16),
-                  Text(
-                    AppLocalizations.of(context)!.noVocabFound,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: AppConstants.space8),
-                  Text(
-                    'Complete lessons to unlock vocabulary.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
-            );
-          }
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _buildList(context, words, targetLang),
-              _buildList(context, words.where((w) => w.interval < 21).toList(), targetLang),
-              _buildList(
-                context,
-                words.where((w) => w.interval >= 21).toList(),
-                targetLang,
-              ),
-            ],
-          );
-        },
-        loading: () => ListView.builder(
-          padding: const EdgeInsets.all(AppConstants.space16),
-          itemCount: 10,
-          itemBuilder: (context, index) => Padding(
-            padding: const EdgeInsets.only(bottom: AppConstants.space8),
-            child: Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
-              child: Container(
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppConstants.radius12),
+      body: Column(
+        children: [
+          // Wordpecker-style Live Search Input Bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (val) {
+                setState(() {
+                  _searchQuery = val.trim().toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search vocabulary or translation...',
+                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primaryGreen),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded, size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppColors.surface,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppColors.divider, width: 1.5),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppColors.divider, width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
                 ),
               ),
             ),
           ),
-        ),
-        error: (e, s) => Center(child: Text('Error: $e')),
+
+          Expanded(
+            child: vocabAsync.when(
+              data: (words) {
+                final filtered = words.where((w) {
+                  if (_searchQuery.isEmpty) return true;
+                  return w.word.toLowerCase().contains(_searchQuery) ||
+                      w.translation.toLowerCase().contains(_searchQuery);
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off_rounded, size: 56, color: Colors.grey[400]),
+                        const SizedBox(height: AppConstants.space16),
+                        Text(
+                          _searchQuery.isEmpty
+                              ? AppLocalizations.of(context)!.noVocabFound
+                              : 'No matching words found for "$_searchQuery"',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildList(context, filtered, targetLang),
+                    _buildList(
+                      context,
+                      filtered.where((w) => w.interval < 21).toList(),
+                      targetLang,
+                    ),
+                    _buildList(
+                      context,
+                      filtered.where((w) => w.interval >= 21).toList(),
+                      targetLang,
+                    ),
+                  ],
+                );
+              },
+              loading: () => ListView.builder(
+                padding: const EdgeInsets.all(AppConstants.space16),
+                itemCount: 10,
+                itemBuilder: (context, index) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppConstants.space8),
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppConstants.radius12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              error: (e, s) => Center(child: Text('Error: $e')),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
