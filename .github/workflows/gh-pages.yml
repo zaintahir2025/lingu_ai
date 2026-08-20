@@ -34,7 +34,7 @@ jobs:
         # The base-href must match your repository name EXACTLY (with leading and trailing slashes).
         # We pass the production backend URL using dart-define. Wrapped in quotes to prevent bash errors if the secret is empty.
         run: >-
-          flutter build web --release --no-wasm-dry-run --base-href /lingu_ai/
+          flutter build web --release --base-href /lingu_ai/
           --dart-define=API_URL="${{ secrets.API_URL }}"
 
       # GitHub Pages can cache main.dart.js after a release. Give every build a

@@ -64,7 +64,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: >-
-          flutter build web --release --no-wasm-dry-run
+          flutter build web --release
           --dart-define=API_URL=${{ secrets.API_URL }}
 
   android:
