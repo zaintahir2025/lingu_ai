@@ -61,7 +61,7 @@ class TutorRepository {
         return const KeyValidationResult(
           isValid: false,
           errorMessage:
-              'This appears to be a Groq API key (starts with "gsk_"). Please select "Groq API" as your provider.',
+              'This appears to be a Groq API key (starts with "gsk_"). Auto-switching provider to Groq API.',
           suggestedProvider: 'Groq API (Llama 3.3)',
         );
       }
@@ -70,16 +70,8 @@ class TutorRepository {
         return const KeyValidationResult(
           isValid: false,
           errorMessage:
-              'This appears to be an OpenAI/OpenRouter API key (starts with "sk-"). Please select "OpenAI / OpenRouter API".',
+              'This appears to be an OpenAI/OpenRouter API key (starts with "sk-"). Auto-switching provider to OpenAI API.',
           suggestedProvider: 'OpenAI / OpenRouter API',
-        );
-      }
-    } else if (provider.contains('Gemini')) {
-      if (!cleanKey.startsWith('AIzaSy')) {
-        return const KeyValidationResult(
-          isValid: false,
-          errorMessage:
-              'Invalid Gemini API Key format. Free Gemini keys from Google AI Studio (https://aistudio.google.com) start with "AIzaSy".',
         );
       }
     }
@@ -101,11 +93,14 @@ class TutorRepository {
 
     final selectedProvider = provider ?? _aiSettingsStorage.provider;
     final formatCheck = checkKeyFormat(key, selectedProvider);
-    if (!formatCheck.isValid) {
+    if (!formatCheck.isValid && formatCheck.suggestedProvider == null) {
       return formatCheck;
     }
 
-    if (selectedProvider.contains('Groq')) {
+    final effectiveProvider =
+        formatCheck.suggestedProvider ?? selectedProvider;
+
+    if (effectiveProvider.contains('Groq')) {
       try {
         final res = await _dio.post(
           'https://api.groq.com/openai/v1/chat/completions',
@@ -124,7 +119,10 @@ class TutorRepository {
           },
         );
         if (res.statusCode == 200) {
-          return const KeyValidationResult(isValid: true);
+          return KeyValidationResult(
+            isValid: true,
+            suggestedProvider: formatCheck.suggestedProvider,
+          );
         }
       } catch (e) {
         return KeyValidationResult(
@@ -133,13 +131,13 @@ class TutorRepository {
               'Groq API Key request failed. Ensure the key is active at console.groq.com.',
         );
       }
-    } else if (selectedProvider.contains('OpenAI') ||
-        selectedProvider.contains('OpenRouter')) {
+    } else if (effectiveProvider.contains('OpenAI') ||
+        effectiveProvider.contains('OpenRouter')) {
       try {
-        final endpoint = selectedProvider.contains('OpenRouter')
+        final endpoint = effectiveProvider.contains('OpenRouter')
             ? 'https://openrouter.ai/api/v1/chat/completions'
             : 'https://api.openai.com/v1/chat/completions';
-        final model = selectedProvider.contains('OpenRouter')
+        final model = effectiveProvider.contains('OpenRouter')
             ? 'openai/gpt-4o-mini'
             : 'gpt-4o-mini';
 
@@ -160,7 +158,10 @@ class TutorRepository {
           },
         );
         if (res.statusCode == 200) {
-          return const KeyValidationResult(isValid: true);
+          return KeyValidationResult(
+            isValid: true,
+            suggestedProvider: formatCheck.suggestedProvider,
+          );
         }
       } catch (e) {
         return KeyValidationResult(
@@ -170,8 +171,9 @@ class TutorRepository {
         );
       }
     } else {
-      // Google Gemini actual generation validation
+      // Google Gemini: supports standard API keys and GCP/OAuth tokens (e.g. AQ..., ya29...)
       for (final modelName in _geminiModels) {
+        // Mode 1: Standard API key header/query param
         try {
           final response = await _dio.post(
             'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$key',
@@ -192,7 +194,38 @@ class TutorRepository {
             },
           );
           if (response.statusCode == 200 && response.data != null) {
-            return const KeyValidationResult(isValid: true);
+            return KeyValidationResult(
+              isValid: true,
+              suggestedProvider: formatCheck.suggestedProvider,
+            );
+          }
+        } catch (_) {}
+
+        // Mode 2: GCP Bearer authorization header (for GCP/Vertex/OAuth tokens like AQ.Ab8RN6...)
+        try {
+          final response = await _dio.post(
+            'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent',
+            options: Options(
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $key',
+              },
+            ),
+            data: {
+              'contents': [
+                {
+                  'parts': [
+                    {'text': 'Hi'},
+                  ],
+                },
+              ],
+            },
+          );
+          if (response.statusCode == 200 && response.data != null) {
+            return KeyValidationResult(
+              isValid: true,
+              suggestedProvider: formatCheck.suggestedProvider,
+            );
           }
         } catch (_) {}
       }
@@ -200,7 +233,7 @@ class TutorRepository {
       return const KeyValidationResult(
         isValid: false,
         errorMessage:
-          'Gemini API Key rejected by Google. Ensure you copied the exact key starting with "AIzaSy" from https://aistudio.google.com.',
+            'Gemini API Key rejected by Google. Ensure Generative Language API is enabled or try generating a standard key at https://aistudio.google.com.',
       );
     }
 
@@ -266,10 +299,7 @@ class TutorRepository {
         if (hasEmitted) return;
       } catch (e) {
         debugPrint('AI Provider ($provider) call failed: $e');
-        final hint = provider.contains('Gemini')
-            ? 'Ensure your key starts with "AIzaSy" from https://aistudio.google.com.'
-            : 'Please verify your API key and active quota in settings (🔑 icon).';
-        yield '⚠️ $provider Error: The AI service rejected your API key.\n\n$hint';
+        yield '⚠️ $provider Error: The AI service rejected your API key.\n\nPlease verify your API key and quota in settings (🔑 icon).';
         return;
       }
     }
@@ -382,12 +412,13 @@ Respond helpfully as AI Language Tutor for $langName. Keep your response concise
         return;
       } catch (sdkError) {
         debugPrint(
-          'Google Generative AI SDK model $modelName failed. Trying REST fallback...',
+          'Google Generative AI SDK model $modelName failed. Trying REST fallbacks...',
         );
       }
     }
 
     for (final modelName in _geminiModels) {
+      // Mode A: Standard API key query/header
       try {
         final url =
             'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey';
@@ -425,7 +456,48 @@ Respond helpfully as AI Language Tutor for $langName. Keep your response concise
           }
         }
       } catch (dioError) {
-        debugPrint('Dio REST model $modelName failed: $dioError');
+        debugPrint('Dio REST Mode A model $modelName failed: $dioError');
+      }
+
+      // Mode B: Bearer Token Authorization header (for GCP/OAuth/Vertex keys starting with AQ...)
+      try {
+        final url =
+            'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent';
+        final response = await _dio.post(
+          url,
+          options: Options(
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $apiKey',
+            },
+          ),
+          data: {
+            'contents': [
+              {
+                'parts': [
+                  {'text': prompt},
+                ],
+              },
+            ],
+          },
+        );
+
+        if (response.statusCode == 200 && response.data != null) {
+          final candidates = response.data['candidates'] as List?;
+          if (candidates != null && candidates.isNotEmpty) {
+            final content = candidates[0]['content'];
+            final parts = content['parts'] as List?;
+            if (parts != null && parts.isNotEmpty) {
+              final text = parts[0]['text'] as String?;
+              if (text != null) {
+                yield text;
+                return;
+              }
+            }
+          }
+        }
+      } catch (dioError) {
+        debugPrint('Dio REST Mode B model $modelName failed: $dioError');
       }
     }
 
