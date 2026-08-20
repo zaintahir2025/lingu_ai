@@ -71,12 +71,74 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
         restoredRemaining.length == remainingIds?.length &&
         restoredHistory?.length == historyIds?.length;
 
+    bool shouldResume = true;
+    if (canRestore && (historyIds?.isNotEmpty ?? false) && mounted) {
+      final currentCardIndex = (historyIds?.length ?? 0) + 1;
+      shouldResume = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              backgroundColor: AppColors.surface,
+              title: const Row(
+                children: [
+                  Icon(
+                    Icons.history_rounded,
+                    color: AppColors.primaryGreen,
+                    size: 28,
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Resume Progress? 🎴',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              content: Text(
+                'You were on Card $currentCardIndex of ${words.length}.\n\nWould you like to resume where you left off, or start over from the beginning?',
+                style: const TextStyle(fontSize: 15),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text(
+                    'Start Over (Card 1) 🔄',
+                    style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text(
+                    'Resume (Card $currentCardIndex) ⚡',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ) ??
+          true;
+    }
+
+    if (!shouldResume) {
+      _clearDraft();
+    }
+
     if (mounted) {
       setState(() {
-        _words = canRestore ? restoredRemaining : List.from(words);
+        _words = (canRestore && shouldResume) ? restoredRemaining : List.from(words);
         _history
           ..clear()
-          ..addAll(canRestore ? restoredHistory! : const <VocabWord>[]);
+          ..addAll((canRestore && shouldResume) ? restoredHistory! : const <VocabWord>[]);
         _totalDeckCount = words.length;
         _isLoading = false;
       });
@@ -277,24 +339,41 @@ class _FlashcardViewState extends ConsumerState<FlashcardView> {
                     color: AppColors.primaryGreenDark,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.divider),
-                  ),
-                  child: Text(
-                    'Deck Total: $_totalDeckCount',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                Row(
+                  children: [
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.redAccent,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      ),
+                      icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                      label: const Text('Start Fresh', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        _clearDraft();
+                        _loadWords();
+                      },
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.divider),
+                      ),
+                      child: Text(
+                        'Deck Total: $_totalDeckCount',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
