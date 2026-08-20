@@ -107,8 +107,8 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
                 PikoMascot(
                   pose: widget.isCorrect
                       ? PikoPose.celebrating
-                      : PikoPose.encouraging,
-                  size: 60,
+                      : PikoPose.sad,
+                  size: 64,
                 ),
                 const SizedBox(width: AppConstants.space16),
                 Expanded(
@@ -116,27 +116,49 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.isCorrect ? 'Excellent!' : 'Good try!',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.titleLarge?.copyWith(color: textColor),
+                        widget.isCorrect
+                            ? 'Awesome! Perfect Answer! 🎉'
+                            : 'Don\'t worry, mistakes help you learn! 💪',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: textColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       if (!widget.isCorrect) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'Correct answer: ${widget.correctAnswer}',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: textColor,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.heartRed.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Correct Answer: ${widget.correctAnswer}',
+                                style: const TextStyle(
+                                  color: AppColors.heartRedDark,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.explanation,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(color: textColor),
+                              if (widget.explanation.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  widget.explanation,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 13,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ],
                     ],
@@ -144,29 +166,37 @@ class _FeedbackBottomSheetState extends State<FeedbackBottomSheet>
                 ),
               ],
             ),
-            const SizedBox(height: AppConstants.space24),
+            const SizedBox(height: AppConstants.space20),
+            if (widget.onAskTutor != null && !widget.isCorrect) ...[
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 2,
+                ),
+                icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+                label: const Text(
+                  '🤖 Ask AI Tutor to Explain (Gemini AI)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                onPressed: widget.onAskTutor,
+              ),
+              const SizedBox(height: AppConstants.space12),
+            ],
             SizedBox(
               width: double.infinity,
               child: PrimaryButton(
-                text: 'Continue',
+                text: 'Continue 🚀',
                 onPressed: () {
                   Navigator.of(context).pop();
                   widget.onContinue();
                 },
               ),
             ),
-            if (widget.onAskTutor != null && !widget.isCorrect) ...[
-              const SizedBox(height: AppConstants.space12),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  icon: const Icon(Icons.chat_bubble_outline),
-                  label: const Text('Ask Tutor Why'),
-                  style: TextButton.styleFrom(foregroundColor: textColor),
-                  onPressed: widget.onAskTutor,
-                ),
-              ),
-            ],
           ],
         ),
       ),
