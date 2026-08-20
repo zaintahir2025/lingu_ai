@@ -70,6 +70,9 @@ class TtsService {
       await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0);
       await _flutterTts.awaitSpeakCompletion(!kIsWeb);
+      try {
+        await _audioPlayer.setPlayerMode(PlayerMode.lowLatency);
+      } catch (_) {}
 
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         try {
@@ -269,14 +272,21 @@ class TtsService {
               : _currentLanguage);
       final shortLang = fullTag.split('-')[0];
 
-      // Primary: High-Quality Google Neural Human Voice Stream
-      if (sanitized.length <= 200) {
+      // Primary: High-Quality Low-Latency Native Neural Human Voice Stream
+      if (sanitized.length <= 250) {
         try {
+          // Play native regional speech using exact BCP-47 tag (e.g. es-ES, fr-FR, de-DE, ja-JP, ur-PK)
           final audioUrl =
-              'https://translate.google.com/translate_tts?ie=UTF-8&tl=$shortLang&client=tw-ob&q=${Uri.encodeComponent(sanitized)}';
+              'https://translate.google.com/translate_tts?ie=UTF-8&tl=$fullTag&client=tw-ob&q=${Uri.encodeComponent(sanitized)}';
           await _audioPlayer.play(UrlSource(audioUrl));
           return;
         } catch (e) {
+          try {
+            final fallbackUrl =
+                'https://translate.google.com/translate_tts?ie=UTF-8&tl=$shortLang&client=tw-ob&q=${Uri.encodeComponent(sanitized)}';
+            await _audioPlayer.play(UrlSource(fallbackUrl));
+            return;
+          } catch (_) {}
           debugPrint('Google Neural Audio Stream fallback to FlutterTts: $e');
         }
       }
