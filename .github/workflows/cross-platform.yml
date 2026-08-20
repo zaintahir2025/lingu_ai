@@ -66,7 +66,6 @@ jobs:
       - run: >-
           flutter build web --release --no-wasm-dry-run
           --dart-define=API_URL=${{ secrets.API_URL }}
-          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
 
   android:
     runs-on: ubuntu-latest
@@ -102,7 +101,6 @@ jobs:
       - run: >-
           flutter build linux --release
           --dart-define=API_URL=${{ secrets.API_URL }}
-          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
 
   windows:
     runs-on: windows-latest
@@ -117,7 +115,6 @@ jobs:
       - run: >-
           flutter build windows --release
           --dart-define=API_URL=${{ secrets.API_URL }}
-          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
 
   apple:
     runs-on: macos-latest
@@ -132,8 +129,6 @@ jobs:
       - run: >-
           flutter build macos --release
           --dart-define=API_URL=${{ secrets.API_URL }}
-          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
       - run: >-
           flutter build ios --release --no-codesign
           --dart-define=API_URL=${{ secrets.API_URL }}
-          --dart-define=TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}

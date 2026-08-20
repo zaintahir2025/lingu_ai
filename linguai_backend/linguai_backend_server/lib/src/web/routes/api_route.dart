@@ -125,12 +125,6 @@ class ApiRoute extends Route {
       if (!_validEmail(email) || !_validPassword(password)) {
         return _error(400, 'A valid email and strong password are required.');
       }
-      if (!await _verifyTurnstile(
-        '${body['turnstileToken'] ?? ''}',
-        request.remoteInfo,
-      )) {
-        return _error(400, 'CAPTCHA verification failed.');
-      }
       if (await AppUser.db.findFirstRow(
             session,
             where: (t) => t.email.equals(email),
@@ -788,7 +782,6 @@ class ApiRoute extends Route {
               env('SMTP_PASS') &&
               env('MAIL_FROM'),
           'gemini': env('GEMINI_API_KEY'),
-          'turnstile': env('TURNSTILE_SECRET_KEY'),
         },
       });
     }
@@ -1418,23 +1411,6 @@ class ApiRoute extends Route {
       throw StateError('Stripe request failed: ${response.body}');
     }
     return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
-  }
-
-  Future<bool> _verifyTurnstile(String token, String remoteIp) async {
-    if (token.length < 10) return false;
-    final secret =
-        Platform.environment['TURNSTILE_SECRET_KEY'] ??
-        ((Platform.environment['SERVERPOD_RUN_MODE'] ?? 'development') ==
-                'production'
-            ? null
-            : '1x0000000000000000000000000000000AA');
-    if (secret == null) return false;
-    final response = await http.post(
-      Uri.parse('https://challenges.cloudflare.com/turnstile/v0/siteverify'),
-      body: {'secret': secret, 'response': token, 'remoteip': remoteIp},
-    );
-    if (response.statusCode != 200) return false;
-    return (jsonDecode(response.body) as Map)['success'] == true;
   }
 
   void _checkRateLimit(String subject, String bucket, {required int max}) {

@@ -84,26 +84,21 @@ The same Flutter codebase targets:
 - macOS 10.15 or newer
 - Modern Linux distributions with GTK 3
 
-Registration uses Cloudflare Turnstile on every target. Web uses a native HTML
-platform view; native apps use the system WebView. Production builds must pass
-`TURNSTILE_SITE_KEY` with `--dart-define` and configure the matching
-`TURNSTILE_SECRET_KEY` on the backend. Debug builds use Cloudflare's official
-always-pass testing pair.
+CAPTCHA is temporarily disabled during the current testing phase. Registration
+still requires a valid email, a strong password, age confirmation, backend rate
+limiting, and email verification. Restore bot protection before public launch.
 
-Linux builds additionally need the system libraries used by audio and WebView:
+Linux builds additionally need the system libraries used by audio:
 
 ```bash
 # Ubuntu/Debian
 sudo apt-get install libgtk-3-dev libgstreamer1.0-dev \
-  libgstreamer-plugins-base1.0-dev libwebkit2gtk-4.1-dev
+  libgstreamer-plugins-base1.0-dev
 
 # Fedora/RHEL
 sudo dnf install gtk3-devel gstreamer1-devel \
-  gstreamer1-plugins-base-devel webkit2gtk4.1-devel
+  gstreamer1-plugins-base-devel
 ```
-
-Windows requires the Microsoft Edge WebView2 runtime, which is included with
-current Windows 10 and Windows 11 installations.
 
 ## Technology Stack
 
@@ -112,7 +107,7 @@ current Windows 10 and Windows 11 installations.
 - Database and Persistence:
   - Drift (SQLite) with WebAssembly (WASM) worker for browser database storage.
   - Hive key-value storage for user settings and cached server-verified subscription state.
-- Backend: Dart, Serverpod, PostgreSQL, JWT refresh-token rotation, Stripe, SMTP, and Cloudflare Turnstile.
+- Backend: Dart, Serverpod, PostgreSQL, JWT refresh-token rotation, Stripe, and SMTP.
 - Routing: GoRouter
 - Audio and TTS: flutter_tts with dynamic BCP-47 locale configuration.
 - AI Integration: Google Gemini REST API via http.
@@ -120,7 +115,7 @@ current Windows 10 and Windows 11 installations.
 
 ## Product Flow
 
-1. Register with email, a strong password, age confirmation, and Cloudflare Turnstile.
+1. Register with email, a strong password, and age confirmation.
 2. Verify the email and sign in with rotating access and refresh tokens.
 3. Choose a target language and complete the placement/onboarding survey.
 4. Follow the lesson path, study flashcards, hear native-locale pronunciation, and complete mixed quiz exercises.
@@ -165,7 +160,6 @@ The backend is entirely Dart and lives in `linguai_backend/`:
 - BCrypt password hashing and short-lived JWT access tokens.
 - Hashed, rotating refresh tokens with logout and account-disable invalidation.
 - Email verification and password reset through SMTP.
-- Cloudflare Turnstile server verification.
 - Profile, lesson, progress, draft, state synchronization, review, leaderboard, support, admin, AI tutor, subscription, and webhook operations.
 - Signed Stripe webhook verification and server-owned premium state.
 - Administrative audit records for destructive or privileged actions.
@@ -179,18 +173,17 @@ Frontend build-time values:
 | Variable | Required | Description |
 | --- | --- | --- |
 | `API_URL` | Release | Public HTTPS Dart API base, including `/api/v1` |
-| `TURNSTILE_SITE_KEY` | Registration | Cloudflare Turnstile site key |
 | `ADMOB_ANDROID_BANNER_ID` | Android ads | Production Android banner unit |
 | `ADMOB_IOS_BANNER_ID` | iOS ads | Production iOS banner unit |
 
-Backend values are documented in `linguai_backend/linguai_backend_server/.env.example`. Important production values include `JWT_SECRET`, PostgreSQL credentials, SMTP credentials, Turnstile secret, Gemini key, Stripe secret, price ID, webhook secret, and public app/API URLs. Never commit real credentials.
+Backend values are documented in `linguai_backend/linguai_backend_server/.env.example`. Important production values include `JWT_SECRET`, PostgreSQL credentials, SMTP credentials, Gemini key, Stripe secret, price ID, webhook secret, and public app/API URLs. Never commit real credentials.
 
 ## Security and Privacy Notes
 
 - Passwords, raw refresh tokens, card numbers, and BYOK provider keys are not stored as readable server data.
 - Authentication, support, and AI requests are rate-limited.
 - Account deletion removes dependent user data.
-- CAPTCHA is validated by the backend; hiding a widget in the client cannot bypass it.
+- CAPTCHA is temporarily removed for testing. Authentication remains rate-limited, but bot protection must be restored before public launch.
 - Stripe card entry occurs on Stripe-hosted pages.
 - `TESTING_ADMIN_ACCESS=true` is strictly a QA switch. Set it to `false` before a public production launch.
 - Store privacy disclosures, legal text, data-safety forms, production monitoring, backups, and signing credentials remain deployment-owner responsibilities.
@@ -212,8 +205,7 @@ Run the main local checks with:
 flutter analyze
 flutter test
 flutter build web --release --base-href /lingu_ai/ \
-  --dart-define=API_URL=https://your-api.example/api/v1 \
-  --dart-define=TURNSTILE_SITE_KEY=your-site-key
+  --dart-define=API_URL=https://your-api.example/api/v1
 
 cd linguai_backend/linguai_backend_server
 dart analyze --fatal-infos
@@ -264,7 +256,7 @@ lingu_ai/
 - Dart SDK
 - Serverpod CLI (`dart pub global activate serverpod_cli`)
 - PostgreSQL 16 (Docker or Podman is convenient locally)
-- SMTP, Stripe, Turnstile, and Gemini credentials for their production features
+- SMTP, Stripe, and Gemini credentials for their production features
 
 ### Installation Steps
 
@@ -305,18 +297,16 @@ lingu_ai/
      flutter run
      ```
 
-   For a production-like local run, provide the backend and CAPTCHA settings:
+   For a production-like local run, provide the backend setting:
 
    ```bash
-   flutter run --dart-define=API_URL=https://your-api.example/api/v1 \
-     --dart-define=TURNSTILE_SITE_KEY=your-site-key
+   flutter run --dart-define=API_URL=https://your-api.example/api/v1
    ```
 
 6. Build Production Web Bundle (the release API URL is mandatory):
    ```bash
    flutter build web --base-href "/lingu_ai/" \
-     --dart-define=API_URL=https://your-api.example/api/v1 \
-     --dart-define=TURNSTILE_SITE_KEY=your-site-key
+     --dart-define=API_URL=https://your-api.example/api/v1
    ```
 
 ---

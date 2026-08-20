@@ -122,11 +122,7 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> register(
-    String email,
-    String password,
-    String turnstileToken,
-  ) async {
+  Future<void> register(String email, String password) async {
     state = state.copyWith(
       status: AuthStatus.authenticating,
       registerError: null,
@@ -142,11 +138,7 @@ class AuthController extends StateNotifier<AuthState> {
         );
         return;
       }
-      await _repository.register(
-        email,
-        password,
-        turnstileToken: turnstileToken,
-      );
+      await _repository.register(email, password);
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
         user: null,

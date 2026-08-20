@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../controllers/auth_controller.dart';
@@ -6,12 +7,10 @@ import '../../../../core/widgets/shared/app_card.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
-import '../widgets/turnstile_widget.dart';
 import '../../../../core/widgets/shared/in_app_notification_banner.dart';
 import '../../../../core/widgets/mascot/piko_mascot.dart';
 import '../../../../core/network/api_config.dart';
 import '../../domain/registration_availability.dart';
-import 'package:flutter/foundation.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -21,10 +20,6 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  static const _productionTurnstileSiteKey = String.fromEnvironment(
-    'TURNSTILE_SITE_KEY',
-  );
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -40,8 +35,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _hasNumber = false;
   bool _hasSpecialChar = false;
   bool _hasUppercase = false;
-
-  String? _turnstileToken;
 
   @override
   void initState() {
@@ -72,14 +65,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   bool _isAbove13 = false;
 
-  String get _turnstileSiteKey => _productionTurnstileSiteKey.isNotEmpty
-      ? _productionTurnstileSiteKey
-      : (kDebugMode ? '1x00000000000000000000AA' : '');
-
   String? get _registrationConfigurationMessage {
     return registrationConfigurationMessage(
       backendConfigured: ApiConfig.isConfigured || kDebugMode,
-      captchaConfigured: _turnstileSiteKey.isNotEmpty,
     );
   }
 
@@ -110,16 +98,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    if (_turnstileToken == null) {
-      InAppNotificationBanner.show(
-        context: context,
-        title: 'Error',
-        message: 'Please complete the CAPTCHA.',
-        type: NotificationType.error,
-      );
-      return;
-    }
-
     if (_passwordController.text != _confirmPasswordController.text) {
       InAppNotificationBanner.show(
         context: context,
@@ -132,11 +110,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     ref
         .read(authControllerProvider.notifier)
-        .register(
-          _emailController.text.trim(),
-          _passwordController.text,
-          _turnstileToken!,
-        );
+        .register(_emailController.text.trim(), _passwordController.text);
   }
 
   Widget _buildChecklistRow(String text, bool isValid) {
@@ -163,7 +137,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.status == AuthStatus.authenticating;
-    final turnstileSiteKey = _turnstileSiteKey;
     final registrationConfigurationMessage = _registrationConfigurationMessage;
 
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
@@ -324,26 +297,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  if (turnstileSiteKey.isNotEmpty)
-                    TurnstileWidget(
-                      siteKey: turnstileSiteKey,
-                      onTokenReceived: (token) {
-                        setState(() {
-                          _turnstileToken = token;
-                        });
-                      },
-                      onTokenExpired: () {
-                        setState(() {
-                          _turnstileToken = null;
-                        });
-                      },
-                    ),
                   if (registrationConfigurationMessage != null)
                     Padding(
-                      padding: EdgeInsets.only(
-                        top: turnstileSiteKey.isNotEmpty ? 12 : 0,
-                      ),
+                      padding: const EdgeInsets.only(top: 12),
                       child: Text(
                         registrationConfigurationMessage,
                         style: const TextStyle(color: AppColors.heartRed),

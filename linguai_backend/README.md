@@ -2,7 +2,7 @@
 
 The production backend is implemented in Dart with Serverpod. It provides
 PostgreSQL persistence, JWT access tokens with rotating hashed refresh tokens,
-email verification and password reset, Cloudflare Turnstile validation,
+email verification and password reset, rate-limited authentication,
 profile and survey APIs, durable progress sync, support and administration,
 Gemini tutor access, and Stripe subscription management with signed webhooks.
 
@@ -23,7 +23,7 @@ Gemini tutor access, and Stripe subscription management with signed webhooks.
 
 The Flutter app uses `http://localhost:3000/api/v1` on web/desktop and
 `http://10.0.2.2:3000/api/v1` on the Android emulator. Production builds must
-set `API_URL` and `TURNSTILE_SITE_KEY` with `--dart-define`.
+set `API_URL` with `--dart-define`.
 
 Serverpod secrets in `config/passwords.yaml` and runtime `.env` files are
 ignored by Git. Commit migrations, generated protocol files, and model YAML.
@@ -40,5 +40,5 @@ dart test
 cd ../..
 flutter analyze
 flutter test
-flutter build web --release --dart-define=API_URL=https://api.example.com/api/v1 --dart-define=TURNSTILE_SITE_KEY=...
+flutter build web --release --dart-define=API_URL=https://api.example.com/api/v1
 ```

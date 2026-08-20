@@ -44,11 +44,7 @@ class User {
 abstract class AuthRepository {
   Future<User> login(String email, String password);
   Future<User> getCurrentUser();
-  Future<void> register(
-    String email,
-    String password, {
-    required String turnstileToken,
-  });
+  Future<void> register(String email, String password);
   Future<void> forgotPassword(String email);
   Future<void> resetPassword(String token, String newPassword);
   Future<void> logout();
@@ -143,20 +139,11 @@ class DartAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> register(
-    String email,
-    String password, {
-    required String turnstileToken,
-  }) async {
+  Future<void> register(String email, String password) async {
     try {
       await _dio.post(
         '$baseUrl/register',
-        data: {
-          'email': email,
-          'password': password,
-          'turnstileToken': turnstileToken,
-          'ageConfirmed': true,
-        },
+        data: {'email': email, 'password': password, 'ageConfirmed': true},
       );
     } on DioException catch (e) {
       debugPrint(
