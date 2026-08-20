@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/widgets/shared/progress_bar.dart';
+import '../../../../core/widgets/shared/wordpecker_flip_card.dart';
 import '../../../../core/database/database.dart';
 import 'package:drift/drift.dart' hide Column;
 import '../../../../core/algorithms/sm2.dart';
@@ -17,6 +18,7 @@ import 'package:lingu_ai/l10n/app_localizations.dart';
 import '../../domain/review_level_config.dart';
 import '../../../../core/local_storage/local_storage_provider.dart';
 import '../../../learn/domain/repositories/learn_repository.dart';
+import '../../../../core/providers/target_language_provider.dart';
 
 class ReviewSessionScreen extends ConsumerStatefulWidget {
   final int level;
@@ -236,6 +238,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
 
     final currentWord = _queue[_currentIndex];
     final progress = _queue.isEmpty ? 0.0 : _currentIndex / _queue.length;
+    final targetLang = ref.watch(targetLanguageProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -260,56 +263,15 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(AppConstants.space24),
-                child: GestureDetector(
+                child: WordpeckerFlipCard(
+                  word: currentWord,
+                  targetLanguage: targetLang,
+                  isFlipped: _isFlipped,
                   onTap: () {
                     setState(() {
-                      _isFlipped = true;
+                      _isFlipped = !_isFlipped;
                     });
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.radius24,
-                      ),
-                      border: Border.all(color: AppColors.divider, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          currentWord.word,
-                          style: Theme.of(context).textTheme.displayMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        if (_isFlipped) ...[
-                          const SizedBox(height: AppConstants.space32),
-                          const Divider(
-                            indent: AppConstants.space32,
-                            endIndent: AppConstants.space32,
-                          ),
-                          const SizedBox(height: AppConstants.space32),
-                          Text(
-                            currentWord.translation,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(color: AppColors.primaryGreen),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
                 ),
               ),
             ),
@@ -348,8 +310,14 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
               )
             else
               Padding(
-                padding: const EdgeInsets.all(AppConstants.space48),
-                child: Text(AppLocalizations.of(context)!.tapToReveal),
+                padding: const EdgeInsets.all(AppConstants.space24),
+                child: Text(
+                  AppLocalizations.of(context)!.tapToReveal,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ),
           ],
         ),
