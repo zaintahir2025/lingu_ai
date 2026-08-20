@@ -205,8 +205,5 @@ class LearnRepository {
 final learnRepositoryProvider = Provider<LearnRepository>((ref) {
   final db = ref.watch(databaseProvider);
   final onboardingStorage = ref.watch(onboardingStorageProvider);
-  ref.watch(
-    targetLanguageProvider,
-  ); // Re-instantiate or trigger dependency on language change
   return LearnRepository(db, onboardingStorage);
 });

@@ -89,7 +89,9 @@ class AdaptiveScaffold extends ConsumerWidget {
                         width: isSelected ? 2 : 1,
                       ),
                     ),
-                    child: ListTile(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: ListTile(
                       leading: Text(
                         TargetLanguages.getFlag(code),
                         style: const TextStyle(fontSize: 28),
@@ -178,9 +180,9 @@ class AdaptiveScaffold extends ConsumerWidget {
                               ),
                             );
                           }
-                        }
                       },
                     ),
+                  ),
                   );
                 }),
               ],
