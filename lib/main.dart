@@ -7,16 +7,14 @@ import 'core/local_storage/local_storage_provider.dart';
 
 import 'core/widgets/shared/in_app_notification_banner.dart';
 import 'core/notifications/notification_service.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:flutter/foundation.dart';
+import 'core/supabase/supabase_config.dart';
 
 final localeProvider = StateProvider<Locale>((ref) => const Locale('en'));
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize SQLite Drift Database
-  // await DatabaseHelper.instance.database;
+  await SupabaseConfig.init();
 
   final box = await LocalStorageService.init();
 

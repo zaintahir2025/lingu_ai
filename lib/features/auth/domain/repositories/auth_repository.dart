@@ -5,6 +5,8 @@ import '../../../../core/storage/token_storage.dart';
 import '../../../../core/storage/onboarding_storage.dart';
 import '../../../../core/network/api_config.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/supabase/supabase_config.dart';
+import '../../data/supabase_auth_repository.dart';
 
 class User {
   final String id;
@@ -220,5 +222,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final tokenStorage = ref.watch(tokenStorageProvider);
   final onboardingStorage = ref.watch(onboardingStorageProvider);
   final dio = ref.watch(dioProvider);
+
+  if (SupabaseConfig.isConfigured) {
+    return SupabaseAuthRepository(tokenStorage);
+  }
   return DartAuthRepository(tokenStorage, onboardingStorage, dio);
 });
