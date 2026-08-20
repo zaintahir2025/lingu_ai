@@ -37,16 +37,6 @@ jobs:
           flutter build web --release --base-href /lingu_ai/
           --dart-define=API_URL="${{ secrets.API_URL }}"
 
-      # GitHub Pages can cache main.dart.js after a release. Give every build a
-      # content-addressed entrypoint so an older bundle can never mask a fix.
-      - name: Fingerprint Flutter entrypoint
-        shell: bash
-        run: |
-          entry_hash="$(sha256sum build/web/main.dart.js | cut -c1-12)"
-          entry_name="main.${entry_hash}.dart.js"
-          mv build/web/main.dart.js "build/web/${entry_name}"
-          perl -0pi -e "s/main\\.dart\\.js/${entry_name}/g" build/web/flutter_bootstrap.js
-
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
