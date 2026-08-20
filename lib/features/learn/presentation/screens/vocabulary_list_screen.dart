@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/database/database.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_constants.dart';
+import '../../../../core/widgets/shared/duolingo_audio_buttons.dart';
+import '../../../../core/widgets/shared/duolingo_word_strength_meter.dart';
 import '../../../../main.dart';
 import '../../data/vocab_translator.dart';
 import 'package:lingu_ai/l10n/app_localizations.dart';
@@ -46,6 +48,7 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen>
   @override
   Widget build(BuildContext context) {
     final vocabAsync = ref.watch(vocabularyListProvider);
+    final targetLang = ref.watch(targetLanguageProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -95,11 +98,12 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen>
           return TabBarView(
             controller: _tabController,
             children: [
-              _buildList(context, words),
-              _buildList(context, words.where((w) => w.interval < 21).toList()),
+              _buildList(context, words, targetLang),
+              _buildList(context, words.where((w) => w.interval < 21).toList(), targetLang),
               _buildList(
                 context,
                 words.where((w) => w.interval >= 21).toList(),
+                targetLang,
               ),
             ],
           );
@@ -133,7 +137,7 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen>
     );
   }
 
-  Widget _buildList(BuildContext context, List<VocabWord> words) {
+  Widget _buildList(BuildContext context, List<VocabWord> words, String targetLang) {
     if (words.isEmpty) {
       return Center(child: Text(AppLocalizations.of(context)!.noWordsCategory));
     }
@@ -143,37 +147,61 @@ class _VocabularyListScreenState extends ConsumerState<VocabularyListScreen>
       itemCount: words.length,
       itemBuilder: (context, index) {
         final word = words[index];
-        final isMastered = word.interval >= 21;
+        final strengthBars = word.interval >= 21
+            ? 4
+            : (word.interval >= 10 ? 3 : (word.interval >= 3 ? 2 : 1));
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: AppConstants.space8),
-          child: ListTile(
-            title: Text(
-              word.word,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(word.translation),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isMastered
-                    ? AppColors.primaryGreen.withAlpha(25)
-                    : AppColors.streakOrange.withAlpha(25),
-                borderRadius: BorderRadius.circular(AppConstants.radius12),
+        return Container(
+          margin: const EdgeInsets.only(bottom: AppConstants.space12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppConstants.radius16),
+            border: Border.all(color: AppColors.divider, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
               ),
-              child: Text(
-                isMastered
-                    ? AppLocalizations.of(context)!.masteredTab
-                    : AppLocalizations.of(context)!.learningTab,
-                style: TextStyle(
-                  color: isMastered
-                      ? AppColors.primaryGreen
-                      : AppColors.streakOrange,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+            ],
+          ),
+          child: Row(
+            children: [
+              // Duolingo Dual Audio Control (🔊 Normal + 🐢 Slow)
+              DuolingoAudioButtons(
+                text: word.word,
+                targetLanguage: targetLang,
+                size: 44,
+              ),
+              const SizedBox(width: 14),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      word.word,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      word.translation,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    DuolingoWordStrengthMeter(strength: strengthBars),
+                  ],
                 ),
               ),
-            ),
+            ],
           ),
         );
       },

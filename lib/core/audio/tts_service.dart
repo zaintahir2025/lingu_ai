@@ -235,6 +235,19 @@ class TtsService {
     );
   }
 
+  Future<void> speakSlowTarget(
+    String text, {
+    String? targetLanguage,
+  }) async {
+    await speak(
+      text,
+      targetLanguage: targetLanguage ?? _currentLanguage,
+      rate: 0.22,
+      forceEnglish: false,
+      emotion: TtsEmotion.calm,
+    );
+  }
+
   Future<void> speak(
     String text, {
     String? targetLanguage,
