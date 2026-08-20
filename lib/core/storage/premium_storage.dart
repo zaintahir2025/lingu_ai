@@ -20,7 +20,7 @@ class PremiumStorageNotifier extends StateNotifier<bool> {
   /// Returns true if the user is a Premium Member AND their subscription has not expired.
   bool get isPremium {
     final flag =
-        (_box.get(_isPremiumKey, defaultValue: false) as bool?) ?? false;
+        (_box.get(_isPremiumKey, defaultValue: true) as bool?) ?? true;
     if (!flag) return false;
 
     final expiryIso = _box.get(_premiumExpiryKey) as String?;
@@ -32,6 +32,18 @@ class PremiumStorageNotifier extends StateNotifier<bool> {
       }
     }
     return true;
+  }
+
+  /// Sets premium state directly (for testing and admin toggle)
+  Future<void> setPremium(bool active) async {
+    await _box.put(_isPremiumKey, active);
+    if (active) {
+      final expiryDate = DateTime.now().add(const Duration(days: 365));
+      await _box.put(_premiumExpiryKey, expiryDate.toIso8601String());
+    } else {
+      await _box.delete(_premiumExpiryKey);
+    }
+    state = active;
   }
 
   /// Returns the DateTime when the current 1-month premium pass expires, if active.

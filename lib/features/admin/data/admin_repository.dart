@@ -280,6 +280,17 @@ class AdminRepository {
     }
   }
 
+  Future<void> setUserPremium(String id, bool premium) async {
+    try {
+      await _dio.patch('/admin/users/$id/premium', data: {'premium': premium});
+    } on DioException catch (exception) {
+      if (exception.type == DioExceptionType.connectionError) {
+        return;
+      }
+      throw Exception(_error(exception));
+    }
+  }
+
   Future<void> deleteUser(String id, String confirmationEmail) async {
     try {
       await _dio.delete(

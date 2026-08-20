@@ -379,22 +379,33 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
 
   Widget _userActions(AdminUser user) {
     final currentId = ref.read(authControllerProvider).user?.id;
-    if (currentId == user.id) {
-      return const Tooltip(
-        message: 'Current account',
-        child: Icon(Icons.verified_user_rounded, color: AppColors.primaryGreen),
-      );
-    }
     return PopupMenuButton<String>(
       tooltip: 'Account actions',
       onSelected: (action) {
         if (action == 'status') {
           _setUserDisabled(user, !user.isDisabled);
+        } else if (action == 'premium') {
+          _toggleUserPremium(user, !user.premium);
         } else if (action == 'delete') {
           _deleteUser(user);
         }
       },
       itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'premium',
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              user.premium
+                  ? Icons.workspace_premium_outlined
+                  : Icons.workspace_premium,
+              color: user.premium ? Colors.orange : AppColors.primaryGreen,
+            ),
+            title: Text(
+              user.premium ? 'Remove Premium' : 'Grant Premium',
+            ),
+          ),
+        ),
         PopupMenuItem(
           value: 'status',
           child: ListTile(
@@ -405,16 +416,49 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
             ),
           ),
         ),
-        const PopupMenuItem(
-          value: 'delete',
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.delete_forever, color: Colors.red),
-            title: Text('Delete account', style: TextStyle(color: Colors.red)),
+        if (currentId != user.id)
+          const PopupMenuItem(
+            value: 'delete',
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.delete_forever, color: Colors.red),
+              title: Text('Delete account', style: TextStyle(color: Colors.red)),
+            ),
           ),
-        ),
       ],
     );
+  }
+
+  Future<void> _toggleUserPremium(AdminUser user, bool grant) async {
+    try {
+      await ref.read(adminRepositoryProvider).setUserPremium(user.id, grant);
+      final currentId = ref.read(authControllerProvider).user?.id;
+      if (currentId == user.id || currentId == null) {
+        await ref.read(premiumStorageProvider.notifier).setPremium(grant);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              grant
+                  ? 'Granted Premium membership to ${user.email}'
+                  : 'Removed Premium membership from ${user.email}',
+            ),
+            backgroundColor: grant ? AppColors.primaryGreen : Colors.orange,
+          ),
+        );
+        _refresh();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _systemCard(AdminSystemStatus system) => Card(
