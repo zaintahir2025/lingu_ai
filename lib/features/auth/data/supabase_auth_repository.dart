@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/supabase/supabase_config.dart';

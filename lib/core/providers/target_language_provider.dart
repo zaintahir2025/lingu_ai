@@ -82,7 +82,7 @@ class TargetLanguageNotifier extends StateNotifier<String> {
 
         // 1. Reset lessons 1..5 to unlocked & uncompleted
         await (db.update(db.lessons)
-              ..where((t) => t.id.isSmallerThanOrEqualValue(5)))
+              ..where((t) => t.id.isSmallerThanValue(6)))
             .write(
           const LessonsCompanion(
             isCompleted: Value(false),
