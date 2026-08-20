@@ -8,6 +8,17 @@ Gemini tutor access, and Stripe subscription management with signed webhooks.
 
 ## Local development
 
+From the repository root, the shortest supported startup command is:
+
+```bash
+./tool/start_local_backend.sh
+```
+
+It reuses Podman or Docker, creates the project-scoped PostgreSQL container when
+needed, waits for database readiness, applies committed migrations, and starts
+the API on `http://localhost:3000/api/v1`. Without SMTP credentials, local email
+verification and password-reset links are printed in that terminal.
+
 1. Copy `linguai_backend_server/.env.example` to a private environment file or
    export the values in your shell.
 2. Start PostgreSQL with `docker compose up -d postgres postgres_test` (Podman

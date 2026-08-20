@@ -251,6 +251,26 @@ lingu_ai/
 
 ## Getting Started Locally
 
+### Fast local testing (no API accounts)
+
+Open two terminals from the repository root. Start PostgreSQL, apply migrations,
+and run the Dart API in the first terminal:
+
+```bash
+./tool/start_local_backend.sh
+```
+
+Start the connected Flutter web app in the second terminal:
+
+```bash
+./tool/start_local_web.sh
+```
+
+Then open `http://127.0.0.1:36537`. During local development, verification and
+password-reset links are printed in the backend terminal instead of being sent
+through SMTP. Stop either foreground process with `Ctrl+C`; the PostgreSQL
+container and its named volume remain available for the next run.
+
 ### Prerequisites
 - Flutter SDK (v3.19 or higher)
 - Dart SDK
