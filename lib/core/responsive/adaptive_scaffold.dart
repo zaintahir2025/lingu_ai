@@ -180,10 +180,10 @@ class AdaptiveScaffold extends ConsumerWidget {
                               ),
                             );
                           }
-                        }
                       },
                     ),
-                  );
+                  ),
+                );
                 }),
               ],
             ),
