@@ -13,8 +13,82 @@ import '../../../../core/ads/ad_service.dart';
 import '../../../../core/widgets/mascot/piko_mascot.dart';
 import '../../../../core/audio/sound_service.dart';
 
+import 'package:flutter_animate/flutter_animate.dart';
+
 class LearnTab extends ConsumerWidget {
   const LearnTab({super.key});
+
+  void _openDailyChest(BuildContext context, WidgetRef ref) {
+    SoundService.playLevelUp();
+    ref.read(progressControllerProvider.notifier).addXp(50);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          '🎁 Daily Mystery Chest! 🎁',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.card_giftcard_rounded,
+              size: 80,
+              color: AppColors.streakOrange,
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scale(
+                  begin: const Offset(1, 1),
+                  end: const Offset(1.15, 1.15),
+                  duration: 600.ms,
+                ),
+            const SizedBox(height: 16),
+            const Text(
+              '🎉 +50 XP Bonus & 1 Day Streak Shield Awarded!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Come back tomorrow to keep your streak burning!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          Center(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 12,
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'AWESOME! 🚀',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -112,6 +186,22 @@ class LearnTab extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.card_giftcard_rounded,
+                        color: Colors.white,
+                        size: 30,
+                      )
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .scale(
+                            begin: const Offset(1, 1),
+                            end: const Offset(1.2, 1.2),
+                            duration: 800.ms,
+                          ),
+                      tooltip: 'Claim Daily Bonus Chest! 🎁',
+                      onPressed: () => _openDailyChest(context, ref),
+                    ),
+                    const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
                         SoundService.playTap();
