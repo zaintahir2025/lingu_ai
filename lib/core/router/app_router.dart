@@ -36,13 +36,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (!isAuth) {
-        if (!hasCompletedOnboarding) {
-          if (state.matchedLocation != '/onboarding/tour' && !goingToAuth) {
-            return '/onboarding/tour'; // Start with Tour
-          }
-        } else {
-          if (!goingToAuth) return '/auth/login';
-        }
+        if (!goingToAuth) return '/auth/login';
       } else {
         final user = authState.user;
         if (user != null) {
