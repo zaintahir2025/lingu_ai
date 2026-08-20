@@ -82,7 +82,7 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context)!.dailyReview,
+                  AppLocalizations.of(context)?.dailyReview ?? 'Daily Review',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -221,7 +221,7 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        AppLocalizations.of(context)!.wordsMastered,
+                        AppLocalizations.of(context)?.wordsMastered ?? 'Words Mastered',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.primaryGreenDark,
                         ),
