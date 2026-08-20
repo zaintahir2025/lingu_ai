@@ -228,6 +228,23 @@ class ProgressController extends AutoDisposeAsyncNotifier<ProgressState> {
     if (currentState == null) return 0;
     return (currentState.progress.totalXp / 10).floor();
   }
+
+  Future<void> resetProgress() async {
+    final db = ref.read(databaseProvider);
+    await db.delete(db.userProgress).go();
+    await db.delete(db.dailyXp).go();
+    final entry = await db
+        .into(db.userProgress)
+        .insertReturning(
+          UserProgressCompanion.insert(
+            totalXp: const Value(0),
+            level: const Value(1),
+            currentStreak: const Value(0),
+            streakFreezes: const Value(0),
+          ),
+        );
+    state = AsyncData(ProgressState(entry));
+  }
 }
 
 final progressControllerProvider =

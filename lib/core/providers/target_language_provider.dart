@@ -44,8 +44,11 @@ class TargetLanguageNotifier extends StateNotifier<String> {
 
   Future<void> switchLanguage(
     String newLangCode, {
-    bool resetProgress = true,
+    bool forceReset = false,
   }) async {
+    final bool isLanguageChanged = newLangCode != state;
+    final bool shouldReset = isLanguageChanged || forceReset;
+
     await _storage.setTargetLanguage(newLangCode);
     state = newLangCode;
 
@@ -70,7 +73,7 @@ class TargetLanguageNotifier extends StateNotifier<String> {
       await _ref.read(ttsServiceProvider).initLanguage(newLangCode);
     } catch (_) {}
 
-    if (resetProgress) {
+    if (shouldReset) {
       try {
         final db = _ref.read(databaseProvider);
         await (db.update(
@@ -104,6 +107,9 @@ class TargetLanguageNotifier extends StateNotifier<String> {
                 status: Value('learning'),
               ),
             );
+
+        // Reset XP, streak, and daily activity
+        await _ref.read(progressControllerProvider.notifier).resetProgress();
       } catch (_) {}
     }
 

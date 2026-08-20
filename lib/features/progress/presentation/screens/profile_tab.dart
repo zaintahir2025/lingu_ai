@@ -607,6 +607,8 @@ class ProfileTab extends ConsumerWidget {
               const SizedBox(height: AppConstants.space16),
               _buildHeartsModeSettings(context, ref),
               const SizedBox(height: AppConstants.space16),
+              _buildResetProgressButton(context, ref),
+              const SizedBox(height: AppConstants.space16),
 
               // Contact Us Button
               Container(
@@ -1376,6 +1378,99 @@ class ProfileTab extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  Widget _buildResetProgressButton(BuildContext context, WidgetRef ref) {
+    final currentLang = ref.watch(targetLanguageProvider);
+    final langName = TargetLanguages.getName(currentLang);
+
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Reset $langName Progress?'),
+            content: Text(
+              'Are you sure you want to reset all completed lessons, XP, and memory strength for $langName? This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.heartRed,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await ref
+                      .read(targetLanguageProvider.notifier)
+                      .switchLanguage(currentLang, forceReset: true);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Course progress reset for $langName'),
+                        backgroundColor: AppColors.heartRed,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Reset Progress', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(AppConstants.radius16),
+      child: Container(
+        padding: const EdgeInsets.all(AppConstants.space16),
+        decoration: BoxDecoration(
+          color: AppColors.softError,
+          borderRadius: BorderRadius.circular(AppConstants.radius16),
+          border: Border.all(color: AppColors.heartRed.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.restart_alt_rounded,
+              color: AppColors.heartRed,
+              size: 28,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Reset Progress 🔄',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppColors.softErrorText,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Start over for $langName',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.heartRed,
+            ),
+          ],
+        ),
       ),
     );
   }
