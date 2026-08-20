@@ -4,5 +4,9 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- Allow the sandboxed release app to reach the LinguAI API, checkout,
+	     and other HTTPS services. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
 </dict>
 </plist>

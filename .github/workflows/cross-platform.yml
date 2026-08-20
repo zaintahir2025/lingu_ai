@@ -80,7 +80,11 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build apk --debug
+      # Release catches manifest/permission and shrinker issues that are hidden
+      # by Flutter's development-only Android manifest.
+      - run: >-
+          flutter build apk --release
+          --dart-define=API_URL=${{ secrets.API_URL }}
 
   linux:
     runs-on: ubuntu-latest
