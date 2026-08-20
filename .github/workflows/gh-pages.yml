@@ -8,6 +8,8 @@ on:
 # Add explicit write permissions so the GITHUB_TOKEN can push to gh-pages branch
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: github-pages
@@ -31,11 +33,10 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter Web
-        # The base-href must match your repository name EXACTLY (with leading and trailing slashes).
-        # We pass the production backend URL using dart-define. Wrapped in quotes to prevent bash errors if the secret is empty.
-        run: >-
-          flutter build web --release --base-href /lingu_ai/
-          --dart-define=API_URL="${{ secrets.API_URL }}"
+        run: flutter build web --release --base-href /lingu_ai/ --dart-define=API_URL="${{ secrets.API_URL }}"
+
+      - name: Create .nojekyll
+        run: touch build/web/.nojekyll
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
