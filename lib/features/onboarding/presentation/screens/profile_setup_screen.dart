@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/widgets/shared/app_card.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -35,16 +36,26 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   Future<void> _submit() async {
-    if (_usernameController.text.trim().isEmpty) return;
+    final username = _usernameController.text.trim();
+    if (username.isEmpty) return;
     if (_selectedDob == null) return;
 
-    await ref
-        .read(userControllerProvider.notifier)
-        .updateProfile(
-          username: _usernameController.text.trim(),
-          avatarId: _selectedAvatar,
-          dob: _selectedDob,
-        );
+    final currentUser = ref.read(authControllerProvider).user;
+    if (currentUser != null) {
+      final updated = currentUser.copyWith(username: username);
+      ref.read(authControllerProvider.notifier).updateUser(updated);
+    }
+
+    try {
+      await ref
+          .read(userControllerProvider.notifier)
+          .updateProfile(
+            username: username,
+            avatarId: _selectedAvatar,
+            dob: _selectedDob,
+          );
+    } catch (_) {}
+
     if (!mounted) return;
     context.go('/onboarding/lang');
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/storage/onboarding_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/shared/app_card.dart';
@@ -13,22 +14,34 @@ class ExperienceChoiceScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userState = ref.watch(userControllerProvider);
 
-    void submitBeginner() {
+    Future<void> submitBeginner() async {
       final targetLanguage =
           ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
-      ref
-          .read(userControllerProvider.notifier)
-          .submitSurvey(
-            knowledgeLevel: 'beginner',
-            fluencyScore: 10,
-            targetLanguage: targetLanguage,
-          )
-          .then((_) {
-            // Need to refetch user or let auth controller handle it
-            if (context.mounted) {
-              context.go('/');
-            }
-          });
+
+      await ref.read(onboardingStorageProvider).setCompletedOnboarding();
+
+      final currentUser = ref.read(authControllerProvider).user;
+      if (currentUser != null) {
+        final updated = currentUser.copyWith(
+          knowledgeLevel: 'beginner',
+          targetLanguage: targetLanguage,
+        );
+        ref.read(authControllerProvider.notifier).updateUser(updated);
+      }
+
+      try {
+        await ref
+            .read(userControllerProvider.notifier)
+            .submitSurvey(
+              knowledgeLevel: 'beginner',
+              fluencyScore: 10,
+              targetLanguage: targetLanguage,
+            );
+      } catch (_) {}
+
+      if (context.mounted) {
+        context.go('/');
+      }
     }
 
     return Scaffold(

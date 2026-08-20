@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../user/presentation/controllers/user_controller.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/storage/onboarding_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/shared/primary_button.dart';
@@ -21,14 +22,27 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
   Future<void> _submit() async {
     final targetLanguage =
         ref.read(onboardingStorageProvider).targetLanguage ?? 'es';
-    await ref
-        .read(userControllerProvider.notifier)
-        .submitSurvey(
-          knowledgeLevel: _knowledgeLevel,
-          fluencyScore: _fluencyScore,
-          targetLanguage: targetLanguage,
-        );
     await ref.read(onboardingStorageProvider).setCompletedOnboarding();
+
+    final currentUser = ref.read(authControllerProvider).user;
+    if (currentUser != null) {
+      final updated = currentUser.copyWith(
+        knowledgeLevel: _knowledgeLevel,
+        targetLanguage: targetLanguage,
+      );
+      ref.read(authControllerProvider.notifier).updateUser(updated);
+    }
+
+    try {
+      await ref
+          .read(userControllerProvider.notifier)
+          .submitSurvey(
+            knowledgeLevel: _knowledgeLevel,
+            fluencyScore: _fluencyScore,
+            targetLanguage: targetLanguage,
+          );
+    } catch (_) {}
+
     if (!mounted) return;
     context.go('/');
   }

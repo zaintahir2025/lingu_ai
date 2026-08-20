@@ -45,15 +45,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       } else {
         final user = authState.user;
         if (user != null) {
+          final targetLanguage =
+              user.targetLanguage ?? onboardingStorage.targetLanguage;
+          final knowledgeLevel =
+              user.knowledgeLevel ??
+              (hasCompletedOnboarding ? 'beginner' : null);
+
           if (user.username == null) {
             if (state.matchedLocation != '/profile-setup') {
               return '/profile-setup';
             }
-          } else if (user.targetLanguage == null) {
+          } else if (targetLanguage == null) {
             if (state.matchedLocation != '/onboarding/lang') {
               return '/onboarding/lang';
             }
-          } else if (user.knowledgeLevel == null) {
+          } else if (knowledgeLevel == null) {
             if (state.matchedLocation != '/experience-choice' &&
                 state.matchedLocation != '/survey') {
               return '/experience-choice';

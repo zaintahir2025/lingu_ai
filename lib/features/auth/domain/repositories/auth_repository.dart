@@ -39,6 +39,28 @@ class User {
       adminAccess: json['adminAccess'] == true || json['role'] == 'admin',
     );
   }
+
+  User copyWith({
+    String? id,
+    String? email,
+    String? name,
+    String? username,
+    String? targetLanguage,
+    String? knowledgeLevel,
+    String? role,
+    bool? adminAccess,
+  }) {
+    return User(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      username: username ?? this.username,
+      targetLanguage: targetLanguage ?? this.targetLanguage,
+      knowledgeLevel: knowledgeLevel ?? this.knowledgeLevel,
+      role: role ?? this.role,
+      adminAccess: adminAccess ?? this.adminAccess,
+    );
+  }
 }
 
 abstract class AuthRepository {

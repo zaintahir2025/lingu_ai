@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart';
 import '../storage/onboarding_storage.dart';
 import '../../features/user/presentation/controllers/user_controller.dart';
+import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../database/database.dart';
 import '../audio/tts_service.dart';
 import '../../features/progress/presentation/providers/progress_controller.dart';
@@ -45,10 +46,17 @@ class TargetLanguageNotifier extends StateNotifier<String> {
     String newLangCode, {
     bool resetProgress = true,
   }) async {
-    if (state == newLangCode) return;
-
     await _storage.setTargetLanguage(newLangCode);
     state = newLangCode;
+
+    // Update AuthState user targetLanguage so route redirects work correctly
+    try {
+      final currentUser = _ref.read(authControllerProvider).user;
+      if (currentUser != null) {
+        final updated = currentUser.copyWith(targetLanguage: newLangCode);
+        _ref.read(authControllerProvider.notifier).updateUser(updated);
+      }
+    } catch (_) {}
 
     // Sync to user profile backend/state
     try {
