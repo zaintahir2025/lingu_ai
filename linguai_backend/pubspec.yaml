@@ -1,9 +1,0 @@
-name: linguai_backend_workspace
-publish_to: none
-
-environment:
-  sdk: '>=3.0.0 <4.0.0'
-
-workspace:
-  - linguai_backend_client
-  - linguai_backend_server
