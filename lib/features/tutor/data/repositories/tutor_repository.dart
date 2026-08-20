@@ -10,12 +10,10 @@ import '../../../../core/network/dio_client.dart';
 class KeyValidationResult {
   final bool isValid;
   final String? errorMessage;
-  final String? suggestedProvider;
 
   const KeyValidationResult({
     required this.isValid,
     this.errorMessage,
-    this.suggestedProvider,
   });
 }
 
@@ -32,10 +30,10 @@ class TutorRepository {
   TutorRepository(this._aiSettingsStorage, this._backendDio);
 
   static const List<String> _geminiModels = [
-    'gemini-2.0-flash',
     'gemini-1.5-flash',
+    'gemini-2.0-flash',
     'gemini-1.5-pro',
-    'gemini-2.0-flash-exp',
+    'gemini-1.5-flash-latest',
   ];
 
   String sanitizeApiKey(String key) {
@@ -47,42 +45,7 @@ class TutorRepository {
         .replaceAll('\r', '');
   }
 
-  KeyValidationResult checkKeyFormat(String key, String provider) {
-    final cleanKey = sanitizeApiKey(key);
-    if (cleanKey.isEmpty) {
-      return const KeyValidationResult(
-        isValid: false,
-        errorMessage: 'API Key cannot be empty.',
-      );
-    }
-
-    if (cleanKey.startsWith('gsk_')) {
-      if (!provider.contains('Groq')) {
-        return const KeyValidationResult(
-          isValid: false,
-          errorMessage:
-              'This appears to be a Groq API key (starts with "gsk_"). Auto-switching provider to Groq API.',
-          suggestedProvider: 'Groq API (Llama 3.3)',
-        );
-      }
-    } else if (cleanKey.startsWith('sk-')) {
-      if (!provider.contains('OpenAI')) {
-        return const KeyValidationResult(
-          isValid: false,
-          errorMessage:
-              'This appears to be an OpenAI/OpenRouter API key (starts with "sk-"). Auto-switching provider to OpenAI API.',
-          suggestedProvider: 'OpenAI / OpenRouter API',
-        );
-      }
-    }
-
-    return const KeyValidationResult(isValid: true);
-  }
-
-  Future<KeyValidationResult> validateApiKey(
-    String apiKey, {
-    String? provider,
-  }) async {
+  Future<KeyValidationResult> validateApiKey(String apiKey) async {
     final key = sanitizeApiKey(apiKey);
     if (key.isEmpty) {
       return const KeyValidationResult(
@@ -91,155 +54,72 @@ class TutorRepository {
       );
     }
 
-    final selectedProvider = provider ?? _aiSettingsStorage.provider;
-    final formatCheck = checkKeyFormat(key, selectedProvider);
-    if (!formatCheck.isValid && formatCheck.suggestedProvider == null) {
-      return formatCheck;
-    }
-
-    final effectiveProvider =
-        formatCheck.suggestedProvider ?? selectedProvider;
-
-    if (effectiveProvider.contains('Groq')) {
+    // Google Gemini Validation across active models
+    for (final modelName in _geminiModels) {
+      // 1. Official Google Generative AI SDK
       try {
-        final res = await _dio.post(
-          'https://api.groq.com/openai/v1/chat/completions',
+        final model = GenerativeModel(model: modelName, apiKey: key);
+        final res = await model.generateContent([Content.text('Hi')]);
+        if (res.text != null && res.text!.isNotEmpty) {
+          return const KeyValidationResult(isValid: true);
+        }
+      } catch (_) {}
+
+      // 2. Standard REST API Key Query & Header
+      try {
+        final response = await _dio.post(
+          'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$key',
           options: Options(
             headers: {
-              'Authorization': 'Bearer $key',
               'Content-Type': 'application/json',
+              'x-goog-api-key': key,
             },
           ),
           data: {
-            'model': 'llama-3.3-70b-versatile',
-            'messages': [
-              {'role': 'user', 'content': 'hi'},
+            'contents': [
+              {
+                'parts': [
+                  {'text': 'Hi'},
+                ],
+              },
             ],
-            'max_tokens': 5,
           },
         );
-        if (res.statusCode == 200) {
-          return KeyValidationResult(
-            isValid: true,
-            suggestedProvider: formatCheck.suggestedProvider,
-          );
+        if (response.statusCode == 200 && response.data != null) {
+          return const KeyValidationResult(isValid: true);
         }
-      } catch (e) {
-        return KeyValidationResult(
-          isValid: false,
-          errorMessage:
-              'Groq API Key request failed. Ensure the key is active at console.groq.com.',
-        );
-      }
-    } else if (effectiveProvider.contains('OpenAI') ||
-        effectiveProvider.contains('OpenRouter')) {
-      try {
-        final endpoint = effectiveProvider.contains('OpenRouter')
-            ? 'https://openrouter.ai/api/v1/chat/completions'
-            : 'https://api.openai.com/v1/chat/completions';
-        final model = effectiveProvider.contains('OpenRouter')
-            ? 'openai/gpt-4o-mini'
-            : 'gpt-4o-mini';
+      } catch (_) {}
 
-        final res = await _dio.post(
-          endpoint,
+      // 3. GCP Bearer Token Header (for GCP/OAuth tokens)
+      try {
+        final response = await _dio.post(
+          'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent',
           options: Options(
             headers: {
-              'Authorization': 'Bearer $key',
               'Content-Type': 'application/json',
+              'Authorization': 'Bearer $key',
             },
           ),
           data: {
-            'model': model,
-            'messages': [
-              {'role': 'user', 'content': 'hi'},
+            'contents': [
+              {
+                'parts': [
+                  {'text': 'Hi'},
+                ],
+              },
             ],
-            'max_tokens': 5,
           },
         );
-        if (res.statusCode == 200) {
-          return KeyValidationResult(
-            isValid: true,
-            suggestedProvider: formatCheck.suggestedProvider,
-          );
+        if (response.statusCode == 200 && response.data != null) {
+          return const KeyValidationResult(isValid: true);
         }
-      } catch (e) {
-        return KeyValidationResult(
-          isValid: false,
-          errorMessage:
-              'OpenAI/OpenRouter Key validation failed. Check your API key and account quota.',
-        );
-      }
-    } else {
-      // Google Gemini: supports standard API keys and GCP/OAuth tokens (e.g. AQ..., ya29...)
-      for (final modelName in _geminiModels) {
-        // Mode 1: Standard API key header/query param
-        try {
-          final response = await _dio.post(
-            'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$key',
-            options: Options(
-              headers: {
-                'Content-Type': 'application/json',
-                'x-goog-api-key': key,
-              },
-            ),
-            data: {
-              'contents': [
-                {
-                  'parts': [
-                    {'text': 'Hi'},
-                  ],
-                },
-              ],
-            },
-          );
-          if (response.statusCode == 200 && response.data != null) {
-            return KeyValidationResult(
-              isValid: true,
-              suggestedProvider: formatCheck.suggestedProvider,
-            );
-          }
-        } catch (_) {}
-
-        // Mode 2: GCP Bearer authorization header (for GCP/Vertex/OAuth tokens like AQ.Ab8RN6...)
-        try {
-          final response = await _dio.post(
-            'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent',
-            options: Options(
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $key',
-              },
-            ),
-            data: {
-              'contents': [
-                {
-                  'parts': [
-                    {'text': 'Hi'},
-                  ],
-                },
-              ],
-            },
-          );
-          if (response.statusCode == 200 && response.data != null) {
-            return KeyValidationResult(
-              isValid: true,
-              suggestedProvider: formatCheck.suggestedProvider,
-            );
-          }
-        } catch (_) {}
-      }
-
-      return const KeyValidationResult(
-        isValid: false,
-        errorMessage:
-            'Gemini API Key rejected by Google. Ensure Generative Language API is enabled or try generating a standard key at https://aistudio.google.com.',
-      );
+      } catch (_) {}
     }
 
     return const KeyValidationResult(
       isValid: false,
-      errorMessage: 'Could not verify API key.',
+      errorMessage:
+          'Google Gemini rejected this key. Please make sure you copied the full key from https://aistudio.google.com.',
     );
   }
 
@@ -249,57 +129,23 @@ class TutorRepository {
     String? targetLang,
   }) async* {
     final customKey = sanitizeApiKey(await _aiSettingsStorage.getApiKey());
-    final provider = _aiSettingsStorage.provider;
 
     if (customKey.isNotEmpty) {
       bool hasEmitted = false;
       try {
-        if (provider.contains('Groq')) {
-          await for (final chunk in _callOpenAiCompatibleApi(
-            'https://api.groq.com/openai/v1/chat/completions',
-            'llama-3.3-70b-versatile',
-            customKey,
-            message,
-            contextWords,
-            targetLang: targetLang,
-          )) {
-            hasEmitted = true;
-            yield chunk;
-          }
-        } else if (provider.contains('OpenAI') || provider.contains('OpenRouter')) {
-          final endpoint = provider.contains('OpenRouter')
-              ? 'https://openrouter.ai/api/v1/chat/completions'
-              : 'https://api.openai.com/v1/chat/completions';
-          final model = provider.contains('OpenRouter')
-              ? 'openai/gpt-4o-mini'
-              : 'gpt-4o-mini';
-
-          await for (final chunk in _callOpenAiCompatibleApi(
-            endpoint,
-            model,
-            customKey,
-            message,
-            contextWords,
-            targetLang: targetLang,
-          )) {
-            hasEmitted = true;
-            yield chunk;
-          }
-        } else {
-          await for (final chunk in _callGeminiApi(
-            customKey,
-            message,
-            contextWords,
-            targetLang: targetLang,
-          )) {
-            hasEmitted = true;
-            yield chunk;
-          }
+        await for (final chunk in _callGeminiApi(
+          customKey,
+          message,
+          contextWords,
+          targetLang: targetLang,
+        )) {
+          hasEmitted = true;
+          yield chunk;
         }
         if (hasEmitted) return;
       } catch (e) {
-        debugPrint('AI Provider ($provider) call failed: $e');
-        yield '⚠️ $provider Error: The AI service rejected your API key.\n\nPlease verify your API key and quota in settings (🔑 icon).';
+        debugPrint('Gemini API call failed: $e');
+        yield '⚠️ Google Gemini API Error: The AI service rejected your API key.\n\nPlease check your key in settings (🔑 icon) at https://aistudio.google.com.';
         return;
       }
     }
@@ -327,54 +173,9 @@ class TutorRepository {
       final data = error.response?.data;
       final errorMessage = data is Map && data['error'] is String
           ? data['error'] as String
-          : 'The built-in AI Tutor is unavailable. Add your own key or try again later.';
+          : 'The built-in AI Tutor is unavailable. Add your Gemini key in settings or try again later.';
       throw Exception(errorMessage);
     }
-  }
-
-  Stream<String> _callOpenAiCompatibleApi(
-    String endpoint,
-    String model,
-    String apiKey,
-    String message,
-    List<String> contextWords, {
-    String? targetLang,
-  }) async* {
-    final langName = targetLang != null
-        ? TargetLanguages.getName(targetLang)
-        : 'Spanish 🇪🇸';
-    final systemPrompt =
-        'You are LinguAI Tutor, a friendly, encouraging, and expert language learning tutor for $langName. Context learned words: ${contextWords.join(", ")}. Keep responses concise, clear, and beginner-friendly.';
-
-    final response = await _dio.post(
-      endpoint,
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-        },
-      ),
-      data: {
-        'model': model,
-        'messages': [
-          {'role': 'system', 'content': systemPrompt},
-          {'role': 'user', 'content': message},
-        ],
-        'temperature': 0.7,
-      },
-    );
-
-    if (response.statusCode == 200 && response.data != null) {
-      final choices = response.data['choices'] as List?;
-      if (choices != null && choices.isNotEmpty) {
-        final text = choices[0]['message']['content'] as String?;
-        if (text != null) {
-          yield text;
-          return;
-        }
-      }
-    }
-    throw Exception('Failed to query $model API endpoint.');
   }
 
   Stream<String> _callGeminiApi(
@@ -418,7 +219,7 @@ Respond helpfully as AI Language Tutor for $langName. Keep your response concise
     }
 
     for (final modelName in _geminiModels) {
-      // Mode A: Standard API key query/header
+      // REST Standard Mode
       try {
         final url =
             'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey';
@@ -455,11 +256,9 @@ Respond helpfully as AI Language Tutor for $langName. Keep your response concise
             }
           }
         }
-      } catch (dioError) {
-        debugPrint('Dio REST Mode A model $modelName failed: $dioError');
-      }
+      } catch (_) {}
 
-      // Mode B: Bearer Token Authorization header (for GCP/OAuth/Vertex keys starting with AQ...)
+      // REST Bearer Mode
       try {
         final url =
             'https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent';
@@ -496,9 +295,7 @@ Respond helpfully as AI Language Tutor for $langName. Keep your response concise
             }
           }
         }
-      } catch (dioError) {
-        debugPrint('Dio REST Mode B model $modelName failed: $dioError');
-      }
+      } catch (_) {}
     }
 
     throw Exception('All Gemini model endpoints failed for custom key.');

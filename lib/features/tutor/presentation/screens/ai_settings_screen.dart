@@ -28,14 +28,12 @@ class AiSettingsStorage {
     return null;
   }
 
-  String get provider =>
-      (_box?.get(_providerKey, defaultValue: 'Google Gemini API') as String?) ??
-      'Google Gemini API';
+  String get provider => 'Google Gemini API';
+
   Future<String> getApiKey() async {
     final secureKey = await _secureStorage.read(key: _apiKey);
     if (secureKey != null) return secureKey;
 
-    // One-time migration from legacy Hive storage into encrypted storage.
     final legacyKey = (_box?.get(_apiKey) as String?) ?? '';
     if (legacyKey.isNotEmpty) {
       await _secureStorage.write(key: _apiKey, value: legacyKey);
@@ -50,7 +48,7 @@ class AiSettingsStorage {
   }) async {
     final box = _box;
     if (box != null) {
-      await box.put(_providerKey, provider);
+      await box.put(_providerKey, 'Google Gemini API');
       await box.delete(_apiKey);
     }
     if (apiKey.isEmpty) {
@@ -70,42 +68,13 @@ class AiSettingsScreen extends ConsumerStatefulWidget {
 
 class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   late TextEditingController _keyController;
-  late String _selectedProvider;
   bool _obscureKey = true;
   bool _isValidating = false;
-
-  final Map<String, Map<String, String>> _providerTemplates = {
-    'Google Gemini API': {
-      'prefix': 'AIzaSy',
-      'url': 'https://aistudio.google.com',
-      'hint': 'Paste your Gemini API key (e.g. AIzaSy...)',
-      'info': 'Free Tier available via Google AI Studio.',
-    },
-    'Groq API (Llama 3.3)': {
-      'prefix': 'gsk_',
-      'url': 'https://console.groq.com',
-      'hint': 'Paste your Groq API key (e.g. gsk_...)',
-      'info': 'Ultra-fast Llama 3.3 inference engine.',
-    },
-    'OpenAI / OpenRouter API': {
-      'prefix': 'sk-',
-      'url': 'https://platform.openai.com',
-      'hint': 'Paste your OpenAI/OpenRouter key (e.g. sk-...)',
-      'info': 'Supports GPT-4o-mini & OpenRouter endpoints.',
-    },
-  };
 
   @override
   void initState() {
     super.initState();
-    final storage = ref.read(aiSettingsStorageProvider);
     _keyController = TextEditingController();
-    _selectedProvider = storage.provider.isNotEmpty
-        ? storage.provider
-        : 'Google Gemini API';
-    if (!_providerTemplates.containsKey(_selectedProvider)) {
-      _selectedProvider = 'Google Gemini API';
-    }
     _loadStoredKey();
   }
 
@@ -125,7 +94,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
     final storage = ref.read(aiSettingsStorageProvider);
 
     if (key.isEmpty) {
-      await storage.saveSettings(provider: _selectedProvider, apiKey: '');
+      await storage.saveSettings(provider: 'Google Gemini API', apiKey: '');
       if (mounted) {
         InAppNotificationBanner.show(
           context: context,
@@ -139,34 +108,29 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
 
     setState(() => _isValidating = true);
     final repo = ref.read(tutorRepositoryProvider);
-    final result = await repo.validateApiKey(
-      key,
-      provider: _selectedProvider,
-    );
+    final result = await repo.validateApiKey(key);
     if (!mounted) return;
     setState(() => _isValidating = false);
 
     if (result.isValid) {
-      await storage.saveSettings(provider: _selectedProvider, apiKey: key);
+      await storage.saveSettings(
+        provider: 'Google Gemini API',
+        apiKey: key,
+      );
       if (!mounted) return;
       InAppNotificationBanner.show(
         context: context,
-        title: 'API Key Verified! ✅',
-        message: 'Your $_selectedProvider Key is valid and active!',
+        title: 'Gemini Key Verified! ✅',
+        message: 'Your Google Gemini API Key is valid and active!',
         type: NotificationType.success,
       );
     } else {
-      if (result.suggestedProvider != null) {
-        setState(() {
-          _selectedProvider = result.suggestedProvider!;
-        });
-      }
       InAppNotificationBanner.show(
         context: context,
         title: 'Key Verification Failed',
         message:
             result.errorMessage ??
-            'The key was rejected by the provider. Please verify your key and try again.',
+            'The key was rejected by Google Gemini. Please check your key at https://aistudio.google.com.',
         type: NotificationType.error,
       );
     }
@@ -174,14 +138,10 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final template =
-        _providerTemplates[_selectedProvider] ??
-        _providerTemplates['Google Gemini API']!;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('AI Brain & BYOK Settings'),
+        title: const Text('Google Gemini AI Settings'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -208,7 +168,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Bring Your Own Key (BYOK): securely connect Gemini, Groq, or OpenAI for personalized tutoring. The key stays encrypted on this device.',
+                      'Google Gemini API Tutor: Enter your free Gemini API Key from Google AI Studio to unlock unlimited interactive AI tutoring.',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.primaryGreenDark,
@@ -221,49 +181,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ),
             const SizedBox(height: AppConstants.space24),
 
-            // Select AI Provider
-            const Text(
-              'Select AI Engine Provider:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedProvider,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              items: _providerTemplates.keys.map((provider) {
-                return DropdownMenuItem(
-                  value: provider,
-                  child: Text(
-                    provider,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  setState(() {
-                    _selectedProvider = val;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: AppConstants.space24),
-
             // Key Input
             Text(
-              '$_selectedProvider Key:',
+              'Google Gemini API Key:',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
@@ -275,7 +195,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
               controller: _keyController,
               obscureText: _obscureKey,
               decoration: InputDecoration(
-                hintText: template['hint'],
+                hintText: 'Paste key from Google AI Studio...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -311,30 +231,23 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.divider),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '💡 Info: ${template['info']}',
-                    style: const TextStyle(
+                    '💡 Info: Free tier available via Google AI Studio.',
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
-                    '🔑 Get key at: ${template['url']}',
-                    style: const TextStyle(
+                    '🔑 Get key at: https://aistudio.google.com',
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.primaryGreenDark,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Key prefix format: "${template['prefix']}"',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -342,7 +255,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
             ),
             const SizedBox(height: AppConstants.space32),
             PrimaryButton(
-              text: _isValidating ? 'Validating Key...' : 'Save & Test AI Key',
+              text: _isValidating ? 'Validating Key...' : 'Save & Test Gemini Key',
               onPressed: _isValidating ? null : _saveAndTest,
             ),
           ],
