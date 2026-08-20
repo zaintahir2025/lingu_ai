@@ -10,6 +10,8 @@ import 'paywall_screen.dart';
 import 'ai_settings_screen.dart';
 import '../../../../core/widgets/mascot/piko_mascot.dart';
 
+import '../../../../core/audio/tts_service.dart';
+
 class TutorTab extends ConsumerStatefulWidget {
   const TutorTab({super.key});
 
@@ -31,11 +33,11 @@ class _TutorTabState extends ConsumerState<TutorTab> {
     }
   }
 
-  void _sendMessage() {
-    final text = _textController.text.trim();
+  void _sendMessage([String? textToSend]) {
+    final text = textToSend ?? _textController.text.trim();
     if (text.isNotEmpty) {
       ref.read(tutorControllerProvider.notifier).sendMessage(text);
-      _textController.clear();
+      if (textToSend == null) _textController.clear();
       Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
     }
   }
@@ -184,8 +186,41 @@ class _TutorTabState extends ConsumerState<TutorTab> {
             },
           ),
         ),
+
+        // Quick Suggestion Chips for Gen-Z Learners
+        if (!tutorState.isStreaming)
+          Container(
+            height: 40,
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                _buildQuickChip('💬 Practice Conversation', 'Can we practice a simple conversation?'),
+                _buildQuickChip('📖 Explain Past Tense', 'Can you explain past tense rules with examples?'),
+                _buildQuickChip('😎 Teach Cool Slang', 'Teach me 5 popular native slang words!'),
+                _buildQuickChip('☕ Order Cafe Coffee', 'Let\'s roleplay ordering coffee in a restaurant.'),
+                _buildQuickChip('⚡ Quiz Me!', 'Quiz me on 3 vocabulary words right now!'),
+              ],
+            ),
+          ),
+
         _buildInputArea(context, tutorState.isStreaming),
       ],
+    );
+  }
+
+  Widget _buildQuickChip(String label, String prompt) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ActionChip(
+        avatar: const Icon(Icons.flash_on_rounded, size: 14, color: AppColors.primaryGreen),
+        label: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        side: BorderSide(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+        onPressed: () => _sendMessage(prompt),
+      ),
     );
   }
 
@@ -232,12 +267,33 @@ class _TutorTabState extends ConsumerState<TutorTab> {
                       height: 24,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(
-                      message.content,
-                      style: TextStyle(
-                        color: isUser ? Colors.white : AppColors.textPrimary,
-                        fontSize: 16,
-                      ),
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            message.content,
+                            style: TextStyle(
+                              color: isUser ? Colors.white : AppColors.textPrimary,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        if (!isUser && message.content.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () {
+                              ref.read(ttsServiceProvider).speak(message.content);
+                            },
+                            child: const Icon(
+                              Icons.volume_up_rounded,
+                              size: 20,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
             ),
           ),
@@ -289,7 +345,7 @@ class _TutorTabState extends ConsumerState<TutorTab> {
             mini: true,
             backgroundColor: isStreaming ? Colors.grey : AppColors.primaryGreen,
             elevation: 0,
-            onPressed: isStreaming ? null : _sendMessage,
+            onPressed: isStreaming ? null : () => _sendMessage(),
             child: const Icon(Icons.send, color: Colors.white, size: 20),
           ),
         ],
