@@ -52,9 +52,9 @@ class TtsService {
   double get currentSpeechRate => _speechRate;
 
   void setSpeechRate(double rate) {
-    _speechRate = rate;
+    _speechRate = rate.clamp(0.1, 1.0);
     try {
-      _flutterTts.setSpeechRate(rate);
+      _flutterTts.setSpeechRate(_speechRate);
     } catch (_) {}
   }
 
@@ -67,23 +67,28 @@ class TtsService {
       await _flutterTts.setSpeechRate(_speechRate);
       await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0);
-      await _flutterTts.awaitSpeakCompletion(true);
+
+      // On Web, awaitSpeakCompletion(true) blocks execution indefinitely.
+      // Disable speak completion waiting for Web platforms.
+      await _flutterTts.awaitSpeakCompletion(!kIsWeb);
 
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         try {
           await _flutterTts.setEngine('com.google.android.tts');
-        } catch (_) {
-          // The device default remains available when Google Speech Services
-          // is not installed.
-        }
+        } catch (_) {}
       }
 
-      // Attempt to load and select best neural/natural voice
-      _availableVoices = await _flutterTts.getVoices;
+      try {
+        _availableVoices = await _flutterTts.getVoices;
+      } catch (_) {
+        _availableVoices = [];
+      }
+
       await _selectBestVoice(_currentLanguage);
       _isInitialized = true;
     } catch (e) {
       debugPrint('Error initializing TtsService: $e');
+      _isInitialized = true;
     }
   }
 
@@ -93,7 +98,9 @@ class TtsService {
       final normalizedTag = langTag.toLowerCase().replaceAll('_', '-');
       final cached = _voiceCache[normalizedTag];
       if (cached != null) {
-        await _flutterTts.setVoice(cached);
+        try {
+          await _flutterTts.setVoice(cached);
+        } catch (_) {}
         return;
       }
 
@@ -146,7 +153,9 @@ class TtsService {
       }
       if (bestVoice != null) {
         _voiceCache[normalizedTag] = bestVoice;
-        await _flutterTts.setVoice(bestVoice);
+        try {
+          await _flutterTts.setVoice(bestVoice);
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('Voice selection warning: $e');
@@ -240,6 +249,7 @@ class TtsService {
 
     try {
       if (!_isInitialized) await _initTts();
+
       String langTag;
       if (forceEnglish) {
         langTag = 'en-US';
@@ -249,29 +259,21 @@ class TtsService {
         langTag = _currentLanguage;
       }
 
-      // Subtle prosody changes keep high-quality voices expressive without
-      // distorting native pronunciation.
       double pitch = 1.0;
       double baseRate = rate ?? _speechRate;
 
-      if (kIsWeb) {
-        // Web Speech uses 1.0 as normal while native engines generally use a
-        // 0–1 scale. Preserve the learner's slider instead of overriding it.
-        baseRate = (0.72 + baseRate * 0.62).clamp(0.72, 1.22);
-      }
-
       switch (emotion) {
         case TtsEmotion.excited:
-          pitch = 1.04;
-          baseRate = (baseRate * 1.04).clamp(0.1, kIsWeb ? 1.25 : 1.0);
+          pitch = 1.05;
+          baseRate = (baseRate * 1.05).clamp(0.1, 1.0);
           break;
         case TtsEmotion.encouraging:
           pitch = 1.02;
-          baseRate = (baseRate * 0.96).clamp(0.1, kIsWeb ? 1.25 : 1.0);
+          baseRate = (baseRate * 0.95).clamp(0.1, 1.0);
           break;
         case TtsEmotion.calm:
           pitch = 0.98;
-          baseRate = (baseRate * 0.9).clamp(0.1, kIsWeb ? 1.25 : 1.0);
+          baseRate = (baseRate * 0.90).clamp(0.1, 1.0);
           break;
         case TtsEmotion.expressive:
           pitch = 1.03;
@@ -281,13 +283,35 @@ class TtsService {
           break;
       }
 
-      // Fast non-blocking voice & configuration apply
-      await _flutterTts.stop();
-      await _flutterTts.setLanguage(langTag);
-      await _flutterTts.setSpeechRate(baseRate);
-      await _flutterTts.setPitch(pitch);
-      await _flutterTts.setVolume(1.0);
-      await _selectBestVoice(langTag);
+      // Stop previous audio to avoid overlap
+      try {
+        await _flutterTts.stop();
+      } catch (_) {}
+
+      // Apply language with fallback to short 2-letter code if full BCP-47 tag fails
+      try {
+        final result = await _flutterTts.setLanguage(langTag);
+        if (result == 0) {
+          final shortLang = langTag.split('-')[0];
+          await _flutterTts.setLanguage(shortLang);
+        }
+      } catch (_) {
+        try {
+          final shortLang = langTag.split('-')[0];
+          await _flutterTts.setLanguage(shortLang);
+        } catch (_) {}
+      }
+
+      try {
+        await _flutterTts.setSpeechRate(baseRate);
+        await _flutterTts.setPitch(pitch);
+        await _flutterTts.setVolume(1.0);
+      } catch (_) {}
+
+      // Safely apply voice if available
+      try {
+        await _selectBestVoice(langTag);
+      } catch (_) {}
 
       final spokenText = switch (emotion) {
         TtsEmotion.excited when !RegExp(r'[.!?]$').hasMatch(sanitized) =>
@@ -296,6 +320,7 @@ class TtsService {
           '$sanitized.',
         _ => sanitized,
       };
+
       await _flutterTts.speak(spokenText);
     } catch (e) {
       debugPrint('Error in TtsService speak ($targetLanguage): $e');
