@@ -303,7 +303,53 @@ class AdaptiveScaffold extends ConsumerWidget {
 
     Widget appBarTitle = Row(
       children: [
-        const PikoMascot(size: 34),
+        GestureDetector(
+          onTap: () {
+            SoundService.playTap();
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                backgroundColor: AppColors.surface,
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const PikoMascot(size: 80, pose: PikoPose.encouraging)
+                        .animate()
+                        .shake(duration: 400.ms, hz: 4),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '🐥 Piko Mascot',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.primaryGreen),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '"Consistency is key! Just 5 minutes a day builds fluency fast. You got this! 🚀"',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary),
+                    ),
+                  ],
+                ),
+                actions: [
+                  Center(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('LET\'S LEARN! ⚡', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: const PikoMascot(size: 34)
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1), duration: 1500.ms),
+        ),
         const SizedBox(width: 6),
         Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(width: 8),
