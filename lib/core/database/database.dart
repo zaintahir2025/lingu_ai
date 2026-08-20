@@ -20,10 +20,6 @@ class AppDatabase extends _$AppDatabase {
     : super(
         driftDatabase(
           name: 'linguai_db',
-          web: DriftWebOptions(
-            sqlite3Wasm: Uri.parse('sqlite3.wasm'),
-            driftWorker: Uri.parse('drift_worker.js'),
-          ),
         ),
       );
 
