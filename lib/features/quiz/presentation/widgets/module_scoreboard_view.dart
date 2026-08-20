@@ -40,16 +40,17 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
     if (_processedResult) return;
     _processedResult = true;
 
-    final isPassed = widget.score >= 0.6;
+    final isPassed = widget.score >= 0.75;
     if (isPassed) {
       await SoundService.playAchievement();
       TtsService().speakTarget(
-        '¡Felicidades! Great job completing lesson ${widget.lessonId}!',
+        '¡Felicidades! Great job scoring ${(widget.score * 100).toInt()}% and unlocking level ${widget.lessonId + 1}!',
         emotion: TtsEmotion.excited,
       );
     } else {
+      await SoundService.playWrong();
       TtsService().speakTarget(
-        'Good effort! Keep practicing to master this lesson.',
+        'Score at least 75% to unlock the next level. Try again!',
         emotion: TtsEmotion.encouraging,
       );
     }
@@ -57,7 +58,7 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isPassed = widget.score >= 0.6;
+    final bool isPassed = widget.score >= 0.75;
 
     return Padding(
       padding: const EdgeInsets.all(AppConstants.space24),
@@ -103,9 +104,14 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
                                   ),
                             ),
                             Text(
-                              isPassed ? 'Passed!' : 'Try Again',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(color: AppColors.textSecondary),
+                              isPassed ? 'Level Unlocked! 🔓' : 'Locked (Needs 75%) 🔒',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: isPassed
+                                        ? AppColors.primaryGreen
+                                        : AppColors.heartRed,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ],
                         ),
@@ -116,7 +122,19 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
               },
             ),
           ),
-          const SizedBox(height: AppConstants.space48),
+          const SizedBox(height: AppConstants.space24),
+          Text(
+            isPassed
+                ? '🎉 Great job! You scored 75%+ and passed the Mega Quiz!'
+                : '🔒 You need at least 75% score on the Mega Quiz to unlock Level ${widget.lessonId + 1}.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: isPassed ? AppColors.primaryGreen : AppColors.heartRedDark,
+            ),
+          ),
+          const SizedBox(height: AppConstants.space24),
           if (isPassed) ...[
             Text(
               '+ ${(widget.score * 50).toInt()} XP',
@@ -129,7 +147,7 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
             const SizedBox(height: AppConstants.space16),
           ],
           PikoMascot(
-            pose: isPassed ? PikoPose.celebrating : PikoPose.encouraging,
+            pose: isPassed ? PikoPose.celebrating : PikoPose.sad,
             size: 100,
           ),
           const Spacer(),
@@ -137,16 +155,13 @@ class _ModuleScoreboardViewState extends ConsumerState<ModuleScoreboardView> {
             Padding(
               padding: const EdgeInsets.only(bottom: AppConstants.space16),
               child: PrimaryButton(
-                text: 'Retry',
-                isSecondary: true,
+                text: 'Retry Mega Quiz (75% Needed) 🎯',
                 onPressed: widget.onRetry,
               ),
             ),
           PrimaryButton(
-            text: isPassed ? 'Next Level' : 'Finish',
+            text: isPassed ? 'Next Level 🚀' : 'Back to Lessons 🏠',
             onPressed: () async {
-              // AdMob controls close timing. This natural lesson boundary is
-              // the only full-screen placement and ad failure never blocks UX.
               await ref.read(adServiceProvider).showInterstitialAd();
               if (!context.mounted) return;
               widget.onContinue();

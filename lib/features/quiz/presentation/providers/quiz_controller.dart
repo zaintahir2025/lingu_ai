@@ -346,7 +346,7 @@ class QuizController extends AutoDisposeFamilyNotifier<QuizState, int> {
       state = state.copyWith(isFinished: true);
       _clearDraftProgress();
 
-      if (state.score >= 0.6) {
+      if (state.score >= 0.75) {
         final repo = ref.read(learnRepositoryProvider);
         repo.completeLesson(arg);
 
