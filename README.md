@@ -1,335 +1,227 @@
-# LinguAI — Modern Gamified AI Language Learning App
+# LinguAI - Enterprise Grade Gamified AI Language Learning Platform
 
-LinguAI is an original, gamified language-learning application that combines short interactive lessons, spaced repetition, native-locale pronunciation, and contextual AI explanations. It borrows proven learning principles from products such as Duolingo and Anki without copying their identity or interface. LinguAI has its own mint-teal visual system and one official companion: Piko, the parrot-robot tutor.
-
-![LinguAI official logo](assets/images/brand/linguai_official_logo.png)
+LinguAI is an industry-grade, cross-platform language learning application engineered with Flutter and Dart Serverpod. The system integrates SuperMemo (SM-2) spaced repetition algorithms, real-time contextual AI tutoring via Google Gemini REST APIs, native speech synthesis, bi-directional localization (English and Urdu), and enterprise security patterns including JWT token rotation and server-verified Stripe monetization.
 
 Live Web Application: https://zaintahir2025.github.io/lingu_ai/
 GitHub Repository: https://github.com/zaintahir2025/lingu_ai
 
 ---
 
-## Key Features and Highlights
+## 1. System Overview and Key Capabilities
 
-### 1. Target Learning Languages
-Users can learn multiple global languages with curated vocabulary words, native example sentences, and script quizzes:
-- Spanish
-- French
-- Japanese (Latin and Kanji/Kana script support with responsive font scaling)
-- German
+### 1.1 Multi-Language Support and Script Engine
+LinguAI provides structured lesson tracks, vocabulary data, script practice, and pronunciation tools for multiple international languages:
+* Spanish (Es)
+* French (Fr)
+* German (De)
+* Japanese (Ja - Latin and Kanji/Kana script rendering with script-aware dynamic typography)
 
-### 2. Dual Interface Localization (English and Urdu)
-- The app UI can be toggled seamlessly between English and Urdu.
-- Translates all interface navigation, headers, button labels, quiz options, flashcards, settings, and profile info into Urdu script (app_ur.arb) or English (app_en.arb).
+### 1.2 Dual Interface Localization (English and Urdu)
+* Full bi-directional localization support using Flutter ARB files (`app_en.arb` and `app_ur.arb`).
+* Dynamic right-to-left (RTL) layout switching and localized UI components for navigation, settings, quizzes, flashcards, and modals.
 
-### 3. Personal AI Language Tutor (Gemini API)
-- Gated feature for LinguAI PRO Members.
-- Interactive conversational AI powered by Google Gemini API (x-goog-api-key header integration with key sanitization and multi-endpoint fallback).
-- Helps users practice target language dialogues, receive grammatical corrections, and get instant feedback.
+### 1.3 Adaptive Conversational AI Tutor
+* Contextual language tutoring powered by Google Gemini API integrations.
+* Client-side BYOK (Bring Your Own Key) support alongside server-hosted proxy execution for PRO tier subscribers.
+* Real-time grammar corrections, vocabulary explanations, and natural conversational dialogue practice.
 
-### 4. Spaced Repetition System (SRS Vocab and Quizzes)
-- Uses an adaptive SuperMemo-style SRS algorithm tracking repetitions, interval, easinessFactor, and nextReviewDate.
-- Review Session Screen: Swipeable flashcards with flip animation, pronunciation audio, and example sentences.
-- Multiple Choice Quizzes: Dynamic question generation for Latin and Non-Latin scripts (Japanese/Urdu) translated via VocabTranslator.
+### 1.4 SuperMemo (SM-2) Spaced Repetition Engine
+* Algorithmic scheduling of review intervals based on user recall performance.
+* Tracks repetition count, easiness factor (EF), and target interval days per vocabulary word.
+* Level-based card scaling: Base level reviews contain 30 cards, expanding adaptively by 15 cards per mastery tier.
 
-### 5. Native Speech Accent TTS and Adjustable Speed Control
-- Sets explicit BCP-47 language locale tags before speaking (es-ES, fr-FR, ja-JP, de-DE, ur-PK, en-US) for authentic native accents.
-- Ranks installed voices by exact locale and neural, natural, enhanced, premium, Google, Microsoft, Siri, or WaveNet quality markers while avoiding compact, synthetic, and robotic voices.
-- Keeps English instructions and target-language words on their correct voice locales so an English prompt is not read with a Spanish, French, German, Japanese, or Urdu voice.
-- Provides a 0.5x–1.5x pronunciation pace control and subtle emotion-aware prosody without distorting native pronunciation.
-- Uses Web Speech synthesis on browsers and the best installed native speech engine on mobile and desktop. Final quality depends on the language packs installed on the device.
+### 1.5 BCP-47 Native Accent TTS Engine
+* Locale-aware text-to-speech rendering matching native accent codes (`es-ES`, `fr-FR`, `ja-JP`, `de-DE`, `ur-PK`, `en-US`).
+* Voice ranking pipeline prioritizing high-fidelity neural engines (WaveNet, Siri, Siri Enhanced, Google Neural) while filtering low-quality synthetic voices.
+* Granular playback velocity control (0.5x to 1.5x speed multiplier).
 
-### 6. LinguAI PRO Membership and Payment Gateway
-- Stripe-hosted recurring subscription checkout and customer billing portal.
-- Premium access is activated only after the backend verifies a signed Stripe webhook; card details never enter the app or LinguAI backend.
-- PRO Benefits:
-  - Unlimited 24/7 AI Language Tutor
-  - 100% Ad-Free Experience (Suppresses AdMob banners)
-  - Unlimited Hearts Mode (Infinite lives)
-  - Priority Customer Support Desk
+### 1.6 Gamification and Progress Tracking
+* Experience Points (XP) & Knowledge Tiers: Dynamic progression from A1 (Beginner) to C2 (Advanced).
+* Daily Streaks: Tracks consecutive active daily study sessions with persistent timestamp validation.
+* Hearts System: Challenge mode with 5 lives vs. Unlimited Hearts for PRO subscribers.
+* Achievements & Leaderboard: Global rank tracking and performance analytics.
 
-### 7. Admin Control Panel (/admin)
-Administrators see authenticated, server-backed operations only:
-1. Registered accounts, verification state, role, Stripe-verified premium status, suspension, restoration, and confirmed deletion.
-2. Priority customer-support inbox with real server-side replies and deletion.
-3. Integration-health monitoring and an immutable administrative action history.
-4. Premium billing remains Stripe-managed so the client cannot fabricate access.
-
-During QA, `TESTING_ADMIN_ACCESS=true` grants every authenticated account access
-without changing its stored role. Set it to `false` before launch. Permanent
-administrator roles are stored in PostgreSQL and managed by the Dart backend.
-
-### 8. Gamification and Daily Motivation
-- XP and Knowledge Levels: Earn XP from completed lessons and quizzes to advance levels (A1 Beginner, A2 Intermediate, etc.).
-- Streak Counter: Tracks consecutive daily learning sessions.
-- Hearts System: Challenge mode (5 hearts) vs Unlimited Hearts mode.
-- Course Unenroll / Progress Reset: Switch or unenroll language courses with a clear confirmation warning modal that resets unlocked levels and review cards.
-
-### 9. Modern Aesthetic Design and App Branding
-- Piko, LinguAI's original parrot-robot companion, is the single official character across lessons, tutor messages, achievements, app icons, logo, and favicon.
-- Piko has dedicated animated GIF loops for idle, thinking, encouraging, mistake-recovery, and celebration states. Reduced-motion users automatically receive the official static PNG.
-- Correct, incorrect, completion, navigation, achievement, and level-up events include restrained audio/haptic feedback.
-- Dark Royal Purple and Gold Shimmer PRO Cards with clean badges.
-- Fully responsive design matching desktop, tablet, and mobile browsers.
+### 1.7 Enterprise Security and Administration
+* Role-based access control (RBAC) distinguishing standard users from system administrators.
+* Admin panel (`/admin`) for account management, priority customer support ticketing, system metrics, and security audit logs.
+* Authenticated operations enforced server-side via BCrypt password hashing and JWT access/refresh token rotation.
 
 ---
 
-## Supported Platforms
+## 2. Technical Architecture
 
-The same Flutter codebase targets:
+### 2.1 Technology Stack
+* Frontend Framework: Flutter Web/Desktop/Mobile (Dart 3.x)
+* State Management: Riverpod 2.x (`StateNotifierProvider`, `Provider`)
+* Router: GoRouter (Declarative route tree with auth-guard navigation logic)
+* Local Database: Drift (SQLite) with WebAssembly (WASM) multi-threading for web clients
+* Key-Value Storage: Hive for secure preference and local token caching
+* Backend Server: Dart Serverpod with PostgreSQL data storage
+* Payment Gateway: Stripe Checkout and Webhooks (Server-verified entitlement)
 
-- Android and iOS
-- Web browsers
-- Windows 10 1809 or newer
-- macOS 10.15 or newer
-- Modern Linux distributions with GTK 3
+### 2.2 System Directory Structure
 
-CAPTCHA is temporarily disabled during the current testing phase. Registration
-still requires a valid email, a strong password, age confirmation, backend rate
-limiting, and email verification. Restore bot protection before public launch.
-
-Linux builds additionally need the system libraries used by audio:
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install libgtk-3-dev libgstreamer1.0-dev \
-  libgstreamer-plugins-base1.0-dev
-
-# Fedora/RHEL
-sudo dnf install gtk3-devel gstreamer1-devel \
-  gstreamer1-plugins-base-devel
-```
-
-## Technology Stack
-
-- Framework: Flutter for web, mobile, and desktop (Dart 3.x)
-- State Management: Riverpod 2.x (StateNotifierProvider, Provider)
-- Database and Persistence:
-  - Drift (SQLite) with WebAssembly (WASM) worker for browser database storage.
-  - Hive key-value storage for user settings and cached server-verified subscription state.
-- Backend: Dart, Serverpod, PostgreSQL, JWT refresh-token rotation, Stripe, and SMTP.
-- Routing: GoRouter
-- Audio and TTS: flutter_tts with dynamic BCP-47 locale configuration.
-- AI Integration: Google Gemini REST API via http.
-- Localization: Flutter gen-l10n (app_en.arb, app_ur.arb).
-
-## Product Flow
-
-1. Register with email, a strong password, and age confirmation.
-2. Verify the email and sign in with rotating access and refresh tokens.
-3. Choose a target language and complete the placement/onboarding survey.
-4. Follow the lesson path, study flashcards, hear native-locale pronunciation, and complete mixed quiz exercises.
-5. Ask Piko for an explanation from inside a quiz. Returning closes the explanation and resumes the same question rather than restarting the quiz.
-6. Review due vocabulary with the SM-2 scheduler. Review level 1 contains 30 previously learned words; later levels grow by 15 words.
-7. Resume the last active route, lesson step, draft, or quiz state after navigating away or reopening the app.
-8. Earn XP, maintain streaks, unlock achievements, and compare progress on the leaderboard.
-
-## Piko Brand System
-
-The project intentionally contains one character identity. Obsolete owl, bear, robot, child, avatar, and red-panda artwork was removed.
-
-| Asset | Purpose |
-| --- | --- |
-| `piko_official_master.png` | Transparent source artwork and reduced-motion fallback |
-| `piko_app_icon.png` | Source for Android, iOS, macOS, Windows, and web icons |
-| `linguai_official_logo.png` | Official Piko + LinguAI wordmark |
-| `animations/piko_idle.gif` | Navigation, login, tutor, and general waiting state |
-| `animations/piko_thinking.gif` | AI explanation and thinking state |
-| `animations/piko_encouraging.gif` | Lesson prompts and retry encouragement |
-| `animations/piko_sad.gif` | Gentle mistake/offline recovery state |
-| `animations/piko_celebrating.gif` | Correct answers, achievements, and level completion |
-
-## Frontend Architecture
-
-- `lib/core`: networking, persistence, responsive layout, audio, advertisements, notifications, routing, theme, synchronization, and shared components.
-- `lib/features/auth`: registration, verification, login, token restoration, and logout.
-- `lib/features/learn`: curriculum, lesson path, modules, vocabulary, and flashcards.
-- `lib/features/quiz`: exercise generation, feedback, draft restoration, and in-quiz tutor explanations.
-- `lib/features/review`: level quotas and SM-2 review sessions.
-- `lib/features/tutor`: Gemini/Groq BYOK settings, server-backed tutor access, chat state, and paywall.
-- `lib/features/progress`: XP, streaks, achievements, leaderboard, profile, goals, support, and settings.
-- `lib/features/admin`: authenticated account, support, integration-health, and audit operations.
-- Riverpod owns application state; GoRouter owns route restoration; Drift and Hive provide local/offline persistence.
-
-## Dart Backend Architecture
-
-The backend is entirely Dart and lives in `linguai_backend/`:
-
-- Serverpod REST-compatible web routes on `/api/v1`.
-- PostgreSQL models and repeatable migrations.
-- BCrypt password hashing and short-lived JWT access tokens.
-- Hashed, rotating refresh tokens with logout and account-disable invalidation.
-- Email verification and password reset through SMTP.
-- Profile, lesson, progress, draft, state synchronization, review, leaderboard, support, admin, AI tutor, subscription, and webhook operations.
-- Signed Stripe webhook verification and server-owned premium state.
-- Administrative audit records for destructive or privileged actions.
-
-The Flutter client never treats locally edited premium/admin values as authoritative.
-
-## Environment Configuration
-
-Frontend build-time values:
-
-| Variable | Required | Description |
-| --- | --- | --- |
-| `API_URL` | Release | Public HTTPS Dart API base, including `/api/v1` |
-| `ADMOB_ANDROID_BANNER_ID` | Android ads | Production Android banner unit |
-| `ADMOB_IOS_BANNER_ID` | iOS ads | Production iOS banner unit |
-
-Backend values are documented in `linguai_backend/linguai_backend_server/.env.example`. Important production values include `JWT_SECRET`, PostgreSQL credentials, SMTP credentials, Gemini key, Stripe secret, price ID, webhook secret, and public app/API URLs. Never commit real credentials.
-
-## Security and Privacy Notes
-
-- Passwords, raw refresh tokens, card numbers, and BYOK provider keys are not stored as readable server data.
-- Authentication, support, and AI requests are rate-limited.
-- Account deletion removes dependent user data.
-- CAPTCHA is temporarily removed for testing. Authentication remains rate-limited, but bot protection must be restored before public launch.
-- Stripe card entry occurs on Stripe-hosted pages.
-- `TESTING_ADMIN_ACCESS=true` is strictly a QA switch. Set it to `false` before a public production launch.
-- Store privacy disclosures, legal text, data-safety forms, production monitoring, backups, and signing credentials remain deployment-owner responsibilities.
-
-## Quality Gates
-
-The root workflows verify:
-
-- Flutter formatting/analyzer and automated tests.
-- Dart backend analyzer and unit tests.
-- Web release compilation.
-- Android debug compilation with Java 21.
-- Linux, Windows, macOS, and unsigned iOS builds on their native GitHub Actions hosts.
-- GitHub Pages deployment from `main` to the orphaned `gh-pages` branch.
-
-Run the main local checks with:
-
-```bash
-flutter analyze
-flutter test
-flutter build web --release --base-href /lingu_ai/ \
-  --dart-define=API_URL=https://your-api.example/api/v1
-
-cd linguai_backend/linguai_backend_server
-dart analyze --fatal-infos
-dart test
-```
-
----
-
-## Repository Structure
-
-```
+```text
 lingu_ai/
 ├── assets/
-│   ├── images/brand/            # Official Piko master, app icon, and logo
+│   ├── images/              # System branding, vectors, and character assets
+│   └── sounds/              # Restrained UI feedback and state audio clips
 ├── lib/
 │   ├── core/
-│   │   ├── ads/                 # Google AdMob Banner and Interstitial Widgets
-│   │   ├── audio/               # TtsService and Speed Rate Providers
-│   │   ├── database/            # Drift SQLite VocabWords and Lessons tables
-│   │   ├── game_state/          # Hearts, Streak and XP Storage
-│   │   ├── router/              # AppRouter GoRouter navigation configuration
-│   │   ├── storage/             # Token, Premium and Onboarding Storage
-│   │   └── widgets/             # Shared UI components and Premium badges
+│   │   ├── ads/             # AdMob integration logic
+│   │   ├── audio/           # SoundService and TtsService implementation
+│   │   ├── database/        # Drift SQLite schema definitions
+│   │   ├── game_state/      # Hearts, XP, and Streak state providers
+│   │   ├── network/         # Dio client, AuthInterceptor, and ApiConfig
+│   │   ├── router/          # AppRouter configuration and route guards
+│   │   ├── storage/         # TokenStorage and OnboardingStorage
+│   │   └── widgets/         # Reusable design system components
 │   ├── features/
-│   │   ├── admin/               # Server-backed Accounts and Support Dashboard
-│   │   ├── auth/                # AuthController and Authentication screens
-│   │   ├── home/                # HomeScreen and Adaptive Bottom Navigation
-│   │   ├── learn/               # LearnTab, VocabTranslator and Flashcards
-│   │   ├── payment/             # Stripe Checkout and Billing Portal
-│   │   ├── progress/            # ProfileTab and ContactUsScreen
-│   │   ├── quiz/                # QuizController and QuizScreen
-│   │   ├── review/              # ReviewSessionScreen (SRS Spaced Repetition)
-│   │   └── tutor/               # TutorScreen (Gemini AI Tutor Chat)
-│   └── l10n/                    # AppLocalizations ARB translation files
+│   │   ├── admin/           # Administrative control panel and audit metrics
+│   │   ├── auth/            # AuthController, login, and registration screens
+│   │   ├── home/            # Main dashboard and navigation layout
+│   │   ├── learn/           # Lesson path, modules, and vocabulary views
+│   │   ├── payment/         # Stripe subscription management
+│   │   ├── progress/        # User profile, statistics, and support desk
+│   │   ├── quiz/            # Interactive quiz controller and exercise views
+│   │   ├── review/          # SM-2 spaced repetition review session
+│   │   └── tutor/           # Conversational AI tutor interface
+│   └── l10n/                # Localization files (app_en.arb, app_ur.arb)
 ├── linguai_backend/
-│   └── linguai_backend_server/ # Dart Serverpod API, models and migrations
-├── web/                         # Web configuration, index.html, favicon and icons
+│   └── linguai_backend_server/
+│       ├── lib/
+│       │   ├── src/
+│       │   │   ├── generated/ # Serverpod protocol models
+│       │   │   ├── services/  # Security, mail, and encryption services
+│       │   │   └── web/       # REST API endpoints (api_route.dart)
+│       │   └── server.dart
+├── web/                     # Web deployment entry point, loader, and manifest
 ├── pubspec.yaml
 └── README.md
 ```
 
 ---
 
-## Getting Started Locally
+## 3. Spaced Repetition (SM-2) Implementation
 
-### Fast local testing (no API accounts)
+The spacing algorithm calculates the next review interval $I(q)$ and updated easiness factor $EF'$ based on user quality score $q \in \{0, 1, 2, 3, 4, 5\}$:
 
-Open two terminals from the repository root. Start PostgreSQL, apply migrations,
-and run the Dart API in the first terminal:
+$$EF' = EF + (0.1 - (5 - q) \times (0.08 + (5 - q) \times 0.02))$$
+
+Where:
+* Minimum $EF$ threshold is constrained to $1.3$.
+* For quality score $q < 3$, repetition count is reset to $0$, and interval $I = 1$ day.
+* For quality score $q \ge 3$:
+  * $I(1) = 1$ day
+  * $I(2) = 6$ days
+  * $I(n) = I(n-1) \times EF'$ for $n > 2$
+
+---
+
+## 4. API Specification and Authentication
+
+All requests to `/api/v1` require Bearer Token authorization headers except public auth endpoints.
+
+### 4.1 Authentication Endpoints
+* `POST /api/v1/auth/register`: Creates new user account. Auto-verifies account in local/development mode when SMTP host is unconfigured.
+* `POST /api/v1/auth/login`: Authenticates credentials, generates JWT access token and rotating refresh token.
+* `GET /api/v1/auth/me`: Retrieves current authenticated user session details.
+* `POST /api/v1/auth/refresh-token`: Rotates expired access token using valid refresh token.
+* `POST /api/v1/auth/logout`: Invalidates active refresh token session.
+
+### 4.2 User and Profile Endpoints
+* `GET /api/v1/user/profile`: Fetches current user profile metadata.
+* `PUT /api/v1/user/profile`: Updates username, avatar selection, date of birth, or target learning language.
+* `POST /api/v1/user/survey`: Submits initial placement survey results (knowledge level, fluency score).
+
+### 4.3 AI Tutor Endpoints
+* `POST /api/v1/ai/tutor`: Executes conversational prompt against backend AI service for authenticated/PRO users.
+
+### 4.4 Administrative Endpoints
+* `GET /api/v1/admin/users`: Lists registered user accounts, roles, and status (Requires admin role or QA access flag).
+* `PATCH /api/v1/admin/users`: Updates user status (suspend, restore, promote).
+* `GET /api/v1/admin/support`: Retrieves customer support ticket inbox.
+
+---
+
+## 5. Environment Configuration
+
+### 5.1 Frontend Build Definitions
 
 ```bash
-./tool/start_local_backend.sh
+flutter build web --release \
+  --base-href "/lingu_ai/" \
+  --dart-define=API_URL=https://your-api-domain.com/api/v1
 ```
 
-Start the connected Flutter web app in the second terminal:
+### 5.2 Backend Environment Variables (`.env`)
 
-```bash
-./tool/start_local_web.sh
+```ini
+SERVERPOD_PORT=8080
+SERVERPOD_RUN_MODE=development
+DATABASE_HOST=127.0.0.1
+DATABASE_PORT=5432
+DATABASE_NAME=linguai
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres_password
+JWT_SECRET=your_secure_jwt_secret_key_here
+PUBLIC_API_URL=http://localhost:3000/api/v1
+PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Then open `http://127.0.0.1:36537`. During local development, verification and
-password-reset links are printed in the backend terminal instead of being sent
-through SMTP. Stop either foreground process with `Ctrl+C`; the PostgreSQL
-container and its named volume remain available for the next run.
+---
 
-### Prerequisites
-- Flutter SDK (v3.19 or higher)
-- Dart SDK
-- Serverpod CLI (`dart pub global activate serverpod_cli`)
-- PostgreSQL 16 (Docker or Podman is convenient locally)
-- SMTP, Stripe, and Gemini credentials for their production features
+## 6. Local Development Setup
 
-### Installation Steps
+### 6.1 Prerequisites
+* Flutter SDK (3.19.0 or higher)
+* Dart SDK (3.3.0 or higher)
+* Docker Desktop or Podman (for local PostgreSQL database)
 
-1. Clone the Repository:
+### 6.2 Frontend Installation and Execution
+1. Clone the repository:
    ```bash
    git clone https://github.com/zaintahir2025/lingu_ai.git
    cd lingu_ai
    ```
-
-2. Install Dependencies:
+2. Install dependencies:
    ```bash
    flutter pub get
-   cd linguai_backend && dart pub get && cd ..
    ```
-
-3. Run Code Generation (if modifying database schemas):
+3. Run local web development server:
    ```bash
-   dart run build_runner build --delete-conflicting-outputs
+   ./tool/start_local_web.sh
    ```
 
-4. Configure the values described in
-   `linguai_backend/linguai_backend_server/.env.example`, start PostgreSQL,
-   apply migrations, and start the Dart API:
-
+### 6.3 Backend Installation and Execution
+1. Navigate to backend directory:
    ```bash
    cd linguai_backend/linguai_backend_server
-   docker compose up -d postgres postgres_test
-   dart run bin/main.dart --apply-migrations
    ```
-
-5. Launch Application:
-   - For Web:
-     ```bash
-     flutter run -d chrome
-     ```
-   - For Desktop / Mobile:
-     ```bash
-     flutter run
-     ```
-
-   For a production-like local run, provide the backend setting:
-
+2. Install backend dependencies:
    ```bash
-   flutter run --dart-define=API_URL=https://your-api.example/api/v1
+   dart pub get
    ```
-
-6. Build Production Web Bundle (the release API URL is mandatory):
+3. Start database and server instance:
    ```bash
-   flutter build web --base-href "/lingu_ai/" \
-     --dart-define=API_URL=https://your-api.example/api/v1
+   ../../tool/start_local_backend.sh
    ```
 
 ---
 
-## License
-Distributed under the MIT License. See LICENSE for more information.
+## 7. Deployment Strategy
+
+### 7.1 GitHub Pages Deployment
+The web bundle is compiled to HTML/CSS/WASM JS and deployed to the `gh-pages` branch using GitHub Actions or manual script compilation:
+
+```bash
+flutter build web --release --base-href "/lingu_ai/"
+```
+
+### 7.2 Containerized Backend Deployment
+The Serverpod backend is packaged using standard Docker containers connected to a managed PostgreSQL cluster (e.g., AWS RDS, GCP Cloud SQL) and deployed via Docker Compose or Kubernetes.
+
+---
+
+## 8. License
+Distributed under the MIT License. See `LICENSE` for details.

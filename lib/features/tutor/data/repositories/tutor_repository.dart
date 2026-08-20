@@ -148,7 +148,7 @@ class TutorRepository {
         data: {
           'prompt': message,
           'contextWords': contextWords,
-          'targetLanguage': ?targetLang,
+          'targetLanguage': targetLang,
         },
       );
       final text = response.data is Map ? response.data['response'] : null;

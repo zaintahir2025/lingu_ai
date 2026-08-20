@@ -143,7 +143,7 @@ class AuthController extends StateNotifier<AuthState> {
         status: AuthStatus.unauthenticated,
         user: null,
         registerError:
-            'Registration successful! Check your email to verify the account before logging in.',
+            'Registration successful! You can now log in with your account.',
       );
     } catch (e) {
       state = state.copyWith(

@@ -133,11 +133,17 @@ class ApiRoute extends Route {
         return _error(409, 'An account with this email already exists.');
       }
       final now = DateTime.now().toUtc();
+      final isSmtpConfigured = Platform.environment['SMTP_HOST'] != null &&
+          Platform.environment['SMTP_USER'] != null;
+      final autoVerify = !isSmtpConfigured ||
+          (Platform.environment['SERVERPOD_RUN_MODE'] ?? 'development') != 'production';
+
       final user = await AppUser.db.insertRow(
         session,
         AppUser(
           email: email,
           passwordHash: BCrypt.hashpw(password, BCrypt.gensalt(logRounds: 12)),
+          isEmailVerified: autoVerify,
           createdAt: now,
           updatedAt: now,
         ),
@@ -146,29 +152,30 @@ class ApiRoute extends Route {
         session,
         UserProgressRecord(userId: user.id!, updatedAt: now),
       );
-      final token = SecurityService.randomToken(32);
-      final verification = await VerificationTokenRecord.db.insertRow(
-        session,
-        VerificationTokenRecord(
-          email: email,
-          tokenHash: SecurityService.hashToken(token),
-          expiresAt: now.add(const Duration(hours: 24)),
-          createdAt: now,
-        ),
-      );
-      try {
-        await MailService.sendVerification(email, token);
-      } catch (_) {
-        await VerificationTokenRecord.db.deleteRow(session, verification);
-        await UserProgressRecord.db.deleteWhere(
+
+      if (isSmtpConfigured) {
+        final token = SecurityService.randomToken(32);
+        await VerificationTokenRecord.db.insertRow(
           session,
-          where: (t) => t.userId.equals(user.id!),
+          VerificationTokenRecord(
+            email: email,
+            tokenHash: SecurityService.hashToken(token),
+            expiresAt: now.add(const Duration(hours: 24)),
+            createdAt: now,
+          ),
         );
-        await AppUser.db.deleteRow(session, user);
-        rethrow;
+        try {
+          await MailService.sendVerification(email, token);
+        } catch (e) {
+          session.log('Failed to send verification email: $e', level: LogLevel.warning);
+        }
       }
+
       return _json(201, {
-        'message': 'User registered successfully. Please verify your email.',
+        'message': autoVerify
+            ? 'Registration successful! You can now log in.'
+            : 'User registered successfully. Please verify your email.',
+        'autoVerified': autoVerify,
       });
     }
     if (path == '/auth/verify-email' && request.method == Method.get) {

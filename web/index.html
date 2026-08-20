@@ -5,7 +5,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Learn languages faster with AI-powered spaced repetition, personalized lessons, and a friendly AI tutor.">
+  <meta name="description" content="LinguAI - Industry-grade gamified language learning platform with adaptive AI tutoring and spaced repetition.">
   <meta name="theme-color" content="#20C997">
 
   <!-- iOS meta tags & icons -->
@@ -18,12 +18,93 @@
   <link rel="icon" type="image/gif" href="favicon.gif?v=3">
   <link rel="alternate icon" type="image/png" sizes="32x32" href="favicon.png?v=3">
 
-  <title>LinguAI</title>
+  <title>LinguAI | AI-Powered Language Learning</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0F172A;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #F8FAFC;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .logo-badge {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #20C997 0%, #0F9D58 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(32, 201, 151, 0.3);
+      margin-bottom: 24px;
+    }
+    .logo-badge svg {
+      width: 40px;
+      height: 40px;
+      fill: #FFFFFF;
+    }
+    .app-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #FFFFFF;
+      margin: 0 0 8px 0;
+    }
+    .app-subtitle {
+      font-size: 14px;
+      color: #94A3B8;
+      margin: 0 0 32px 0;
+      font-weight: 400;
+    }
+    .spinner-bar {
+      width: 160px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+    .spinner-bar::after {
+      content: '';
+      position: absolute;
+      left: -50%;
+      height: 100%;
+      width: 50%;
+      background: linear-gradient(90deg, #20C997, #38BDF8);
+      border-radius: 2px;
+      animation: loading-anim 1.5s infinite ease-in-out;
+    }
+    @keyframes loading-anim {
+      0% { left: -50%; width: 30%; }
+      50% { left: 35%; width: 60%; }
+      100% { left: 100%; width: 30%; }
+    }
+  </style>
 </head>
 <body>
-  <!-- Bump the release query when bootstrap behavior changes so GitHub Pages
-       and long-lived browser caches fetch the current app loader. -->
+  <div id="loading-container">
+    <div class="logo-badge">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
+      </svg>
+    </div>
+    <h1 class="app-title">LinguAI</h1>
+    <p class="app-subtitle">Initializing Language Platform</p>
+    <div class="spinner-bar"></div>
+  </div>
+
   <script src="flutter_bootstrap.js?v=6" async></script>
 </body>
 </html>

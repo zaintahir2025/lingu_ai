@@ -34,10 +34,10 @@ class UserRepositoryImpl implements UserRepository {
       final response = await _dio.put(
         '${ApiConfig.baseUrl}/user/profile',
         data: {
-          'username': ?username,
-          'avatarId': ?avatarId,
-          'dob': ?dob?.toIso8601String(),
-          'targetLanguage': ?targetLanguage,
+          'username': username,
+          'avatarId': avatarId,
+          'dob': dob?.toIso8601String(),
+          'targetLanguage': targetLanguage,
         },
       );
       return User.fromJson(response.data['user']);
@@ -56,9 +56,9 @@ class UserRepositoryImpl implements UserRepository {
       final response = await _dio.post(
         '${ApiConfig.baseUrl}/user/survey',
         data: {
-          'knowledgeLevel': ?knowledgeLevel,
-          'fluencyScore': ?fluencyScore,
-          'targetLanguage': ?targetLanguage,
+          'knowledgeLevel': knowledgeLevel,
+          'fluencyScore': fluencyScore,
+          'targetLanguage': targetLanguage,
         },
       );
       return User.fromJson(response.data['user']);

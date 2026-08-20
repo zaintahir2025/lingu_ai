@@ -46,7 +46,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           dob: _selectedDob,
         );
     if (!mounted) return;
-    context.go('/lang-choice');
+    context.go('/onboarding/lang');
   }
 
   @override
