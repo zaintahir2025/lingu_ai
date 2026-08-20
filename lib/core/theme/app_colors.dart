@@ -3,30 +3,32 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Piko brand palette: mint-teal, navy, and golden yellow.
-  static const Color primaryGreen = Color(0xFF20C997);
-  static const Color primaryGreenDark = Color(0xFF087F6B); // Shadow/depth
+  // Premium Vibrant Palette: Mint-Teal Emerald Primary & Deep Slate
+  static const Color primaryGreen = Color(0xFF10B981); // Vibrant Emerald Mint
+  static const Color primaryGreenHover = Color(0xFF059669);
+  static const Color primaryGreenDark = Color(0xFF047857); // Tactile 3D shadow
 
-  static const Color xpGold = Color(0xFFFFC800);
-  static const Color xpGoldDark = Color(0xFFDCA000);
+  static const Color xpGold = Color(0xFFF59E0B);
+  static const Color xpGoldDark = Color(0xFFD97706);
 
-  static const Color streakOrange = Color(0xFFFF9600);
-  static const Color streakOrangeDark = Color(0xFFCC7800);
+  static const Color streakOrange = Color(0xFFF97316);
+  static const Color streakOrangeDark = Color(0xFFEA580C);
 
-  static const Color heartRed = Color(0xFFFF4B4B);
-  static const Color heartRedDark = Color(0xFFD33131);
+  static const Color heartRed = Color(0xFFEF4444);
+  static const Color heartRedDark = Color(0xFFDC2626);
 
-  // Feedback colors
-  static const Color softSuccess = Color(0xFFD9FFF2);
-  static const Color softSuccessText = Color(0xFF087F6B);
+  // Soft Feedback Shades
+  static const Color softSuccess = Color(0xFFECFDF5);
+  static const Color softSuccessText = Color(0xFF047857);
 
-  static const Color softError = Color(0xFFFFDFE0);
-  static const Color softErrorText = Color(0xFFEA2B2B);
+  static const Color softError = Color(0xFFFEF2F2);
+  static const Color softErrorText = Color(0xFFB91C1C);
 
-  // Neutrals
-  static const Color background = Color(0xFFFFFFFF);
+  // Surface & Neutral System
+  static const Color background = Color(0xFFF8FAFC); // Slate Soft Background
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color textPrimary = Color(0xFF073B4C);
-  static const Color textSecondary = Color(0xFF66858F);
-  static const Color divider = Color(0xFFDCE9E7);
+  static const Color surfaceHover = Color(0xFFF1F5F9);
+  static const Color textPrimary = Color(0xFF0F172A); // Deep Navy Slate
+  static const Color textSecondary = Color(0xFF64748B); // Slate Muted Text
+  static const Color divider = Color(0xFFE2E8F0); // Subtle Border
 }

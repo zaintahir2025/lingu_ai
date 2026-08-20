@@ -34,8 +34,8 @@ class _PrimaryButtonState extends State<PrimaryButton> {
         : AppColors.primaryGreenDark;
     final textColor = widget.isSecondary ? AppColors.textPrimary : Colors.white;
     final hoverColor = widget.isSecondary
-        ? Colors.grey[50]
-        : const Color(0xFF6DE010);
+        ? AppColors.surfaceHover
+        : AppColors.primaryGreenHover;
 
     return MouseRegion(
       cursor: widget.onPressed == null
@@ -54,7 +54,9 @@ class _PrimaryButtonState extends State<PrimaryButton> {
           duration: const Duration(milliseconds: 100),
           margin: EdgeInsets.only(top: _isPressed ? 4 : 0),
           decoration: BoxDecoration(
-            color: _isHovered ? hoverColor : baseColor,
+            color: widget.onPressed == null
+                ? AppColors.divider
+                : (_isHovered ? hoverColor : baseColor),
             borderRadius: BorderRadius.circular(AppConstants.radius16),
             border: widget.isSecondary
                 ? Border.all(color: AppColors.divider, width: 2)
@@ -80,6 +82,8 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                       color: widget.onPressed == null
                           ? AppColors.textSecondary
                           : textColor,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
                     ),
                   ),
           ),
