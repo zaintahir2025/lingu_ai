@@ -11,6 +11,7 @@ import '../storage/premium_storage.dart';
 import '../game_state/game_state_provider.dart';
 import '../providers/target_language_provider.dart';
 import '../widgets/mascot/piko_mascot.dart';
+import '../audio/sound_service.dart';
 
 class AdaptiveScaffold extends ConsumerWidget {
   final Widget body;

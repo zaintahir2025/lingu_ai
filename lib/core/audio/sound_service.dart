@@ -49,4 +49,8 @@ class SoundService {
       debugPrint('Error playing achievement haptic: $e');
     }
   }
+
+  static Future<void> playLevelUp() async {
+    await playAchievement();
+  }
 }
