@@ -21,13 +21,14 @@ class ProgressTab extends ConsumerWidget {
         final level = state.progress.level;
         final streak = state.progress.currentStreak;
 
+        final loc = AppLocalizations.of(context);
         return SingleChildScrollView(
           padding: const EdgeInsets.all(AppConstants.space16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                AppLocalizations.of(context)!.yourProgress,
+                loc?.yourProgress ?? 'Your Progress',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: AppColors.primaryGreen,
@@ -49,7 +50,7 @@ class ProgressTab extends ConsumerWidget {
 
               // Extended Stat Grid
               Text(
-                AppLocalizations.of(context)!.statistics,
+                loc?.statistics ?? 'Statistics',
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -76,42 +77,42 @@ class ProgressTab extends ConsumerWidget {
                     children: [
                       _buildStatCard(
                         context,
-                        AppLocalizations.of(context)!.totalXp,
+                        loc?.totalXp ?? 'Total XP',
                         xp.toString(),
                         Icons.star,
                         AppColors.xpGold,
                       ),
                       _buildStatCard(
                         context,
-                        AppLocalizations.of(context)!.levelTitle,
+                        loc?.levelTitle ?? 'Level',
                         level.toString(),
                         Icons.military_tech,
                         AppColors.primaryGreen,
                       ),
                       _buildStatCard(
                         context,
-                        AppLocalizations.of(context)!.dayStreak,
+                        loc?.dayStreak ?? 'Day Streak',
                         streak.toString(),
                         Icons.local_fire_department,
                         AppColors.streakOrange,
                       ),
                       _buildStatCard(
                         context,
-                        AppLocalizations.of(context)!.masteredWords,
+                        loc?.masteredWords ?? 'Mastered Words',
                         masteredWords.toString(),
                         Icons.school,
                         Colors.blue,
                       ),
                       _buildStatCard(
                         context,
-                        AppLocalizations.of(context)!.completedLessons,
+                        loc?.completedLessons ?? 'Completed Lessons',
                         completedLessons.toString(),
                         Icons.menu_book,
                         Colors.purple,
                       ),
                       _buildStatCard(
                         context,
-                        AppLocalizations.of(context)!.minutesSpent,
+                        loc?.minutesSpent ?? 'Minutes Spent',
                         minutesSpent.toString(),
                         Icons.timer,
                         Colors.teal,
@@ -124,7 +125,7 @@ class ProgressTab extends ConsumerWidget {
 
               // Leaderboard
               Text(
-                AppLocalizations.of(context)!.leaderboardTab,
+                loc?.leaderboardTab ?? 'Leaderboard',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

@@ -268,7 +268,7 @@ class _TutorTabState extends ConsumerState<TutorTab> {
               enabled: !isStreaming,
               decoration: InputDecoration(
                 hintText: isStreaming
-                    ? AppLocalizations.of(context)!.tutorIsTyping
+                    ? (AppLocalizations.of(context)?.tutorIsTyping ?? 'Tutor is typing...')
                     : 'Ask AI Tutor...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),

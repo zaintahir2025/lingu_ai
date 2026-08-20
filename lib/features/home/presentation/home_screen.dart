@@ -40,6 +40,7 @@ class HomeScreen extends ConsumerWidget {
 
     final selectedIndex = ref.watch(homeTabProvider);
 
+    final loc = AppLocalizations.of(context);
     return AdaptiveScaffold(
       title: 'LinguAI',
       selectedIndex: selectedIndex,
@@ -58,7 +59,7 @@ class HomeScreen extends ConsumerWidget {
             'assets/images/svgs/learn.svg',
             height: 28,
           ),
-          label: AppLocalizations.of(context)!.learnTab,
+          label: loc?.learnTab ?? 'Learn',
         ),
         NavigationDestination(
           icon: SvgPicture.asset(
@@ -70,12 +71,12 @@ class HomeScreen extends ConsumerWidget {
             'assets/images/svgs/quests.svg',
             height: 28,
           ),
-          label: AppLocalizations.of(context)!.reviewTab,
+          label: loc?.reviewTab ?? 'Review',
         ),
         NavigationDestination(
           icon: const PikoMascot(size: 26, animated: false),
           selectedIcon: const PikoMascot(size: 30),
-          label: AppLocalizations.of(context)!.tutorTab,
+          label: loc?.tutorTab ?? 'Tutor',
         ),
         NavigationDestination(
           icon: SvgPicture.asset(
@@ -87,7 +88,7 @@ class HomeScreen extends ConsumerWidget {
             'assets/images/svgs/leaderboard.svg',
             height: 28,
           ),
-          label: AppLocalizations.of(context)!.progressTab,
+          label: loc?.progressTab ?? 'Progress',
         ),
         NavigationDestination(
           icon: const Icon(
@@ -100,7 +101,7 @@ class HomeScreen extends ConsumerWidget {
             size: 28,
             color: AppColors.primaryGreen,
           ),
-          label: AppLocalizations.of(context)!.profileTab,
+          label: loc?.profileTab ?? 'Profile',
         ),
       ],
       body: _buildBody(context, selectedIndex),
