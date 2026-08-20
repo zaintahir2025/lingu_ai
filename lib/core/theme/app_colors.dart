@@ -17,6 +17,9 @@ class AppColors {
   static const Color heartRed = Color(0xFFEF4444);
   static const Color heartRedDark = Color(0xFFDC2626);
 
+  static const Color gemBlue = Color(0xFF1CB0F6);
+  static const Color gemBlueDark = Color(0xFF0092D6);
+
   // Soft Feedback Shades
   static const Color softSuccess = Color(0xFFECFDF5);
   static const Color softSuccessText = Color(0xFF047857);
