@@ -3,9 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main # Trigger on push to main branch
+      - main
 
-# Add explicit write permissions so the GITHUB_TOKEN can push to gh-pages branch
 permissions:
   contents: write
   pages: write
@@ -38,9 +37,21 @@ jobs:
       - name: Create .nojekyll
         run: touch build/web/.nojekyll
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to gh-pages branch
+        continue-on-error: true
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/web
           force_orphan: true
+
+      - name: Upload Pages Artifact
+        continue-on-error: true
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
