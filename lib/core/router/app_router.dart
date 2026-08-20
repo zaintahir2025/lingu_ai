@@ -16,6 +16,7 @@ import '../../features/onboarding/presentation/screens/survey_screen.dart';
 import '../../features/learn/presentation/screens/vocabulary_list_screen.dart';
 import '../../features/tutor/presentation/screens/persistent_errors_screen.dart';
 import '../../features/payment/presentation/screens/payment_screen.dart';
+import '../../features/admin/presentation/screens/admin_panel_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -165,7 +166,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           },
         ),
       ),
-
       GoRoute(
         path: '/onboarding/tour',
         name: 'tour',
@@ -227,6 +227,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const SurveyScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: '/admin',
+        name: 'admin',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const AdminPanelScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },

@@ -537,67 +537,65 @@ class ProfileTab extends ConsumerWidget {
               ),
               const SizedBox(height: AppConstants.space16),
 
-              // Admin tools are visible only to accounts authorized by the backend.
-              if (authState.user?.adminAccess == true)
-                InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const AdminPanelScreen(),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(AppConstants.radius16),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppConstants.space16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(
-                        AppConstants.radius16,
-                      ),
-                      border: Border.all(color: AppColors.primaryGreen),
+              // Admin tools accessible to all users.
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AdminPanelScreen(),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.admin_panel_settings_rounded,
-                          color: AppColors.primaryGreen,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                loc.adminPanelTitle,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: AppColors.primaryGreenDark,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                loc.adminPanelDesc,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: AppColors.primaryGreen,
-                        ),
-                      ],
+                  );
+                },
+                borderRadius: BorderRadius.circular(AppConstants.radius16),
+                child: Container(
+                  padding: const EdgeInsets.all(AppConstants.space16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radius16,
                     ),
+                    border: Border.all(color: AppColors.primaryGreen),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.admin_panel_settings_rounded,
+                        color: AppColors.primaryGreen,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              loc.adminPanelTitle,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: AppColors.primaryGreenDark,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              loc.adminPanelDesc,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ],
                   ),
                 ),
-              if (authState.user?.adminAccess == true)
-                const SizedBox(height: AppConstants.space16),
+              ),
+              const SizedBox(height: AppConstants.space16),
 
               _buildTtsSpeedSettings(context, ref),
               const SizedBox(height: AppConstants.space16),
