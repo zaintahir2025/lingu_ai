@@ -7,6 +7,18 @@ import '../../presentation/screens/ai_settings_screen.dart';
 import '../../../../core/providers/target_language_provider.dart';
 import '../../../../core/network/dio_client.dart';
 
+class KeyValidationResult {
+  final bool isValid;
+  final String? errorMessage;
+  final String? suggestedProvider;
+
+  const KeyValidationResult({
+    required this.isValid,
+    this.errorMessage,
+    this.suggestedProvider,
+  });
+}
+
 class TutorRepository {
   final AiSettingsStorage _aiSettingsStorage;
   final Dio _backendDio;
@@ -20,11 +32,10 @@ class TutorRepository {
   TutorRepository(this._aiSettingsStorage, this._backendDio);
 
   static const List<String> _geminiModels = [
-    'gemini-2.5-flash',
     'gemini-2.0-flash',
     'gemini-1.5-flash',
     'gemini-1.5-pro',
-    'gemini-1.5-flash-latest',
+    'gemini-2.0-flash-exp',
   ];
 
   String sanitizeApiKey(String key) {
@@ -36,11 +47,63 @@ class TutorRepository {
         .replaceAll('\r', '');
   }
 
-  Future<bool> validateGeminiApiKey(String apiKey, {String? provider}) async {
+  KeyValidationResult checkKeyFormat(String key, String provider) {
+    final cleanKey = sanitizeApiKey(key);
+    if (cleanKey.isEmpty) {
+      return const KeyValidationResult(
+        isValid: false,
+        errorMessage: 'API Key cannot be empty.',
+      );
+    }
+
+    if (cleanKey.startsWith('gsk_')) {
+      if (!provider.contains('Groq')) {
+        return const KeyValidationResult(
+          isValid: false,
+          errorMessage:
+              'This appears to be a Groq API key (starts with "gsk_"). Please select "Groq API" as your provider.',
+          suggestedProvider: 'Groq API (Llama 3.3)',
+        );
+      }
+    } else if (cleanKey.startsWith('sk-')) {
+      if (!provider.contains('OpenAI')) {
+        return const KeyValidationResult(
+          isValid: false,
+          errorMessage:
+              'This appears to be an OpenAI/OpenRouter API key (starts with "sk-"). Please select "OpenAI / OpenRouter API".',
+          suggestedProvider: 'OpenAI / OpenRouter API',
+        );
+      }
+    } else if (provider.contains('Gemini')) {
+      if (!cleanKey.startsWith('AIzaSy')) {
+        return const KeyValidationResult(
+          isValid: false,
+          errorMessage:
+              'Invalid Gemini API Key format. Free Gemini keys from Google AI Studio (https://aistudio.google.com) start with "AIzaSy".',
+        );
+      }
+    }
+
+    return const KeyValidationResult(isValid: true);
+  }
+
+  Future<KeyValidationResult> validateApiKey(
+    String apiKey, {
+    String? provider,
+  }) async {
     final key = sanitizeApiKey(apiKey);
-    if (key.isEmpty) return false;
+    if (key.isEmpty) {
+      return const KeyValidationResult(
+        isValid: false,
+        errorMessage: 'Key is empty.',
+      );
+    }
 
     final selectedProvider = provider ?? _aiSettingsStorage.provider;
+    final formatCheck = checkKeyFormat(key, selectedProvider);
+    if (!formatCheck.isValid) {
+      return formatCheck;
+    }
 
     if (selectedProvider.contains('Groq')) {
       try {
@@ -60,19 +123,54 @@ class TutorRepository {
             'max_tokens': 5,
           },
         );
-        return res.statusCode == 200;
-      } catch (_) {
-        return false;
+        if (res.statusCode == 200) {
+          return const KeyValidationResult(isValid: true);
+        }
+      } catch (e) {
+        return KeyValidationResult(
+          isValid: false,
+          errorMessage:
+              'Groq API Key request failed. Ensure the key is active at console.groq.com.',
+        );
+      }
+    } else if (selectedProvider.contains('OpenAI') ||
+        selectedProvider.contains('OpenRouter')) {
+      try {
+        final endpoint = selectedProvider.contains('OpenRouter')
+            ? 'https://openrouter.ai/api/v1/chat/completions'
+            : 'https://api.openai.com/v1/chat/completions';
+        final model = selectedProvider.contains('OpenRouter')
+            ? 'openai/gpt-4o-mini'
+            : 'gpt-4o-mini';
+
+        final res = await _dio.post(
+          endpoint,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $key',
+              'Content-Type': 'application/json',
+            },
+          ),
+          data: {
+            'model': model,
+            'messages': [
+              {'role': 'user', 'content': 'hi'},
+            ],
+            'max_tokens': 5,
+          },
+        );
+        if (res.statusCode == 200) {
+          return const KeyValidationResult(isValid: true);
+        }
+      } catch (e) {
+        return KeyValidationResult(
+          isValid: false,
+          errorMessage:
+              'OpenAI/OpenRouter Key validation failed. Check your API key and account quota.',
+        );
       }
     } else {
-      // Default: Google Gemini
-      try {
-        final response = await _dio.get(
-          'https://generativelanguage.googleapis.com/v1beta/models?key=$key',
-        );
-        if (response.statusCode == 200) return true;
-      } catch (_) {}
-
+      // Google Gemini actual generation validation
       for (final modelName in _geminiModels) {
         try {
           final response = await _dio.post(
@@ -93,11 +191,23 @@ class TutorRepository {
               ],
             },
           );
-          if (response.statusCode == 200) return true;
+          if (response.statusCode == 200 && response.data != null) {
+            return const KeyValidationResult(isValid: true);
+          }
         } catch (_) {}
       }
-      return false;
+
+      return const KeyValidationResult(
+        isValid: false,
+        errorMessage:
+          'Gemini API Key rejected by Google. Ensure you copied the exact key starting with "AIzaSy" from https://aistudio.google.com.',
+      );
     }
+
+    return const KeyValidationResult(
+      isValid: false,
+      errorMessage: 'Could not verify API key.',
+    );
   }
 
   Stream<String> streamTutorMessage(
@@ -123,6 +233,25 @@ class TutorRepository {
             hasEmitted = true;
             yield chunk;
           }
+        } else if (provider.contains('OpenAI') || provider.contains('OpenRouter')) {
+          final endpoint = provider.contains('OpenRouter')
+              ? 'https://openrouter.ai/api/v1/chat/completions'
+              : 'https://api.openai.com/v1/chat/completions';
+          final model = provider.contains('OpenRouter')
+              ? 'openai/gpt-4o-mini'
+              : 'gpt-4o-mini';
+
+          await for (final chunk in _callOpenAiCompatibleApi(
+            endpoint,
+            model,
+            customKey,
+            message,
+            contextWords,
+            targetLang: targetLang,
+          )) {
+            hasEmitted = true;
+            yield chunk;
+          }
         } else {
           await for (final chunk in _callGeminiApi(
             customKey,
@@ -137,7 +266,10 @@ class TutorRepository {
         if (hasEmitted) return;
       } catch (e) {
         debugPrint('AI Provider ($provider) call failed: $e');
-        yield '⚠️ $provider Key Error: The AI service rejected your API key or model request.\n\nPlease check your key in settings (🔑 icon).';
+        final hint = provider.contains('Gemini')
+            ? 'Ensure your key starts with "AIzaSy" from https://aistudio.google.com.'
+            : 'Please verify your API key and active quota in settings (🔑 icon).';
+        yield '⚠️ $provider Error: The AI service rejected your API key.\n\n$hint';
         return;
       }
     }

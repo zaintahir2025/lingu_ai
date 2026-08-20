@@ -87,6 +87,12 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
       'hint': 'Paste your Groq API key (e.g. gsk_...)',
       'info': 'Ultra-fast Llama 3.3 inference engine.',
     },
+    'OpenAI / OpenRouter API': {
+      'prefix': 'sk-',
+      'url': 'https://platform.openai.com',
+      'hint': 'Paste your OpenAI/OpenRouter key (e.g. sk-...)',
+      'info': 'Supports GPT-4o-mini & OpenRouter endpoints.',
+    },
   };
 
   @override
@@ -133,14 +139,14 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
 
     setState(() => _isValidating = true);
     final repo = ref.read(tutorRepositoryProvider);
-    final isValid = await repo.validateGeminiApiKey(
+    final result = await repo.validateApiKey(
       key,
       provider: _selectedProvider,
     );
     if (!mounted) return;
     setState(() => _isValidating = false);
 
-    if (isValid) {
+    if (result.isValid) {
       await storage.saveSettings(provider: _selectedProvider, apiKey: key);
       if (!mounted) return;
       InAppNotificationBanner.show(
@@ -150,11 +156,17 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
         type: NotificationType.success,
       );
     } else {
+      if (result.suggestedProvider != null) {
+        setState(() {
+          _selectedProvider = result.suggestedProvider!;
+        });
+      }
       InAppNotificationBanner.show(
         context: context,
         title: 'Key Verification Failed',
         message:
-            'The key was not saved. Check the provider, connection, and key, then try again.',
+            result.errorMessage ??
+            'The key was rejected by the provider. Please verify your key and try again.',
         type: NotificationType.error,
       );
     }
@@ -196,7 +208,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Bring Your Own Key (BYOK): securely connect Gemini or Groq for personalized tutoring. The key stays encrypted on this device.',
+                      'Bring Your Own Key (BYOK): securely connect Gemini, Groq, or OpenAI for personalized tutoring. The key stays encrypted on this device.',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.primaryGreenDark,
