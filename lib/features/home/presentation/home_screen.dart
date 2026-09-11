@@ -53,7 +53,6 @@ class HomeScreen extends ConsumerWidget {
           icon: SvgPicture.asset(
             'assets/images/svgs/learn.svg',
             height: 24,
-            colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
           ),
           selectedIcon: SvgPicture.asset(
             'assets/images/svgs/learn.svg',
@@ -65,7 +64,6 @@ class HomeScreen extends ConsumerWidget {
           icon: SvgPicture.asset(
             'assets/images/svgs/quests.svg',
             height: 24,
-            colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
           ),
           selectedIcon: SvgPicture.asset(
             'assets/images/svgs/quests.svg',
@@ -82,7 +80,6 @@ class HomeScreen extends ConsumerWidget {
           icon: SvgPicture.asset(
             'assets/images/svgs/leaderboard.svg',
             height: 24,
-            colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.srcIn),
           ),
           selectedIcon: SvgPicture.asset(
             'assets/images/svgs/leaderboard.svg',
@@ -94,12 +91,12 @@ class HomeScreen extends ConsumerWidget {
           icon: const Icon(
             Icons.person_outline_rounded,
             size: 26,
-            color: Colors.grey,
+            color: AppColors.textPrimary,
           ),
-          selectedIcon: Icon(
+          selectedIcon: const Icon(
             Icons.person_rounded,
             size: 28,
-            color: AppColors.primaryGreen,
+            color: AppColors.textPrimary,
           ),
           label: loc?.profileTab ?? 'Profile',
         ),
