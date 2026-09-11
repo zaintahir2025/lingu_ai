@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart';
 import '../database/database.dart';
+import '../../features/progress/presentation/providers/progress_controller.dart';
 
 import '../local_storage/local_storage_provider.dart';
 
@@ -115,8 +116,17 @@ class GameStateNotifier extends StateNotifier<GameState> {
   }
 }
 
-final gameStateProvider = StateNotifierProvider<GameStateNotifier, GameState>((
-  ref,
-) {
-  return GameStateNotifier(ref);
+final gameStateProvider = StateNotifierProvider<GameStateNotifier, GameState>((ref) {
+  final notifier = GameStateNotifier(ref);
+
+  ref.listen(progressControllerProvider, (previous, next) {
+    if (next.hasValue) {
+      notifier.syncFromProgress(
+        next.value!.progress.totalXp,
+        next.value!.progress.currentStreak,
+      );
+    }
+  });
+
+  return notifier;
 });
