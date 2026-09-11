@@ -24,9 +24,10 @@ class WordMatchingExerciseView extends ConsumerStatefulWidget {
 
 class _WordMatchingExerciseViewState
     extends ConsumerState<WordMatchingExerciseView> {
-  String? _selectedTargetWord;
-  String? _selectedTranslation;
-  final Set<String> _matchedWords = {};
+  int? _selectedTargetIndex;
+  int? _selectedTranslationIndex;
+  final Set<int> _matchedTargetIndices = {};
+  final Set<int> _matchedTranslationIndices = {};
   bool _isLoading = true;
   List<Map<String, String>> _wordPairs = [];
   List<String> _targetWords = [];
@@ -59,15 +60,10 @@ class _WordMatchingExerciseViewState
           .read(localStorageProvider)
           .get('matching_draft_lesson_${widget.lessonId}');
       if (draft is Map) {
-        final validWords = _wordPairs.map((pair) => pair['word']).toSet();
-        final restored =
-            (draft['matchedWords'] as List?)?.whereType<String>().where(
-              validWords.contains,
-            ) ??
-            const <String>[];
-        _matchedWords
-          ..clear()
-          ..addAll(restored);
+        final restoredT = (draft['targetIndices'] as List?)?.whereType<int>() ?? const <int>[];
+        final restoredTr = (draft['translationIndices'] as List?)?.whereType<int>() ?? const <int>[];
+        _matchedTargetIndices..clear()..addAll(restoredT);
+        _matchedTranslationIndices..clear()..addAll(restoredTr);
       }
     }
 
@@ -79,26 +75,30 @@ class _WordMatchingExerciseViewState
   }
 
   void _checkMatch() {
-    if (_selectedTargetWord == null || _selectedTranslation == null) return;
+    if (_selectedTargetIndex == null || _selectedTranslationIndex == null) return;
 
-    final pair = _wordPairs.firstWhere(
-      (p) =>
-          p['word'] == _selectedTargetWord &&
-          p['translation'] == _selectedTranslation,
-      orElse: () => {},
+    final targetWord = _targetWords[_selectedTargetIndex!];
+    final transWord = _translations[_selectedTranslationIndex!];
+    
+    // In case of identical target words, we just need ANY valid pair matching this combination
+    // Since we are matching by index, it doesn't matter if there's another duplicate word,
+    // as long as the translation is correct for it.
+    final isValidPair = _wordPairs.any(
+      (p) => p['word'] == targetWord && p['translation'] == transWord,
     );
 
-    if (pair.isNotEmpty) {
+    if (isValidPair) {
       // Matched correctly!
-      ref.read(ttsServiceProvider).speak(_selectedTargetWord!);
+      ref.read(ttsServiceProvider).speak(targetWord);
       setState(() {
-        _matchedWords.add(_selectedTargetWord!);
-        _selectedTargetWord = null;
-        _selectedTranslation = null;
+        _matchedTargetIndices.add(_selectedTargetIndex!);
+        _matchedTranslationIndices.add(_selectedTranslationIndex!);
+        _selectedTargetIndex = null;
+        _selectedTranslationIndex = null;
       });
       _saveDraft();
 
-      if (_matchedWords.length == _wordPairs.length) {
+      if (_matchedTargetIndices.length == _wordPairs.length) {
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
             _clearDraft();
@@ -116,8 +116,8 @@ class _WordMatchingExerciseViewState
         ),
       );
       setState(() {
-        _selectedTargetWord = null;
-        _selectedTranslation = null;
+        _selectedTargetIndex = null;
+        _selectedTranslationIndex = null;
       });
     }
   }
@@ -125,7 +125,10 @@ class _WordMatchingExerciseViewState
   void _saveDraft() {
     ref.read(localStorageProvider).put(
       'matching_draft_lesson_${widget.lessonId}',
-      {'matchedWords': _matchedWords.toList()},
+      {
+        'targetIndices': _matchedTargetIndices.toList(),
+        'translationIndices': _matchedTranslationIndices.toList(),
+      },
     );
   }
 
@@ -185,8 +188,8 @@ class _WordMatchingExerciseViewState
                     itemCount: _targetWords.length,
                     itemBuilder: (context, index) {
                       final word = _targetWords[index];
-                      final isMatched = _matchedWords.contains(word);
-                      final isSelected = _selectedTargetWord == word;
+                      final isMatched = _matchedTargetIndices.contains(index);
+                      final isSelected = _selectedTargetIndex == index;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -195,7 +198,7 @@ class _WordMatchingExerciseViewState
                               ? null
                               : () {
                                   setState(() {
-                                    _selectedTargetWord = word;
+                                    _selectedTargetIndex = index;
                                   });
                                   _checkMatch();
                                 },
@@ -258,12 +261,8 @@ class _WordMatchingExerciseViewState
                     itemCount: _translations.length,
                     itemBuilder: (context, index) {
                       final trans = _translations[index];
-                      final isMatched = _wordPairs.any(
-                        (p) =>
-                            p['translation'] == trans &&
-                            _matchedWords.contains(p['word']),
-                      );
-                      final isSelected = _selectedTranslation == trans;
+                      final isMatched = _matchedTranslationIndices.contains(index);
+                      final isSelected = _selectedTranslationIndex == index;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -272,7 +271,7 @@ class _WordMatchingExerciseViewState
                               ? null
                               : () {
                                   setState(() {
-                                    _selectedTranslation = trans;
+                                    _selectedTranslationIndex = index;
                                   });
                                   _checkMatch();
                                 },
@@ -321,7 +320,7 @@ class _WordMatchingExerciseViewState
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: _matchedWords.length == _wordPairs.length
+            onPressed: _matchedTargetIndices.length == _wordPairs.length
                 ? widget.onComplete
                 : null,
             style: ElevatedButton.styleFrom(
@@ -333,7 +332,7 @@ class _WordMatchingExerciseViewState
               ),
             ),
             child: Text(
-              _matchedWords.length == _wordPairs.length
+              _matchedTargetIndices.length == _wordPairs.length
                   ? 'Continue to Quiz'
                   : 'Match All Words to Continue',
             ),
