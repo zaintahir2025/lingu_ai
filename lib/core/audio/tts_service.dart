@@ -276,14 +276,23 @@ class TtsService {
       if (sanitized.length <= 250) {
         try {
           // Play native regional speech using exact BCP-47 tag (e.g. es-ES, fr-FR, de-DE, ja-JP, ur-PK)
-          final audioUrl =
+          final originalUrl =
               'https://translate.google.com/translate_tts?ie=UTF-8&tl=$fullTag&client=tw-ob&q=${Uri.encodeComponent(sanitized)}';
+          
+          // Use a CORS proxy on Web to strip the Referer header (which Google blocks with 404)
+          final audioUrl = kIsWeb 
+              ? 'https://corsproxy.io/?${Uri.encodeComponent(originalUrl)}'
+              : originalUrl;
+              
           await _audioPlayer.play(UrlSource(audioUrl));
           return;
         } catch (e) {
           try {
-            final fallbackUrl =
+            final fallbackOriginal =
                 'https://translate.google.com/translate_tts?ie=UTF-8&tl=$shortLang&client=tw-ob&q=${Uri.encodeComponent(sanitized)}';
+            final fallbackUrl = kIsWeb
+                ? 'https://corsproxy.io/?${Uri.encodeComponent(fallbackOriginal)}'
+                : fallbackOriginal;
             await _audioPlayer.play(UrlSource(fallbackUrl));
             return;
           } catch (_) {}

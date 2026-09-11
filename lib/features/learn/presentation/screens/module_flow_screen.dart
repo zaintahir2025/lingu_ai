@@ -41,13 +41,12 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
           box.get('module_flow_stage_lesson_${widget.lessonId}') as int?;
       final savedScore =
           box.get('module_flow_score_lesson_${widget.lessonId}') as num?;
-          
+
       if (savedIdx != null &&
           savedIdx > 0 &&
           savedIdx < ModuleStage.values.length) {
-          
         final stageName = _getStageNameForIndex(savedIdx);
-        
+
         final shouldResume = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
@@ -79,7 +78,10 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text(
                   'Start Fresh 🔄',
-                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               ElevatedButton(
@@ -116,14 +118,19 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
       }
     } catch (_) {}
   }
-  
+
   String _getStageNameForIndex(int index) {
     switch (index) {
-      case 0: return 'Stage 1: Vocabulary';
-      case 1: return 'Stage 2: Word Matching';
-      case 2: return 'Stage 3: Lesson Quiz';
-      case 3: return 'Results';
-      default: return 'an earlier stage';
+      case 0:
+        return 'Stage 1: Vocabulary';
+      case 1:
+        return 'Stage 2: Word Matching';
+      case 2:
+        return 'Stage 3: Lesson Quiz';
+      case 3:
+        return 'Results';
+      default:
+        return 'an earlier stage';
     }
   }
 
