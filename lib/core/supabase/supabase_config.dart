@@ -5,17 +5,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupabaseConfig {
   static const String url = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://xyzcompany.supabase.co',
+    defaultValue: 'https://fpilwagdoodgdwgglgxf.supabase.co',
   );
 
   static const String anonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_key',
+    defaultValue: 'sb_publishable_p0Gu1RnE7p_vJSwVf5YRdA_wFaTUReE',
   );
 
-  static bool get isConfigured =>
-      url != 'https://xyzcompany.supabase.co' &&
-      anonKey != 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_key';
+  static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;
 
   static Future<void> init() async {
     try {

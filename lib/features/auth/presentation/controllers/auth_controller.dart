@@ -100,7 +100,16 @@ class AuthController extends StateNotifier<AuthState> {
         await _syncPremium();
       }
     } catch (e) {
+      if (e.toString().contains('Invalid login credentials') || e.toString().contains('AuthException')) {
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          loginError: 'Invalid email or password.',
+        );
+        return;
+      }
       debugPrint('Backend login unavailable; activating offline demo session: $e');
+      // Set errorMessage so the UI can display a snackbar to inform the user
+      state = state.copyWith(errorMessage: 'Backend unavailable. Offline mode activated.');
     }
 
     final displayName = authenticatedUser?.username ??
@@ -141,7 +150,15 @@ class AuthController extends StateNotifier<AuthState> {
         await _repository.register(email, password);
       }
     } catch (e) {
+      if (e.toString().contains('AuthException')) {
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          registerError: 'Registration failed: ${e.toString().split('AuthException: ').last}',
+        );
+        return;
+      }
       debugPrint('Backend registration unavailable; activating offline demo session: $e');
+      state = state.copyWith(errorMessage: 'Backend unavailable. Offline mode activated.');
     }
 
     // Automatically log in the newly registered user
