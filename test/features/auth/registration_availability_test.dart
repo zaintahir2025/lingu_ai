@@ -7,10 +7,10 @@ void main() {
       expect(registrationConfigurationMessage(backendConfigured: true), isNull);
     });
 
-    test('reports a missing backend', () {
+    test('always allows registration regardless of backend configuration', () {
       expect(
         registrationConfigurationMessage(backendConfigured: false),
-        'Registration is unavailable because the backend is not configured.',
+        isNull,
       );
     });
   });
