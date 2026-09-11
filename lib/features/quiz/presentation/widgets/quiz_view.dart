@@ -36,6 +36,7 @@ class _QuizViewState extends ConsumerState<QuizView> {
   String _currentAnswer = '';
   final FocusNode _focusNode = FocusNode();
   bool _isFeedbackShowing = false;
+  bool _isCorrect = false;
 
   @override
   void initState() {
@@ -49,9 +50,10 @@ class _QuizViewState extends ConsumerState<QuizView> {
     super.dispose();
   }
 
-  void _onAnswerChanged(String value) {
+  void _onAnswerChanged(String answer) {
+    if (_isFeedbackShowing) return;
     setState(() {
-      _currentAnswer = value;
+      _currentAnswer = answer;
     });
   }
 
@@ -70,10 +72,14 @@ class _QuizViewState extends ConsumerState<QuizView> {
         .currentQuestion;
     if (question == null) return;
 
-    _isFeedbackShowing = true;
     final isCorrect = ref
         .read(quizControllerProvider(widget.lessonId).notifier)
         .submitAnswer(_currentAnswer);
+
+    setState(() {
+      _isFeedbackShowing = true;
+      _isCorrect = isCorrect;
+    });
 
     FeedbackBottomSheet.show(
       context: context,
@@ -90,9 +96,11 @@ class _QuizViewState extends ConsumerState<QuizView> {
         );
       },
       onContinue: () {
-        _isFeedbackShowing = false;
+        if (!mounted) return;
         setState(() {
+          _isFeedbackShowing = false;
           _currentAnswer = '';
+          _isCorrect = false;
         });
         ref
             .read(quizControllerProvider(widget.lessonId).notifier)
@@ -168,6 +176,8 @@ class _QuizViewState extends ConsumerState<QuizView> {
           question: question,
           selectedOption: _currentAnswer.isNotEmpty ? _currentAnswer : null,
           onSelect: _onAnswerChanged,
+          isSubmitted: _isFeedbackShowing,
+          isCorrect: _isCorrect,
         );
         break;
       case QuestionType.fillBlank:
@@ -176,6 +186,9 @@ class _QuizViewState extends ConsumerState<QuizView> {
           answer: _currentAnswer,
           onChanged: _onAnswerChanged,
           onSubmit: _submitAnswer,
+          isSubmitted: _isFeedbackShowing,
+          isCorrect: _isCorrect,
+          correctAnswer: question.correctAnswer,
         );
         break;
       case QuestionType.translation:
@@ -184,6 +197,9 @@ class _QuizViewState extends ConsumerState<QuizView> {
           answer: _currentAnswer,
           onChanged: _onAnswerChanged,
           onSubmit: _submitAnswer,
+          isSubmitted: _isFeedbackShowing,
+          isCorrect: _isCorrect,
+          correctAnswer: question.correctAnswer,
         );
         break;
       case QuestionType.listening:
@@ -192,6 +208,9 @@ class _QuizViewState extends ConsumerState<QuizView> {
           answer: _currentAnswer,
           onChanged: _onAnswerChanged,
           onSubmit: _submitAnswer,
+          isSubmitted: _isFeedbackShowing,
+          isCorrect: _isCorrect,
+          correctAnswer: question.correctAnswer,
         );
         break;
     }

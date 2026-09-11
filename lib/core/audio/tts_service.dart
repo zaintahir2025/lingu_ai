@@ -238,10 +238,7 @@ class TtsService {
     );
   }
 
-  Future<void> speakSlowTarget(
-    String text, {
-    String? targetLanguage,
-  }) async {
+  Future<void> speakSlowTarget(String text, {String? targetLanguage}) async {
     await speak(
       text,
       targetLanguage: targetLanguage ?? _currentLanguage,
@@ -268,8 +265,8 @@ class TtsService {
       final fullTag = forceEnglish
           ? 'en-US'
           : (targetLanguage != null
-              ? getBcp47LanguageTag(targetLanguage)
-              : _currentLanguage);
+                ? getBcp47LanguageTag(targetLanguage)
+                : _currentLanguage);
       final shortLang = fullTag.split('-')[0];
 
       // Primary: High-Quality Low-Latency Native Neural Human Voice Stream
@@ -278,12 +275,12 @@ class TtsService {
           // Play native regional speech using exact BCP-47 tag (e.g. es-ES, fr-FR, de-DE, ja-JP, ur-PK)
           final originalUrl =
               'https://translate.google.com/translate_tts?ie=UTF-8&tl=$fullTag&client=tw-ob&q=${Uri.encodeComponent(sanitized)}';
-          
+
           // Use a CORS proxy on Web to strip the Referer header (which Google blocks with 404)
-          final audioUrl = kIsWeb 
+          final audioUrl = kIsWeb
               ? 'https://corsproxy.io/?${Uri.encodeComponent(originalUrl)}'
               : originalUrl;
-              
+
           await _audioPlayer.play(UrlSource(audioUrl));
           return;
         } catch (e) {

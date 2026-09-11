@@ -2,12 +2,47 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../core/supabase/supabase_config.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
-class SupportRepository {
-  SupportRepository(this._dio);
+abstract class SupportRepository {
+  Future<void> createTicket({
+    required String category,
+    required String subject,
+    required String message,
+  });
+}
+
+class SupabaseSupportRepository implements SupportRepository {
+  final _supabase = supa.Supabase.instance.client;
+
+  @override
+  Future<void> createTicket({
+    required String category,
+    required String subject,
+    required String message,
+  }) async {
+    final session = _supabase.auth.currentSession;
+    if (session == null) throw Exception('Not logged in');
+
+    await _supabase.from('support_tickets').insert({
+      'user_id': session.user.id,
+      'user_email': session.user.email,
+      'category': category,
+      'subject': subject,
+      'message': message,
+      'priority': 'standard',
+      'status': 'open',
+    });
+  }
+}
+
+class DioSupportRepository implements SupportRepository {
+  DioSupportRepository(this._dio);
 
   final Dio _dio;
 
+  @override
   Future<void> createTicket({
     required String category,
     required String subject,
@@ -29,5 +64,8 @@ class SupportRepository {
 }
 
 final supportRepositoryProvider = Provider<SupportRepository>((ref) {
-  return SupportRepository(ref.watch(dioProvider));
+  if (SupabaseConfig.isConfigured) {
+    return SupabaseSupportRepository();
+  }
+  return DioSupportRepository(ref.watch(dioProvider));
 });
