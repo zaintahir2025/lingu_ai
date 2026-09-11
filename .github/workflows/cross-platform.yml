@@ -66,8 +66,7 @@ jobs:
       - run: flutter pub get
       - run: >-
           flutter build web --release
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"
+
 
   android:
     runs-on: ubuntu-latest
@@ -84,8 +83,7 @@ jobs:
       - run: flutter pub get
       - run: >-
           flutter build apk --release
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"
+
 
   linux:
     runs-on: ubuntu-latest
@@ -105,8 +103,7 @@ jobs:
       - run: flutter pub get
       - run: >-
           flutter build linux --release
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"
+
 
   windows:
     runs-on: windows-latest
@@ -120,8 +117,7 @@ jobs:
       - run: flutter pub get
       - run: >-
           flutter build windows --release
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"
+
 
   apple:
     runs-on: macos-latest
@@ -135,9 +131,5 @@ jobs:
       - run: flutter pub get
       - run: >-
           flutter build macos --release
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"
       - run: >-
-          flutter build ios --release --no-codesign
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          --dart-define=SUPABASE_PUBLISHABLE_KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}" || true
+          flutter build ios --release --no-codesign || true

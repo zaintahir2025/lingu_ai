@@ -50,10 +50,7 @@ class HomeScreen extends ConsumerWidget {
       },
       destinations: [
         NavigationDestination(
-          icon: SvgPicture.asset(
-            'assets/images/svgs/learn.svg',
-            height: 24,
-          ),
+          icon: SvgPicture.asset('assets/images/svgs/learn.svg', height: 24),
           selectedIcon: SvgPicture.asset(
             'assets/images/svgs/learn.svg',
             height: 28,
@@ -61,10 +58,7 @@ class HomeScreen extends ConsumerWidget {
           label: loc?.learnTab ?? 'Learn',
         ),
         NavigationDestination(
-          icon: SvgPicture.asset(
-            'assets/images/svgs/quests.svg',
-            height: 24,
-          ),
+          icon: SvgPicture.asset('assets/images/svgs/quests.svg', height: 24),
           selectedIcon: SvgPicture.asset(
             'assets/images/svgs/quests.svg',
             height: 28,
