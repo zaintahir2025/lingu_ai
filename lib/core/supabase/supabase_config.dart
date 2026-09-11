@@ -8,18 +8,18 @@ class SupabaseConfig {
     defaultValue: 'https://fpilwagdoodgdwgglgxf.supabase.co',
   );
 
-  static const String anonKey = String.fromEnvironment(
-    'SUPABASE_ANON_KEY',
+  static const String publishableKey = String.fromEnvironment(
+    'SUPABASE_PUBLISHABLE_KEY',
     defaultValue: 'sb_publishable_p0Gu1RnE7p_vJSwVf5YRdA_wFaTUReE',
   );
 
-  static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;
+  static bool get isConfigured => url.isNotEmpty && publishableKey.isNotEmpty;
 
   static Future<void> init() async {
     try {
       await Supabase.initialize(
         url: url,
-        anonKey: anonKey,
+        publishableKey: publishableKey,
         debug: kDebugMode,
       );
       debugPrint('Supabase initialized successfully.');
