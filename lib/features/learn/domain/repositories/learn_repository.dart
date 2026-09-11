@@ -5,8 +5,6 @@ import '../../../../core/storage/onboarding_storage.dart';
 import '../../data/vocab_data.dart';
 import '../../data/vocab_translator.dart';
 
-import '../../../../core/providers/target_language_provider.dart';
-
 class LearnRepository {
   final AppDatabase _db;
   final OnboardingStorage? _onboardingStorage;

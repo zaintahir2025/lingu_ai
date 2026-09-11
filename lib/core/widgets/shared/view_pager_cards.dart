@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_constants.dart';
 
 /// Inspired by ViewPagerCards (Rubens Sousa):
 /// A 3D Card Transformer PageView with depth scaling, peak previews, and tactile elevation.
 class ViewPagerCards extends StatefulWidget {
   final int itemCount;
-  final Widget Function(BuildContext context, int index, bool isSelected) itemBuilder;
+  final Widget Function(BuildContext context, int index, bool isSelected)
+  itemBuilder;
   final ValueChanged<int>? onPageChanged;
   final int initialPage;
   final double height;

@@ -77,7 +77,9 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.space24),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.space24,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -90,7 +92,10 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
                 const SizedBox(height: 4),
                 const Text(
                   'Swipe cards below to select your review level powered by Spaced Repetition.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -129,7 +134,9 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primaryGreen
-                                : AppColors.primaryGreen.withValues(alpha: 0.15),
+                                : AppColors.primaryGreen.withValues(
+                                    alpha: 0.15,
+                                  ),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -200,12 +207,49 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
           const SizedBox(height: AppConstants.space16),
 
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.space24),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.space24,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Google Ad Placement #3 (Review Tab)
                 ref.read(adServiceProvider).buildReviewAdBanner(context),
+
+                // Due Words Counter
+                Container(
+                  padding: const EdgeInsets.all(AppConstants.space24),
+                  decoration: BoxDecoration(
+                    color: AppColors.streakOrange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppConstants.radius16),
+                    border: Border.all(color: AppColors.streakOrange, width: 2),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Due for Review',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.streakOrange,
+                        ),
+                      ),
+                      TweenAnimationBuilder<int>(
+                        tween: IntTween(begin: 0, end: _dueCount),
+                        duration: const Duration(seconds: 2),
+                        builder: (context, value, child) {
+                          return Text(
+                            '$value',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  color: AppColors.streakOrange,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
 
                 const SizedBox(height: AppConstants.space16),
 
@@ -221,7 +265,8 @@ class _ReviewTabState extends ConsumerState<ReviewTab> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        AppLocalizations.of(context)?.wordsMastered ?? 'Words Mastered',
+                        AppLocalizations.of(context)?.wordsMastered ??
+                            'Words Mastered',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: AppColors.primaryGreenDark,
                         ),

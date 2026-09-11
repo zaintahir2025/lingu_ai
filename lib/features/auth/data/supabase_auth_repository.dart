@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/token_storage.dart';
@@ -22,7 +21,9 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<User> login(String email, String password) async {
     final client = _supabase;
     if (client == null) {
-      throw Exception('Supabase is not configured yet. Set SUPABASE_URL & SUPABASE_ANON_KEY.');
+      throw Exception(
+        'Supabase is not configured yet. Set SUPABASE_URL & SUPABASE_ANON_KEY.',
+      );
     }
 
     final response = await client.auth.signInWithPassword(
@@ -56,7 +57,9 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> register(String email, String password) async {
     final client = _supabase;
     if (client == null) {
-      throw Exception('Supabase is not configured yet. Set SUPABASE_URL & SUPABASE_ANON_KEY.');
+      throw Exception(
+        'Supabase is not configured yet. Set SUPABASE_URL & SUPABASE_ANON_KEY.',
+      );
     }
 
     final response = await client.auth.signUp(
@@ -81,8 +84,14 @@ class SupabaseAuthRepository implements AuthRepository {
     return User(
       id: supaUser.id,
       email: supaUser.email ?? 'user@linguai.local',
-      name: supaUser.userMetadata?['username'] ?? supaUser.email?.split('@').first ?? 'Learner',
-      username: supaUser.userMetadata?['username'] ?? supaUser.email?.split('@').first ?? 'Learner',
+      name:
+          supaUser.userMetadata?['username'] ??
+          supaUser.email?.split('@').first ??
+          'Learner',
+      username:
+          supaUser.userMetadata?['username'] ??
+          supaUser.email?.split('@').first ??
+          'Learner',
       role: supaUser.userMetadata?['role'] ?? 'user',
       adminAccess: supaUser.userMetadata?['role'] == 'admin',
     );

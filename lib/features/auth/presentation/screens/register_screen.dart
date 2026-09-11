@@ -33,6 +33,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _hasSpecialChar = false;
   bool _hasUppercase = false;
   bool _isAbove13 = false;
+  bool _submitted = false;
 
   @override
   void initState() {
@@ -62,6 +63,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _register() {
+    setState(() {
+      _submitted = true;
+    });
+
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
       InAppNotificationBanner.show(
@@ -284,9 +289,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           'I confirm I am 13 years of age or older',
                           style: TextStyle(
                             fontSize: 13,
-                            color: _isAbove13
-                                ? AppColors.textPrimary
-                                : AppColors.heartRed,
+                            color: (_submitted && !_isAbove13)
+                                ? AppColors.heartRed
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ),
