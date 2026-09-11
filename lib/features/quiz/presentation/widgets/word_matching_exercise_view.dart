@@ -60,10 +60,18 @@ class _WordMatchingExerciseViewState
           .read(localStorageProvider)
           .get('matching_draft_lesson_${widget.lessonId}');
       if (draft is Map) {
-        final restoredT = (draft['targetIndices'] as List?)?.whereType<int>() ?? const <int>[];
-        final restoredTr = (draft['translationIndices'] as List?)?.whereType<int>() ?? const <int>[];
-        _matchedTargetIndices..clear()..addAll(restoredT);
-        _matchedTranslationIndices..clear()..addAll(restoredTr);
+        final restoredT =
+            (draft['targetIndices'] as List?)?.whereType<int>() ??
+            const <int>[];
+        final restoredTr =
+            (draft['translationIndices'] as List?)?.whereType<int>() ??
+            const <int>[];
+        _matchedTargetIndices
+          ..clear()
+          ..addAll(restoredT);
+        _matchedTranslationIndices
+          ..clear()
+          ..addAll(restoredTr);
       }
     }
 
@@ -75,11 +83,12 @@ class _WordMatchingExerciseViewState
   }
 
   void _checkMatch() {
-    if (_selectedTargetIndex == null || _selectedTranslationIndex == null) return;
+    if (_selectedTargetIndex == null || _selectedTranslationIndex == null)
+      return;
 
     final targetWord = _targetWords[_selectedTargetIndex!];
     final transWord = _translations[_selectedTranslationIndex!];
-    
+
     // In case of identical target words, we just need ANY valid pair matching this combination
     // Since we are matching by index, it doesn't matter if there's another duplicate word,
     // as long as the translation is correct for it.
@@ -123,13 +132,12 @@ class _WordMatchingExerciseViewState
   }
 
   void _saveDraft() {
-    ref.read(localStorageProvider).put(
-      'matching_draft_lesson_${widget.lessonId}',
-      {
-        'targetIndices': _matchedTargetIndices.toList(),
-        'translationIndices': _matchedTranslationIndices.toList(),
-      },
-    );
+    ref
+        .read(localStorageProvider)
+        .put('matching_draft_lesson_${widget.lessonId}', {
+          'targetIndices': _matchedTargetIndices.toList(),
+          'translationIndices': _matchedTranslationIndices.toList(),
+        });
   }
 
   void _clearDraft() {
@@ -261,7 +269,9 @@ class _WordMatchingExerciseViewState
                     itemCount: _translations.length,
                     itemBuilder: (context, index) {
                       final trans = _translations[index];
-                      final isMatched = _matchedTranslationIndices.contains(index);
+                      final isMatched = _matchedTranslationIndices.contains(
+                        index,
+                      );
                       final isSelected = _selectedTranslationIndex == index;
 
                       return Padding(

@@ -34,22 +34,97 @@ class _ModuleFlowScreenState extends ConsumerState<ModuleFlowScreen> {
     });
   }
 
-  void _restoreSavedStage() {
+  Future<void> _restoreSavedStage() async {
     try {
       final box = ref.read(localStorageProvider);
       final savedIdx =
           box.get('module_flow_stage_lesson_${widget.lessonId}') as int?;
       final savedScore =
           box.get('module_flow_score_lesson_${widget.lessonId}') as num?;
+          
       if (savedIdx != null &&
-          savedIdx >= 0 &&
+          savedIdx > 0 &&
           savedIdx < ModuleStage.values.length) {
-        setState(() {
-          _currentStage = ModuleStage.values[savedIdx];
-          _finalScore = savedScore?.toDouble() ?? 0;
-        });
+          
+        final stageName = _getStageNameForIndex(savedIdx);
+        
+        final shouldResume = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: AppColors.surface,
+            title: const Row(
+              children: [
+                Icon(
+                  Icons.history_rounded,
+                  color: AppColors.primaryGreen,
+                  size: 28,
+                ),
+                SizedBox(width: 10),
+                Text(
+                  'Resume Lesson?',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            content: Text(
+              'You left off at $stageName.\n\nWould you like to resume, or start over from the Vocabulary flashcards?',
+              style: const TextStyle(fontSize: 15),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Start Fresh 🔄',
+                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Resume ⚡',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldResume == true) {
+          setState(() {
+            _currentStage = ModuleStage.values[savedIdx];
+            _finalScore = savedScore?.toDouble() ?? 0;
+          });
+        } else {
+          try {
+            box.delete('module_flow_stage_lesson_${widget.lessonId}');
+            box.delete('module_flow_score_lesson_${widget.lessonId}');
+            box.delete('flashcard_draft_lesson_${widget.lessonId}');
+            box.delete('matching_draft_lesson_${widget.lessonId}');
+          } catch (_) {}
+        }
       }
     } catch (_) {}
+  }
+  
+  String _getStageNameForIndex(int index) {
+    switch (index) {
+      case 0: return 'Stage 1: Vocabulary';
+      case 1: return 'Stage 2: Word Matching';
+      case 2: return 'Stage 3: Lesson Quiz';
+      case 3: return 'Results';
+      default: return 'an earlier stage';
+    }
   }
 
   void _saveStage(ModuleStage stage) {

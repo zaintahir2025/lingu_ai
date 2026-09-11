@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.linguai.linguai"
-    compileSdk = 34
+    compileSdk = 36
     buildToolsVersion = "34.0.0"
     ndkVersion = flutter.ndkVersion
 
