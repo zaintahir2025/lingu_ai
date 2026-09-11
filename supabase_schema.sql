@@ -100,3 +100,60 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- 9. Create Lessons Table
+CREATE TABLE IF NOT EXISTS public.lessons (
+    id SERIAL PRIMARY KEY,
+    topic TEXT NOT NULL,
+    cefr_level TEXT NOT NULL,
+    order_index INT NOT NULL,
+    is_premium BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 10. Create Flashcards Table (Global vocabulary words)
+CREATE TABLE IF NOT EXISTS public.flashcards (
+    id SERIAL PRIMARY KEY,
+    lesson_id INT REFERENCES public.lessons(id) ON DELETE CASCADE,
+    word TEXT NOT NULL,
+    translation TEXT NOT NULL,
+    audio_url TEXT,
+    example_sentence TEXT,
+    example_translation TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 11. Create User Flashcards Progress Table (SM-2 SRS Data)
+CREATE TABLE IF NOT EXISTS public.user_flashcards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    flashcard_id INT REFERENCES public.flashcards(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'new', -- new, learning, review, mastered
+    next_review_date TIMESTAMP WITH TIME ZONE,
+    repetitions INT DEFAULT 0,
+    easiness_factor REAL DEFAULT 2.5,
+    interval_days INT DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(user_id, flashcard_id)
+);
+
+-- 12. RLS Policies for Lessons & Flashcards
+ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.flashcards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_flashcards ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access to lessons" 
+    ON public.lessons FOR SELECT 
+    USING (true);
+
+CREATE POLICY "Allow public read access to flashcards" 
+    ON public.flashcards FOR SELECT 
+    USING (true);
+
+CREATE POLICY "Allow users to read their own flashcard progress" 
+    ON public.user_flashcards FOR SELECT 
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to insert/update their own flashcard progress" 
+    ON public.user_flashcards FOR ALL 
+    USING (auth.uid() = user_id);
