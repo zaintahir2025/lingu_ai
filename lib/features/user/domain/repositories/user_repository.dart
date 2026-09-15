@@ -33,17 +33,24 @@ class SupabaseUserRepository implements UserRepository {
   }) async {
     final session = _supabase.auth.currentSession;
     if (session == null) throw Exception('Not logged in');
-    
+
     final updates = <String, dynamic>{};
     if (username != null) updates['username'] = username;
     if (targetLanguage != null) updates['target_language'] = targetLanguage;
-    
+
     if (updates.isNotEmpty) {
-      await _supabase.from('profiles').update(updates).eq('id', session.user.id);
+      await _supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', session.user.id);
     }
-    
-    final profile = await _supabase.from('profiles').select().eq('id', session.user.id).single();
-    
+
+    final profile = await _supabase
+        .from('profiles')
+        .select()
+        .eq('id', session.user.id)
+        .single();
+
     return User(
       id: session.user.id,
       email: session.user.email!,
@@ -62,17 +69,24 @@ class SupabaseUserRepository implements UserRepository {
   }) async {
     final session = _supabase.auth.currentSession;
     if (session == null) throw Exception('Not logged in');
-    
+
     final updates = <String, dynamic>{};
     if (knowledgeLevel != null) updates['knowledge_level'] = knowledgeLevel;
     if (targetLanguage != null) updates['target_language'] = targetLanguage;
-    
+
     if (updates.isNotEmpty) {
-      await _supabase.from('profiles').update(updates).eq('id', session.user.id);
+      await _supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', session.user.id);
     }
-    
-    final profile = await _supabase.from('profiles').select().eq('id', session.user.id).single();
-    
+
+    final profile = await _supabase
+        .from('profiles')
+        .select()
+        .eq('id', session.user.id)
+        .single();
+
     return User(
       id: session.user.id,
       email: session.user.email!,

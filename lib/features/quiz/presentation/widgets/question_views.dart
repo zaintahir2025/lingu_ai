@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/models/quiz_question.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_constants.dart';
-import '../../../../../core/audio/tts_service.dart';
 
-class MultipleChoiceView extends ConsumerWidget {
+import '../../../../core/audio/tts_service.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_constants.dart';
+import '../../domain/models/quiz_question.dart';
+
+class MultipleChoiceView extends StatelessWidget {
   final QuizQuestion question;
   final String? selectedOption;
   final ValueChanged<String> onSelect;
   final bool isSubmitted;
-  final bool isCorrect;
+  final bool? isCorrect;
+  final String? correctAnswer;
 
   const MultipleChoiceView({
     super.key,
@@ -18,78 +19,58 @@ class MultipleChoiceView extends ConsumerWidget {
     required this.selectedOption,
     required this.onSelect,
     this.isSubmitted = false,
-    this.isCorrect = false,
+    this.isCorrect,
+    this.correctAnswer,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tts = ref.watch(ttsServiceProvider);
+  Widget build(BuildContext context) {
+    final tts = TtsService();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                question.prompt,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.volume_up_rounded,
-                color: AppColors.primaryGreen,
-                size: 28,
-              ),
-              tooltip: 'Listen to question',
-              onPressed: () => tts.speakEnglish(question.prompt),
-            ),
-          ],
+        Text(
+          question.prompt,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: AppConstants.space24),
-        ...question.options.asMap().entries.map((entry) {
-          final index = entry.key;
-          final option = entry.value;
+        const SizedBox(height: AppConstants.space32),
+        ...List.generate(question.options.length, (index) {
+          final option = question.options[index];
           final isSelected = selectedOption == option;
-          final isThisTheCorrectAnswer = option == question.correctAnswer;
           
           Color bgColor = isSelected ? AppColors.softSuccess : AppColors.surface;
           Color borderColor = isSelected ? AppColors.primaryGreen : AppColors.divider;
-          Color textColor = isSelected ? AppColors.primaryGreenDark : AppColors.textPrimary;
           Color iconBgColor = isSelected ? AppColors.primaryGreen : AppColors.divider;
           Color iconTextColor = isSelected ? Colors.white : AppColors.textPrimary;
-          
+          Color textColor = isSelected ? AppColors.primaryGreenDark : AppColors.textPrimary;
+
           if (isSubmitted) {
-            if (isThisTheCorrectAnswer) {
+            if (option == correctAnswer) {
               bgColor = AppColors.softSuccess;
               borderColor = AppColors.primaryGreen;
-              textColor = AppColors.primaryGreenDark;
               iconBgColor = AppColors.primaryGreen;
               iconTextColor = Colors.white;
-            } else if (isSelected && !isCorrect) {
+              textColor = AppColors.primaryGreenDark;
+            } else if (isSelected && isCorrect == false) {
               bgColor = AppColors.softError;
               borderColor = AppColors.heartRed;
-              textColor = AppColors.heartRedDark;
               iconBgColor = AppColors.heartRed;
               iconTextColor = Colors.white;
-            } else {
-              bgColor = AppColors.surface;
-              borderColor = AppColors.divider;
-              textColor = AppColors.textSecondary;
-              iconBgColor = AppColors.divider;
-              iconTextColor = AppColors.textSecondary;
+              textColor = AppColors.softErrorText;
             }
           }
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: AppConstants.space12),
+            padding: const EdgeInsets.only(bottom: AppConstants.space16),
             child: InkWell(
               onTap: () {
-                if (!isSubmitted) {
-                  tts.speak(option);
-                  onSelect(option);
-                }
+                if (isSubmitted) return;
+                onSelect(option);
+                tts.speak(option);
               },
               borderRadius: BorderRadius.circular(AppConstants.radius16),
               child: Container(
@@ -109,7 +90,9 @@ class MultipleChoiceView extends ConsumerWidget {
                       height: 32,
                       decoration: BoxDecoration(
                         color: iconBgColor,
-                        borderRadius: BorderRadius.circular(AppConstants.radius8),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.radius8,
+                        ),
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -148,15 +131,13 @@ class MultipleChoiceView extends ConsumerWidget {
   }
 }
 
-class FillBlankView extends ConsumerWidget {
+class FillBlankView extends StatelessWidget {
   final QuizQuestion question;
   final String answer;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmit;
-  final bool promptIsEnglish;
   final bool isSubmitted;
-  final bool isCorrect;
-  final String? correctAnswer;
+  final bool? isCorrect;
 
   const FillBlankView({
     super.key,
@@ -164,103 +145,67 @@ class FillBlankView extends ConsumerWidget {
     required this.answer,
     required this.onChanged,
     required this.onSubmit,
-    this.promptIsEnglish = false,
     this.isSubmitted = false,
-    this.isCorrect = false,
-    this.correctAnswer,
+    this.isCorrect,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tts = ref.watch(ttsServiceProvider);
-    
-    Color inputColor = AppColors.primaryGreen;
-    Color fillColor = Colors.transparent;
+  Widget build(BuildContext context) {
+    Color borderColor = AppColors.primaryGreen;
     if (isSubmitted) {
-      inputColor = isCorrect ? AppColors.primaryGreen : AppColors.heartRed;
-      fillColor = isCorrect ? AppColors.softSuccess : AppColors.softError;
+      borderColor = isCorrect == true ? AppColors.primaryGreen : AppColors.heartRed;
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Fill in the blank',
-          style: Theme.of(context).textTheme.headlineMedium,
+          question.prompt,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: AppConstants.space24),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                question.prompt,
-                style: Theme.of(context).textTheme.displaySmall,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.volume_up_rounded,
-                color: AppColors.primaryGreen,
-                size: 32,
-              ),
-              onPressed: () => promptIsEnglish
-                  ? tts.speakEnglish(question.prompt)
-                  : tts.speakTarget(question.prompt),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppConstants.space24),
+        const SizedBox(height: AppConstants.space32),
         TextField(
           autofocus: true,
           readOnly: isSubmitted,
-          controller: TextEditingController(text: answer)
-            ..selection = TextSelection.collapsed(offset: answer.length),
-          style: TextStyle(
-            color: isSubmitted ? inputColor : AppColors.textPrimary,
-            fontWeight: isSubmitted ? FontWeight.bold : FontWeight.normal,
-          ),
           decoration: InputDecoration(
-            hintText: 'Type your answer...',
-            filled: isSubmitted,
-            fillColor: fillColor,
+            hintText: 'Type the missing word...',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.radius16),
-              borderSide: BorderSide(
-                color: isSubmitted ? inputColor : AppColors.divider, 
-                width: 2,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radius16),
-              borderSide: BorderSide(
-                color: inputColor,
-                width: 2,
-              ),
+              borderSide: BorderSide(color: borderColor, width: 2),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.radius16),
-              borderSide: BorderSide(
-                color: isSubmitted ? inputColor : AppColors.divider,
-                width: 2,
-              ),
+              borderSide: BorderSide(color: isSubmitted ? borderColor : AppColors.divider, width: 2),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radius16),
+              borderSide: BorderSide(color: borderColor, width: 2),
             ),
           ),
           onChanged: onChanged,
           onSubmitted: (_) => onSubmit(),
+          controller: TextEditingController.fromValue(
+            TextEditingValue(
+              text: answer,
+              selection: TextSelection.collapsed(offset: answer.length),
+            ),
+          ),
         ),
       ],
     );
   }
 }
 
-class TranslationView extends ConsumerWidget {
+class TranslationView extends StatelessWidget {
   final QuizQuestion question;
   final String answer;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmit;
   final bool isSubmitted;
-  final bool isCorrect;
-  final String? correctAnswer;
+  final bool? isCorrect;
 
   const TranslationView({
     super.key,
@@ -269,33 +214,99 @@ class TranslationView extends ConsumerWidget {
     required this.onChanged,
     required this.onSubmit,
     this.isSubmitted = false,
-    this.isCorrect = false,
-    this.correctAnswer,
+    this.isCorrect,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return FillBlankView(
-      question: question,
-      answer: answer,
-      onChanged: onChanged,
-      onSubmit: onSubmit,
-      promptIsEnglish: true,
-      isSubmitted: isSubmitted,
-      isCorrect: isCorrect,
-      correctAnswer: correctAnswer,
+  Widget build(BuildContext context) {
+    final tts = TtsService();
+
+    Color borderColor = AppColors.primaryGreen;
+    if (isSubmitted) {
+      borderColor = isCorrect == true ? AppColors.primaryGreen : AppColors.heartRed;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Translate this sentence',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppConstants.space16),
+        Container(
+          padding: const EdgeInsets.all(AppConstants.space24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppConstants.radius16),
+            border: Border.all(color: AppColors.divider),
+          ),
+          child: Column(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.volume_up_rounded,
+                  size: 32,
+                  color: AppColors.primaryGreen,
+                ),
+                onPressed: () => tts.speak(question.prompt),
+              ),
+              const SizedBox(height: AppConstants.space16),
+              Text(
+                question.prompt,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppConstants.space32),
+        TextField(
+          autofocus: true,
+          readOnly: isSubmitted,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Type your translation here...',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radius16),
+              borderSide: BorderSide(color: borderColor, width: 2),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radius16),
+              borderSide: BorderSide(color: isSubmitted ? borderColor : AppColors.divider, width: 2),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radius16),
+              borderSide: BorderSide(color: borderColor, width: 2),
+            ),
+          ),
+          onChanged: onChanged,
+          onSubmitted: (_) => onSubmit(),
+          controller: TextEditingController.fromValue(
+            TextEditingValue(
+              text: answer,
+              selection: TextSelection.collapsed(offset: answer.length),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class ListeningView extends ConsumerStatefulWidget {
+class ListeningView extends StatelessWidget {
   final QuizQuestion question;
   final String answer;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmit;
   final bool isSubmitted;
-  final bool isCorrect;
-  final String? correctAnswer;
+  final bool? isCorrect;
 
   const ListeningView({
     super.key,
@@ -304,100 +315,75 @@ class ListeningView extends ConsumerStatefulWidget {
     required this.onChanged,
     required this.onSubmit,
     this.isSubmitted = false,
-    this.isCorrect = false,
-    this.correctAnswer,
+    this.isCorrect,
   });
 
   @override
-  ConsumerState<ListeningView> createState() => _ListeningViewState();
-}
-
-class _ListeningViewState extends ConsumerState<ListeningView> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _playAudio();
-    });
-  }
-
-  void _playAudio() {
-    ref.read(ttsServiceProvider).speak(widget.question.prompt);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    Color inputColor = AppColors.primaryGreen;
-    Color fillColor = Colors.transparent;
-    if (widget.isSubmitted) {
-      inputColor = widget.isCorrect ? AppColors.primaryGreen : AppColors.heartRed;
-      fillColor = widget.isCorrect ? AppColors.softSuccess : AppColors.softError;
+    final tts = TtsService();
+    
+    Color borderColor = AppColors.primaryGreen;
+    if (isSubmitted) {
+      borderColor = isCorrect == true ? AppColors.primaryGreen : AppColors.heartRed;
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
+        const Text(
           'Type what you hear',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        const SizedBox(height: AppConstants.space24),
-        Center(
-          child: InkWell(
-            onTap: _playAudio,
-            borderRadius: BorderRadius.circular(60),
-            child: Container(
-              padding: const EdgeInsets.all(AppConstants.space24),
-              decoration: const BoxDecoration(
-                color: AppColors.primaryGreen,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.volume_up_rounded,
-                color: Colors.white,
-                size: 48,
-              ),
-            ),
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppConstants.space32),
+        Center(
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.volume_up_rounded,
+                size: 64,
+                color: AppColors.primaryGreen,
+              ),
+              onPressed: () => tts.speak(question.prompt),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppConstants.space48),
         TextField(
           autofocus: true,
-          readOnly: widget.isSubmitted,
-          controller: TextEditingController(text: widget.answer)
-            ..selection = TextSelection.collapsed(offset: widget.answer.length),
-          style: TextStyle(
-            color: widget.isSubmitted ? inputColor : AppColors.textPrimary,
-            fontWeight: widget.isSubmitted ? FontWeight.bold : FontWeight.normal,
-          ),
+          readOnly: isSubmitted,
           decoration: InputDecoration(
-            hintText: 'Type your answer...',
-            filled: widget.isSubmitted,
-            fillColor: fillColor,
+            hintText: 'Type the exact words...',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.radius16),
-              borderSide: BorderSide(
-                color: widget.isSubmitted ? inputColor : AppColors.divider, 
-                width: 2,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radius16),
-              borderSide: BorderSide(
-                color: inputColor,
-                width: 2,
-              ),
+              borderSide: BorderSide(color: borderColor, width: 2),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.radius16),
-              borderSide: BorderSide(
-                color: widget.isSubmitted ? inputColor : AppColors.divider,
-                width: 2,
-              ),
+              borderSide: BorderSide(color: isSubmitted ? borderColor : AppColors.divider, width: 2),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radius16),
+              borderSide: BorderSide(color: borderColor, width: 2),
             ),
           ),
-          onChanged: widget.onChanged,
-          onSubmitted: (_) => widget.onSubmit(),
+          onChanged: onChanged,
+          onSubmitted: (_) => onSubmit(),
+          controller: TextEditingController.fromValue(
+            TextEditingValue(
+              text: answer,
+              selection: TextSelection.collapsed(offset: answer.length),
+            ),
+          ),
         ),
       ],
     );

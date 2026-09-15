@@ -14,7 +14,7 @@ abstract class SupportRepository {
 }
 
 class SupabaseSupportRepository implements SupportRepository {
-  final _supabase = supa.Supabase.instance.client;
+  final supabase = supa.Supabase.instance.client;
 
   @override
   Future<void> createTicket({
@@ -22,10 +22,10 @@ class SupabaseSupportRepository implements SupportRepository {
     required String subject,
     required String message,
   }) async {
-    final session = _supabase.auth.currentSession;
+    final session = supabase.auth.currentSession;
     if (session == null) throw Exception('Not logged in');
 
-    await _supabase.from('support_tickets').insert({
+    await supabase.from('support_tickets').insert({
       'user_id': session.user.id,
       'user_email': session.user.email,
       'category': category,

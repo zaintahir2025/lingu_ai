@@ -1,30 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/quiz_controller.dart';
-import 'question_views.dart';
-import 'feedback_bottom_sheet.dart';
-import '../../../../core/widgets/shared/progress_bar.dart';
-import '../../../../core/widgets/shared/primary_button.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_constants.dart';
-import '../../domain/models/quiz_question.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_constants.dart';
+import '../../../../core/widgets/shared/primary_button.dart';
+import '../../../../core/widgets/shared/progress_bar.dart';
 import '../../../../core/game_state/game_state_provider.dart';
 import '../../../../core/game_state/heart_settings_storage.dart';
-
+import '../../domain/models/quiz_question.dart';
+import '../providers/quiz_controller.dart';
+import 'feedback_bottom_sheet.dart';
 import 'in_quiz_tutor_modal.dart';
+import 'question_views.dart';
 
 class QuizView extends ConsumerStatefulWidget {
   final int lessonId;
   final bool isPractice;
-  final Function(double score) onComplete;
+  final void Function(double finalScore) onComplete;
 
   const QuizView({
     super.key,
     required this.lessonId,
-    this.isPractice = false,
+    required this.isPractice,
     required this.onComplete,
   });
 
@@ -34,15 +33,9 @@ class QuizView extends ConsumerStatefulWidget {
 
 class _QuizViewState extends ConsumerState<QuizView> {
   String _currentAnswer = '';
-  final FocusNode _focusNode = FocusNode();
   bool _isFeedbackShowing = false;
-  bool _isCorrect = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.requestFocus();
-  }
+  bool? _isCorrect;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void dispose() {
@@ -96,11 +89,10 @@ class _QuizViewState extends ConsumerState<QuizView> {
         );
       },
       onContinue: () {
-        if (!mounted) return;
         setState(() {
           _isFeedbackShowing = false;
           _currentAnswer = '';
-          _isCorrect = false;
+          _isCorrect = null;
         });
         ref
             .read(quizControllerProvider(widget.lessonId).notifier)
@@ -178,6 +170,7 @@ class _QuizViewState extends ConsumerState<QuizView> {
           onSelect: _onAnswerChanged,
           isSubmitted: _isFeedbackShowing,
           isCorrect: _isCorrect,
+          correctAnswer: question.correctAnswer,
         );
         break;
       case QuestionType.fillBlank:
@@ -188,7 +181,6 @@ class _QuizViewState extends ConsumerState<QuizView> {
           onSubmit: _submitAnswer,
           isSubmitted: _isFeedbackShowing,
           isCorrect: _isCorrect,
-          correctAnswer: question.correctAnswer,
         );
         break;
       case QuestionType.translation:
@@ -199,7 +191,6 @@ class _QuizViewState extends ConsumerState<QuizView> {
           onSubmit: _submitAnswer,
           isSubmitted: _isFeedbackShowing,
           isCorrect: _isCorrect,
-          correctAnswer: question.correctAnswer,
         );
         break;
       case QuestionType.listening:
@@ -210,7 +201,6 @@ class _QuizViewState extends ConsumerState<QuizView> {
           onSubmit: _submitAnswer,
           isSubmitted: _isFeedbackShowing,
           isCorrect: _isCorrect,
-          correctAnswer: question.correctAnswer,
         );
         break;
     }
