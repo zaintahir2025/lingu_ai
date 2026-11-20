@@ -22,17 +22,19 @@ SM2Result calculateSM2({
   required double easinessFactor,
   required int interval,
 }) {
+  final safeQuality = quality.clamp(0, 5).toInt();
   int nextRepetitions;
   double nextEasinessFactor;
   int nextInterval;
 
-  if (quality >= 3) {
+  if (safeQuality >= 3) {
     if (repetitions == 0) {
       nextInterval = 1;
     } else if (repetitions == 1) {
       nextInterval = 6;
     } else {
       nextInterval = (interval * easinessFactor).round();
+      if (nextInterval < 1) nextInterval = 1;
     }
     nextRepetitions = repetitions + 1;
   } else {
@@ -41,7 +43,7 @@ SM2Result calculateSM2({
   }
 
   nextEasinessFactor =
-      easinessFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+      easinessFactor + (0.1 - (5 - safeQuality) * (0.08 + (5 - safeQuality) * 0.02));
 
   // EF should never fall below 1.3
   if (nextEasinessFactor < 1.3) {

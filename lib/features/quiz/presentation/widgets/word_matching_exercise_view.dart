@@ -83,8 +83,9 @@ class _WordMatchingExerciseViewState
   }
 
   void _checkMatch() {
-    if (_selectedTargetIndex == null || _selectedTranslationIndex == null)
+    if (_selectedTargetIndex == null || _selectedTranslationIndex == null) {
       return;
+    }
 
     final targetWord = _targetWords[_selectedTargetIndex!];
     final transWord = _translations[_selectedTranslationIndex!];

@@ -116,17 +116,8 @@ class TargetLanguageNotifier extends StateNotifier<String> {
           ),
         );
 
-        // 5. Reset XP, streak, levels, and daily activity in Drift database
-        await db.delete(db.userProgress).go();
-        await db.delete(db.dailyXp).go();
-        await db.into(db.userProgress).insert(
-          UserProgressCompanion.insert(
-            totalXp: const Value(0),
-            level: const Value(1),
-            currentStreak: const Value(0),
-            streakFreezes: const Value(0),
-          ),
-        );
+        // Keep account-wide XP, streaks and daily history when switching
+        // learning languages. Only language-specific lesson/SRS state resets.
       } catch (e) {
         // Log reset error if any
       }

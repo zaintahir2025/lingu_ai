@@ -1,159 +1,215 @@
 -- =========================================================
--- LINGU AI SUPABASE COMPLETE DATABASE SCHEMA
--- Execute this SQL in your Supabase SQL Editor
+-- LINGUAI SUPABASE SCHEMA
+-- This schema is safe to run on a fresh Supabase project.
+-- Existing projects should also apply the migration in
+-- supabase/migrations/202611200001_security_hardening.sql.
 -- =========================================================
 
--- 1. Create Profiles Table (Syncs automatically with Supabase Auth Users)
-CREATE TABLE IF NOT EXISTS public.profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    email TEXT UNIQUE NOT NULL,
-    username TEXT,
-    avatar_id TEXT DEFAULT 'piko_head',
-    target_language TEXT DEFAULT 'es',
-    knowledge_level TEXT DEFAULT 'beginner',
-    role TEXT DEFAULT 'user',
-    is_premium BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text unique not null,
+  username text,
+  avatar_id text default 'piko_head',
+  date_of_birth date,
+  target_language text default 'es',
+  knowledge_level text default 'beginner',
+  role text not null default 'user' check (role in ('user', 'admin')),
+  is_premium boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
--- 2. Create User Progress Table
-CREATE TABLE IF NOT EXISTS public.user_progress (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
-    total_xp INT DEFAULT 0,
-    level INT DEFAULT 1,
-    current_streak INT DEFAULT 0,
-    streak_freezes INT DEFAULT 0,
-    gems INT DEFAULT 100,
-    last_practice_date DATE,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+alter table public.profiles alter column is_premium set default false;
+
+create table if not exists public.user_progress (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid unique references public.profiles(id) on delete cascade,
+  total_xp int not null default 0,
+  level int not null default 1,
+  current_streak int not null default 0,
+  streak_freezes int not null default 0,
+  gems int not null default 100,
+  last_practice_date date,
+  updated_at timestamptz not null default now()
 );
 
--- 3. Create Support Tickets Table
-CREATE TABLE IF NOT EXISTS public.support_tickets (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    user_email TEXT NOT NULL,
-    category TEXT NOT NULL,
-    subject TEXT NOT NULL,
-    message TEXT NOT NULL,
-    reply TEXT,
-    priority TEXT DEFAULT 'standard',
-    status TEXT DEFAULT 'open',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+create table if not exists public.support_tickets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  user_email text not null,
+  category text not null,
+  subject text not null,
+  message text not null,
+  reply text,
+  priority text not null default 'standard',
+  status text not null default 'open',
+  created_at timestamptz not null default now()
 );
 
--- 4. Enable Row Level Security (RLS)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
+create table if not exists public.lessons (
+  id serial primary key,
+  topic text not null,
+  cefr_level text not null,
+  order_index int not null,
+  is_premium boolean not null default false,
+  created_at timestamptz not null default now()
+);
 
--- 5. RLS Policies for Profiles
-CREATE POLICY "Allow users to read their own profile" 
-    ON public.profiles FOR SELECT 
-    USING (auth.uid() = id);
+create table if not exists public.flashcards (
+  id serial primary key,
+  lesson_id int references public.lessons(id) on delete cascade,
+  word text not null,
+  translation text not null,
+  audio_url text,
+  example_sentence text,
+  example_translation text,
+  created_at timestamptz not null default now()
+);
 
-CREATE POLICY "Allow users to update their own profile" 
-    ON public.profiles FOR UPDATE 
-    USING (auth.uid() = id);
+create table if not exists public.user_flashcards (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  flashcard_id int not null references public.flashcards(id) on delete cascade,
+  status text not null default 'new',
+  next_review_date timestamptz,
+  repetitions int not null default 0,
+  easiness_factor real not null default 2.5,
+  interval_days int not null default 0,
+  updated_at timestamptz not null default now(),
+  unique(user_id, flashcard_id)
+);
 
-CREATE POLICY "Allow public insert during registration" 
-    ON public.profiles FOR INSERT 
-    WITH CHECK (true);
+-- RLS is enabled everywhere exposed to the Supabase API.
+alter table public.profiles enable row level security;
+alter table public.user_progress enable row level security;
+alter table public.support_tickets enable row level security;
+alter table public.lessons enable row level security;
+alter table public.flashcards enable row level security;
+alter table public.user_flashcards enable row level security;
 
--- 6. RLS Policies for User Progress
-CREATE POLICY "Allow users to read their own progress" 
-    ON public.user_progress FOR SELECT 
-    USING (auth.uid() = user_id);
+-- Make this file safe to re-run after the previous permissive policies.
+drop policy if exists "Allow users to read their own profile" on public.profiles;
+drop policy if exists "Allow users to update their own profile" on public.profiles;
+drop policy if exists "Allow public insert during registration" on public.profiles;
+drop policy if exists "Allow users to read their own progress" on public.user_progress;
+drop policy if exists "Allow users to insert/update their own progress" on public.user_progress;
+drop policy if exists "Allow users to manage their support tickets" on public.support_tickets;
+drop policy if exists "Allow public read access to lessons" on public.lessons;
+drop policy if exists "Allow public read access to flashcards" on public.flashcards;
+drop policy if exists "Allow users to read their own flashcard progress" on public.user_flashcards;
+drop policy if exists "Allow users to insert/update their own flashcard progress" on public.user_flashcards;
+drop policy if exists "profile_select_own" on public.profiles;
+drop policy if exists "profile_update_own" on public.profiles;
+drop policy if exists "progress_select_own" on public.user_progress;
+drop policy if exists "support_select_own" on public.support_tickets;
+drop policy if exists "support_insert_own" on public.support_tickets;
+drop policy if exists "lessons_read_public" on public.lessons;
+drop policy if exists "flashcards_read_public" on public.flashcards;
+drop policy if exists "user_flashcards_select_own" on public.user_flashcards;
+drop policy if exists "user_flashcards_insert_own" on public.user_flashcards;
+drop policy if exists "user_flashcards_update_own" on public.user_flashcards;
 
-CREATE POLICY "Allow users to insert/update their own progress" 
-    ON public.user_progress FOR ALL 
-    USING (auth.uid() = user_id);
+-- Remove broad client-side access. Elevated server-side operations must use
+-- a server secret/service role and must never run in a Flutter client.
+revoke all on public.profiles from anon, authenticated;
+revoke all on public.user_progress from anon, authenticated;
+revoke all on public.support_tickets from anon, authenticated;
+revoke all on public.user_flashcards from anon, authenticated;
 
--- 7. RLS Policies for Support Tickets
-CREATE POLICY "Allow users to manage their support tickets" 
-    ON public.support_tickets FOR ALL 
-    USING (auth.uid() = user_id);
+grant select on public.profiles to authenticated;
+grant update (username, avatar_id, date_of_birth, target_language, knowledge_level)
+  on public.profiles to authenticated;
 
--- 8. Trigger to Automatically Create Profile & Progress on Signup
-CREATE OR REPLACE FUNCTION public.handle_new_user() 
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, email, username, is_premium)
-  VALUES (
-    new.id, 
-    new.email, 
-    COALESCE(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
-    TRUE
+-- Progress mutations are intentionally not exposed as direct table writes.
+-- XP/levels must be updated by trusted server logic, not client supplied values.
+grant select on public.user_progress to authenticated;
+
+grant select, insert on public.support_tickets to authenticated;
+-- Ticket replies, moderation status and priority are server/admin controlled.
+grant select on public.lessons, public.flashcards to anon, authenticated;
+
+grant select, insert on public.user_flashcards to authenticated;
+grant update (status, next_review_date, repetitions, easiness_factor, interval_days, updated_at)
+  on public.user_flashcards to authenticated;
+
+-- Users can see and edit only their own profile fields that are granted above.
+create policy "profile_select_own"
+  on public.profiles for select to authenticated
+  using ((select auth.uid()) = id);
+
+create policy "profile_update_own"
+  on public.profiles for update to authenticated
+  using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
+
+create policy "progress_select_own"
+  on public.user_progress for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+create policy "support_select_own"
+  on public.support_tickets for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+create policy "support_insert_own"
+  on public.support_tickets for insert to authenticated
+  with check (
+    (select auth.uid()) = user_id
+    and user_email = (
+      select p.email from public.profiles as p where p.id = (select auth.uid())
+    )
+    and reply is null
+    and priority = 'standard'
+    and status = 'open'
   );
 
-  INSERT INTO public.user_progress (user_id, total_xp, level, current_streak)
-  VALUES (new.id, 0, 1, 0);
+create policy "lessons_read_public"
+  on public.lessons for select to anon, authenticated
+  using (true);
 
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+create policy "flashcards_read_public"
+  on public.flashcards for select to anon, authenticated
+  using (true);
 
--- Drop trigger if exists and recreate
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+create policy "user_flashcards_select_own"
+  on public.user_flashcards for select to authenticated
+  using ((select auth.uid()) = user_id);
 
--- 9. Create Lessons Table
-CREATE TABLE IF NOT EXISTS public.lessons (
-    id SERIAL PRIMARY KEY,
-    topic TEXT NOT NULL,
-    cefr_level TEXT NOT NULL,
-    order_index INT NOT NULL,
-    is_premium BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
+create policy "user_flashcards_insert_own"
+  on public.user_flashcards for insert to authenticated
+  with check ((select auth.uid()) = user_id);
 
--- 10. Create Flashcards Table (Global vocabulary words)
-CREATE TABLE IF NOT EXISTS public.flashcards (
-    id SERIAL PRIMARY KEY,
-    lesson_id INT REFERENCES public.lessons(id) ON DELETE CASCADE,
-    word TEXT NOT NULL,
-    translation TEXT NOT NULL,
-    audio_url TEXT,
-    example_sentence TEXT,
-    example_translation TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
+create policy "user_flashcards_update_own"
+  on public.user_flashcards for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
--- 11. Create User Flashcards Progress Table (SM-2 SRS Data)
-CREATE TABLE IF NOT EXISTS public.user_flashcards (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    flashcard_id INT REFERENCES public.flashcards(id) ON DELETE CASCADE,
-    status TEXT DEFAULT 'new', -- new, learning, review, mastered
-    next_review_date TIMESTAMP WITH TIME ZONE,
-    repetitions INT DEFAULT 0,
-    easiness_factor REAL DEFAULT 2.5,
-    interval_days INT DEFAULT 0,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    UNIQUE(user_id, flashcard_id)
-);
+-- Auth signup creates a free profile. Never copy role/premium from user metadata.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.profiles (id, email, username, role, is_premium)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'username', split_part(new.email, '@', 1)),
+    'user',
+    false
+  )
+  on conflict (id) do nothing;
 
--- 12. RLS Policies for Lessons & Flashcards
-ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.flashcards ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_flashcards ENABLE ROW LEVEL SECURITY;
+  insert into public.user_progress (user_id, total_xp, level, current_streak)
+  values (new.id, 0, 1, 0)
+  on conflict (user_id) do nothing;
 
-CREATE POLICY "Allow public read access to lessons" 
-    ON public.lessons FOR SELECT 
-    USING (true);
+  return new;
+end;
+$$;
 
-CREATE POLICY "Allow public read access to flashcards" 
-    ON public.flashcards FOR SELECT 
-    USING (true);
-
-CREATE POLICY "Allow users to read their own flashcard progress" 
-    ON public.user_flashcards FOR SELECT 
-    USING (auth.uid() = user_id);
-
-CREATE POLICY "Allow users to insert/update their own flashcard progress" 
-    ON public.user_flashcards FOR ALL 
-    USING (auth.uid() = user_id);
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();

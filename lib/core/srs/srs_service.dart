@@ -30,7 +30,7 @@ class SrsService {
     required int currentErrorCount,
     required int qualityScore, // 0 = complete blackout, 3 = pass, 5 = perfect
   }) {
-    final q = qualityScore.clamp(0, 5);
+    final q = qualityScore.clamp(0, 5).toInt();
     double newEaseFactor = currentEaseFactor;
     int newIntervalDays = currentIntervalDays;
     int newRepetitions = currentRepetitions;
@@ -46,7 +46,10 @@ class SrsService {
       } else if (newRepetitions == 1) {
         newIntervalDays = 6;
       } else {
-        newIntervalDays = (currentIntervalDays * currentEaseFactor).round();
+        newIntervalDays = max(
+          1,
+          (currentIntervalDays * currentEaseFactor).round(),
+        );
       }
       newRepetitions += 1;
     }

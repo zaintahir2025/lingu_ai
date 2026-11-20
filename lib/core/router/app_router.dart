@@ -38,6 +38,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (!isAuth) {
         if (!goingToAuth) return '/auth/login';
       } else {
+        // Route-level UX guard only. Every admin API must enforce RBAC too.
+        if (state.matchedLocation == '/admin' &&
+            authState.user?.adminAccess != true) {
+          return '/';
+        }
         final user = authState.user;
         if (user != null) {
           final targetLanguage =

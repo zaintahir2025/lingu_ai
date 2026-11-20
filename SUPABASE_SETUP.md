@@ -1,51 +1,41 @@
-# 🚀 Lingu AI - Supabase Setup Guide
+# LinguAI — Supabase setup
 
-This guide details how to connect your **Lingu AI** app to **Supabase** for 100% free cloud authentication, progress sync, and database storage!
+## 1. Configure Supabase
 
----
+Create a Supabase project, then run `supabase_schema.sql` in the SQL Editor.
 
-## 📋 Step 1: Create a Free Supabase Project
+For a project that has already used the older schema, review and apply:
 
-1. Go to [supabase.com](https://supabase.com) and click **Start your project** (Free Forever).
-2. Create a new Organization & Project (e.g. `Lingu-AI`).
-3. Set your Database Password and choose a region close to your users.
-4. Wait 1-2 minutes for your database to provision.
+`supabase/migrations/202611200001_security_hardening.sql`
 
----
+**Important:** this migration changes all current `is_premium` values to false. The previous app and schema could grant PRO by default, so existing entitlements must be checked against real payment records before being restored. Do not run it without reviewing that effect.
 
-## ⚡ Step 2: Run the SQL Schema
+## 2. Configure client credentials
 
-1. Open your Supabase Dashboard.
-2. Click on the **SQL Editor** tab on the left sidebar (`/project/_/sql`).
-3. Click **New Query**.
-4. Open the `supabase_schema.sql` file in this repository, copy all contents, paste it into the editor, and click **Run**.
+Copy the Project URL and the publishable (or legacy anon/public) key from Supabase Project Settings → API.
 
-*(This creates the `profiles`, `user_progress`, `support_tickets` tables with automatic triggers and RLS security).*
-
----
-
-## 🔑 Step 3: Get Your API Credentials
-
-1. In Supabase Dashboard, go to **Project Settings** -> **API** (`/project/_/settings/api`).
-2. Copy your **Project URL** (e.g., `https://abcdefgh.supabase.co`).
-3. Copy your **anon / public** API Key (e.g., `eyJhbGciOiJIUzI1Ni...`).
-
----
-
-## 📱 Step 4: Run / Deploy App with Credentials
-
-Pass your credentials when running or building the app:
+Run locally with:
 
 ```bash
-flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your_anon_key
+flutter run \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=your_publishable_key
 ```
 
-Or for GitHub Actions / Web deployment, add `SUPABASE_URL` and `SUPABASE_ANON_KEY` to your GitHub Repository Secrets!
+You can use `SUPABASE_ANON_KEY` instead of `SUPABASE_PUBLISHABLE_KEY` for older Supabase projects.
 
----
+For GitHub Pages, add these repository Actions secrets:
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEY` (or `SUPABASE_ANON_KEY`)
 
-## 🎯 What Supabase Handles for Lingu AI:
-- ✅ **Authentication**: Sign up, Login, Logout, Password Reset.
-- ✅ **Automatic Profile Creation**: Trigger automatically sets up user profile & progress on signup.
-- ✅ **User Progress**: Cloud sync for XP, Streaks, Levels, and Gems.
-- ✅ **Support Tickets**: Live customer support system.
+Never place a Supabase `service_role` / secret key in Flutter, GitHub Pages build variables, or any client-side file.
+
+## 3. Current integration boundaries
+
+This repository contains the Flutter client, local Drift database and Supabase client/schema. It does **not** currently contain the Serverpod/API backend source described in some older README sections.
+
+The Flutter app has optional REST API calls controlled by `API_URL`. AI proxy, cloud XP sync, admin operations and Stripe checkout require a separately deployed server that implements the expected API contract. Without that server, those features report an unavailable service; the app must not invent successful results.
+
+The Gemini key entered by a user is a user-owned key used for direct client requests. Do not put a shared Gemini key in the Flutter app.
+
+Stripe entitlement is granted only after a server verifies the subscription. Configure no client-side shortcut or service-role key to bypass that check.

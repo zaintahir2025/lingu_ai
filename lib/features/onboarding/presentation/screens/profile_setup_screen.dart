@@ -26,7 +26,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       context: context,
       initialDate: DateTime.now().subtract(const Duration(days: 365 * 13)),
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      lastDate: DateTime(
+        DateTime.now().year - 13,
+        DateTime.now().month,
+        DateTime.now().day,
+      ),
     );
     if (picked != null) {
       setState(() {

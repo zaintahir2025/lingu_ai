@@ -70,14 +70,6 @@ class LangPickerScreen extends ConsumerWidget {
                     userState.isLoading,
                   ),
                   const SizedBox(height: 16),
-                  _buildLangOption(
-                    context,
-                    ref,
-                    'Urdu',
-                    '🇵🇰',
-                    'ur',
-                    userState.isLoading,
-                  ),
                   if (userState.isLoading) ...[
                     const SizedBox(height: 16),
                     const CircularProgressIndicator(),

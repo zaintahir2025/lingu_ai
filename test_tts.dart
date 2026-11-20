@@ -5,5 +5,6 @@ void main() async {
   final client = HttpClient();
   final request = await client.getUrl(Uri.parse(url));
   final response = await request.close();
-  print('Status: ${response.statusCode}');
+  stderr.writeln('Status: ${response.statusCode}');
+  client.close(force: true);
 }

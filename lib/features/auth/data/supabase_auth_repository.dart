@@ -17,12 +17,56 @@ class SupabaseAuthRepository implements AuthRepository {
     return null;
   }
 
+  Future<Map<String, dynamic>> _readProfile(
+    SupabaseClient client,
+    String userId,
+  ) async {
+    try {
+      final row = await client
+          .from('profiles')
+          .select('username, target_language, knowledge_level, role')
+          .eq('id', userId)
+          .maybeSingle();
+      if (row != null) return Map<String, dynamic>.from(row);
+    } catch (_) {
+      // Missing profile is treated as a normal learner with incomplete setup.
+    }
+    return <String, dynamic>{};
+  }
+
+  Future<User> _toAppUser(
+    SupabaseClient client,
+    dynamic supaUser, {
+    required String fallbackEmail,
+  }) async {
+    final profile = await _readProfile(client, supaUser.id as String);
+    final metadata = supaUser.userMetadata;
+    final metadataUsername =
+        metadata is Map ? metadata['username'] as String? : null;
+    final username = profile['username'] is String
+        ? profile['username'] as String
+        : metadataUsername ?? fallbackEmail.split('@').first;
+    final role = profile['role'] == 'admin' ? 'admin' : 'user';
+
+    return User(
+      id: supaUser.id as String,
+      email: supaUser.email as String? ?? fallbackEmail,
+      name: username,
+      username: username,
+      targetLanguage: profile['target_language'] as String?,
+      knowledgeLevel: profile['knowledge_level'] as String?,
+      role: role,
+      adminAccess: role == 'admin',
+    );
+  }
+
   @override
   Future<User> login(String email, String password) async {
     final client = _supabase;
     if (client == null) {
       throw Exception(
-        'Supabase is not configured yet. Set SUPABASE_URL & SUPABASE_ANON_KEY.',
+        'Supabase is not configured. Set SUPABASE_URL and '
+        'SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY).',
       );
     }
 
@@ -30,27 +74,18 @@ class SupabaseAuthRepository implements AuthRepository {
       email: email,
       password: password,
     );
-
     final supaUser = response.user;
-    if (supaUser == null) {
-      throw Exception('Login failed: Invalid credentials.');
+    final session = response.session;
+    if (supaUser == null || session == null) {
+      throw Exception('Login did not create an authenticated session.');
     }
 
-    if (response.session != null) {
-      await _tokenStorage.saveTokens(
-        jwt: response.session!.accessToken,
-        refreshToken: response.session!.refreshToken ?? '',
-      );
-    }
-
-    return User(
-      id: supaUser.id,
-      email: supaUser.email ?? email,
-      name: supaUser.userMetadata?['username'] ?? email.split('@').first,
-      username: supaUser.userMetadata?['username'] ?? email.split('@').first,
-      role: supaUser.userMetadata?['role'] ?? 'user',
-      adminAccess: supaUser.userMetadata?['role'] == 'admin',
+    await _tokenStorage.saveTokens(
+      jwt: session.accessToken,
+      refreshToken: session.refreshToken ?? '',
     );
+
+    return _toAppUser(client, supaUser, fallbackEmail: email);
   }
 
   @override
@@ -58,7 +93,8 @@ class SupabaseAuthRepository implements AuthRepository {
     final client = _supabase;
     if (client == null) {
       throw Exception(
-        'Supabase is not configured yet. Set SUPABASE_URL & SUPABASE_ANON_KEY.',
+        'Supabase is not configured. Set SUPABASE_URL and '
+        'SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY).',
       );
     }
 
@@ -81,19 +117,10 @@ class SupabaseAuthRepository implements AuthRepository {
       throw Exception('No authenticated user session.');
     }
 
-    return User(
-      id: supaUser.id,
-      email: supaUser.email ?? 'user@linguai.local',
-      name:
-          supaUser.userMetadata?['username'] ??
-          supaUser.email?.split('@').first ??
-          'Learner',
-      username:
-          supaUser.userMetadata?['username'] ??
-          supaUser.email?.split('@').first ??
-          'Learner',
-      role: supaUser.userMetadata?['role'] ?? 'user',
-      adminAccess: supaUser.userMetadata?['role'] == 'admin',
+    return _toAppUser(
+      client,
+      supaUser,
+      fallbackEmail: supaUser.email ?? 'user@linguai.local',
     );
   }
 
@@ -102,6 +129,8 @@ class SupabaseAuthRepository implements AuthRepository {
     final client = _supabase;
     if (client != null) {
       await client.auth.resetPasswordForEmail(email);
+    } else {
+      throw Exception('Password reset is unavailable until Supabase is configured.');
     }
   }
 
@@ -110,6 +139,8 @@ class SupabaseAuthRepository implements AuthRepository {
     final client = _supabase;
     if (client != null) {
       await client.auth.updateUser(UserAttributes(password: newPassword));
+    } else {
+      throw Exception('Password reset is unavailable until Supabase is configured.');
     }
   }
 
@@ -117,9 +148,7 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> logout() async {
     final client = _supabase;
     if (client != null) {
-      try {
-        await client.auth.signOut();
-      } catch (_) {}
+      await client.auth.signOut();
     }
     await _tokenStorage.clearTokens();
   }

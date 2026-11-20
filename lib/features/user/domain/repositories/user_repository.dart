@@ -22,7 +22,13 @@ abstract class UserRepository {
 }
 
 class SupabaseUserRepository implements UserRepository {
-  final _supabase = supa.Supabase.instance.client;
+  supa.SupabaseClient get _supabase {
+    try {
+      return supa.Supabase.instance.client;
+    } catch (_) {
+      throw Exception('Supabase is not initialized. Check app configuration.');
+    }
+  }
 
   @override
   Future<User> updateProfile({
@@ -36,6 +42,10 @@ class SupabaseUserRepository implements UserRepository {
 
     final updates = <String, dynamic>{};
     if (username != null) updates['username'] = username;
+    if (avatarId != null) updates['avatar_id'] = avatarId;
+    if (dob != null) {
+      updates['date_of_birth'] = dob.toIso8601String().split('T').first;
+    }
     if (targetLanguage != null) updates['target_language'] = targetLanguage;
 
     if (updates.isNotEmpty) {
@@ -57,7 +67,8 @@ class SupabaseUserRepository implements UserRepository {
       username: profile['username'],
       targetLanguage: profile['target_language'],
       knowledgeLevel: profile['knowledge_level'],
-      role: profile['role'] ?? 'user',
+      role: profile['role'] == 'admin' ? 'admin' : 'user',
+      adminAccess: profile['role'] == 'admin',
     );
   }
 
@@ -93,7 +104,8 @@ class SupabaseUserRepository implements UserRepository {
       username: profile['username'],
       targetLanguage: profile['target_language'],
       knowledgeLevel: profile['knowledge_level'],
-      role: profile['role'] ?? 'user',
+      role: profile['role'] == 'admin' ? 'admin' : 'user',
+      adminAccess: profile['role'] == 'admin',
     );
   }
 }
