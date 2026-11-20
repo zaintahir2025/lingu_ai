@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/api_config.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/storage/premium_storage.dart';
 
@@ -23,46 +22,45 @@ class PaymentRepository {
 
   PaymentRepository(this._dio, this._premiumStorage);
 
-  String get _baseUrl => '${ApiConfig.baseUrl}/payments';
+  Future<Uri> _checkoutUrl(String path) async {
+    final response = await _dio.post(path);
+    final rawUrl = response.data is Map ? response.data['url'] : null;
+    final url = rawUrl is String ? Uri.tryParse(rawUrl) : null;
 
-  Future<Uri> createCheckoutSession() async {
-    try {
-      final response = await _dio.post('$_baseUrl/checkout-session');
-      final rawUrl = response.data is Map ? response.data['url'] : null;
-      final url = rawUrl is String ? Uri.tryParse(rawUrl) : null;
-      if (url == null || !url.isScheme('https')) {
-        throw const FormatException('Invalid secure checkout URL');
-      }
-      return url;
-    } on DioException catch (_) {
-      // Dummy success for offline/Supabase mode
-      await _premiumStorage.applyVerifiedSubscription(active: true);
-      return Uri.parse('https://billing.stripe.com/p/session/test');
+    // Only accept HTTPS checkout URLs from the authenticated server.
+    if (url == null ||
+        url.scheme != 'https' ||
+        url.host.isEmpty ||
+        !(url.host == 'checkout.stripe.com' ||
+            url.host.endsWith('.stripe.com'))) {
+      throw const FormatException('The server returned an invalid checkout URL.');
     }
+    return url;
   }
 
-  Future<Uri> createPortalSession() async {
-    try {
-      final response = await _dio.post('$_baseUrl/portal-session');
-      final rawUrl = response.data is Map ? response.data['url'] : null;
-      final url = rawUrl is String ? Uri.tryParse(rawUrl) : null;
-      if (url == null || !url.isScheme('https')) {
-        throw const FormatException('Invalid billing portal URL');
-      }
-      return url;
-    } on DioException catch (_) {
-      return Uri.parse('https://billing.stripe.com/p/session/test');
-    }
-  }
+  Future<Uri> createCheckoutSession() =>
+      _checkoutUrl('/payments/checkout-session');
+
+  Future<Uri> createPortalSession() =>
+      _checkoutUrl('/payments/portal-session');
 
   Future<VerifiedSubscription> refreshSubscription() async {
     try {
-      final response = await _dio.get('$_baseUrl/subscription');
+      final response = await _dio.get('/payments/subscription');
+      if (response.data is! Map) {
+        throw const FormatException('Invalid subscription response.');
+      }
       final data = Map<String, dynamic>.from(response.data as Map);
-      final active = data['active'] == true;
       final expiresAt = data['expiresAt'] is String
           ? DateTime.tryParse(data['expiresAt'] as String)
           : null;
+
+      // A subscription is active only when the server says so and supplies a
+      // future expiry. Network/parse failures must never grant local premium.
+      final active = data['active'] == true &&
+          expiresAt != null &&
+          expiresAt.isAfter(DateTime.now());
+
       await _premiumStorage.applyVerifiedSubscription(
         active: active,
         expiresAt: expiresAt,
@@ -72,10 +70,9 @@ class PaymentRepository {
         expiresAt: expiresAt,
         provider: data['provider'] as String?,
       );
-    } on DioException catch (_) {
-      // Simulate that the user is premium
-      await _premiumStorage.applyVerifiedSubscription(active: true);
-      return const VerifiedSubscription(active: true, provider: 'free_tier');
+    } catch (_) {
+      await _premiumStorage.applyVerifiedSubscription(active: false);
+      rethrow;
     }
   }
 }
