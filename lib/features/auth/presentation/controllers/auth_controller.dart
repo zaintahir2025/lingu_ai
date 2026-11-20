@@ -1,11 +1,9 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/storage/premium_storage.dart';
 import '../../../payment/data/payment_repository.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 enum AuthStatus { initial, unauthenticated, authenticating, authenticated }
 
@@ -30,10 +28,11 @@ class AuthState {
     String? loginError,
     String? registerError,
     String? errorMessage,
+    bool clearUser = false,
   }) {
     return AuthState(
       status: status ?? this.status,
-      user: user ?? this.user,
+      user: clearUser ? null : (user ?? this.user),
       loginError: loginError,
       registerError: registerError,
       errorMessage: errorMessage,
@@ -47,41 +46,39 @@ class AuthController extends StateNotifier<AuthState> {
   final Ref _ref;
 
   AuthController(this._repository, this._tokenStorage, this._ref)
-    : super(const AuthState()) {
+      : super(const AuthState()) {
     _init();
   }
 
+  Future<void> _clearPremium() => _ref
+      .read(premiumStorageProvider.notifier)
+      .applyVerifiedSubscription(active: false);
+
   Future<void> _syncPremium() async {
-    await _ref
-        .read(premiumStorageProvider.notifier)
-        .applyVerifiedSubscription(active: false);
     try {
       await _ref.read(paymentRepositoryProvider).refreshSubscription();
     } catch (_) {
-      // Premium remains disabled unless the backend verifies an active subscription.
+      await _clearPremium();
     }
   }
 
+  Future<bool> _hasNetwork() async {
+    final results = await Connectivity().checkConnectivity();
+    return !results.contains(ConnectivityResult.none);
+  }
+
   Future<void> _init() async {
-    final token = await _tokenStorage.getJwt();
-    if (token != null) {
-      try {
-        final user = await _repository.getCurrentUser();
-        await _syncPremium();
-        state = state.copyWith(status: AuthStatus.authenticated, user: user);
-      } catch (_) {
-        // Fallback to local user session if saved token exists
-        final localUsername = _tokenStorage.username ?? 'Learner';
-        final demoUser = User(
-          id: '1',
-          email: 'user@linguai.local',
-          name: localUsername,
-          username: localUsername,
-        );
-        state = state.copyWith(status: AuthStatus.authenticated, user: demoUser);
-      }
-    } else {
-      state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
+    try {
+      final user = await _repository.getCurrentUser();
+      await _syncPremium();
+      state = state.copyWith(status: AuthStatus.authenticated, user: user);
+    } catch (_) {
+      await _tokenStorage.clearTokens();
+      await _clearPremium();
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        clearUser: true,
+      );
     }
   }
 
@@ -90,51 +87,32 @@ class AuthController extends StateNotifier<AuthState> {
       status: AuthStatus.authenticating,
       loginError: null,
       errorMessage: null,
+      clearUser: true,
     );
 
-    User? authenticatedUser;
     try {
-      final connectivityResult = await Connectivity().checkConnectivity();
-      if (!connectivityResult.contains(ConnectivityResult.none)) {
-        authenticatedUser = await _repository.login(email, password);
-        await _syncPremium();
+      if (!await _hasNetwork()) {
+        throw Exception('An internet connection is required to sign in.');
       }
-    } catch (e) {
-      if (e.toString().contains('Invalid login credentials') || e.toString().contains('AuthException')) {
-        state = state.copyWith(
-          status: AuthStatus.unauthenticated,
-          loginError: 'Invalid email or password.',
-        );
-        return;
-      }
-      debugPrint('Backend login unavailable; activating offline demo session: $e');
-      // Set errorMessage so the UI can display a snackbar to inform the user
-      state = state.copyWith(errorMessage: 'Backend unavailable. Offline mode activated.');
+
+      final user = await _repository.login(email.trim(), password);
+      await _syncPremium();
+      final displayName = user.username ?? user.name ?? email.split('@').first;
+      await _tokenStorage.saveUsername(displayName);
+
+      state = state.copyWith(status: AuthStatus.authenticated, user: user);
+    } catch (error) {
+      await _tokenStorage.clearTokens();
+      await _clearPremium();
+      final message = error.toString();
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        loginError: message.contains('Invalid login credentials')
+            ? 'Invalid email or password.'
+            : message.replaceFirst('Exception: ', ''),
+        clearUser: true,
+      );
     }
-
-    final displayName = authenticatedUser?.username ??
-        authenticatedUser?.name ??
-        _tokenStorage.username ??
-        (email.contains('@') ? email.split('@').first : 'Learner');
-
-    final user = authenticatedUser ??
-        User(
-          id: '1',
-          email: email,
-          name: displayName,
-          username: displayName,
-        );
-
-    await _tokenStorage.saveTokens(
-      jwt: 'demo_jwt_token_lingu_ai',
-      refreshToken: 'demo_refresh_token_lingu_ai',
-    );
-    await _tokenStorage.saveUsername(displayName);
-
-    state = state.copyWith(
-      status: AuthStatus.authenticated,
-      user: user,
-    );
   }
 
   Future<void> register(String email, String password) async {
@@ -142,56 +120,41 @@ class AuthController extends StateNotifier<AuthState> {
       status: AuthStatus.authenticating,
       registerError: null,
       errorMessage: null,
+      clearUser: true,
     );
 
     try {
-      final connectivityResult = await Connectivity().checkConnectivity();
-      if (!connectivityResult.contains(ConnectivityResult.none)) {
-        await _repository.register(email, password);
+      if (!await _hasNetwork()) {
+        throw Exception('An internet connection is required to register.');
       }
-    } catch (e) {
-      if (e.toString().contains('AuthException')) {
-        state = state.copyWith(
-          status: AuthStatus.unauthenticated,
-          registerError: 'Registration failed: ${e.toString().split('AuthException: ').last}',
-        );
-        return;
-      }
-      debugPrint('Backend registration unavailable; activating offline demo session: $e');
-      state = state.copyWith(errorMessage: 'Backend unavailable. Offline mode activated.');
+      await _repository.register(email.trim(), password);
+
+      // Supabase may require email confirmation. Do not create a fake login.
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        registerError: 'Account created. Check your email to verify it, then sign in.',
+        clearUser: true,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        registerError: error.toString().replaceFirst('Exception: ', ''),
+        clearUser: true,
+      );
     }
-
-    // Automatically log in the newly registered user
-    final displayName = email.contains('@') ? email.split('@').first : 'Learner';
-    final user = User(
-      id: '1',
-      email: email,
-      name: displayName,
-      username: displayName,
-    );
-
-    await _tokenStorage.saveTokens(
-      jwt: 'demo_jwt_token_lingu_ai',
-      refreshToken: 'demo_refresh_token_lingu_ai',
-    );
-    await _tokenStorage.saveUsername(displayName);
-
-    state = state.copyWith(
-      status: AuthStatus.authenticated,
-      user: user,
-      registerError: 'Welcome to LinguAI! Your account is active.',
-    );
   }
 
   Future<void> logout() async {
     try {
       await _repository.logout();
-    } catch (_) {}
-    await _tokenStorage.clearTokens();
-    await _ref
-        .read(premiumStorageProvider.notifier)
-        .applyVerifiedSubscription(active: false);
-    state = state.copyWith(status: AuthStatus.unauthenticated, user: null);
+    } finally {
+      await _tokenStorage.clearTokens();
+      await _clearPremium();
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        clearUser: true,
+      );
+    }
   }
 
   void updateUser(User user) {
@@ -202,9 +165,9 @@ class AuthController extends StateNotifier<AuthState> {
 }
 
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
-  (ref) {
-    final repository = ref.watch(authRepositoryProvider);
-    final tokenStorage = ref.watch(tokenStorageProvider);
-    return AuthController(repository, tokenStorage, ref);
-  },
+  (ref) => AuthController(
+    ref.watch(authRepositoryProvider),
+    ref.watch(tokenStorageProvider),
+    ref,
+  ),
 );
