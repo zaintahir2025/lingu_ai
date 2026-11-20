@@ -13,38 +13,23 @@ class PremiumStorageNotifier extends StateNotifier<bool> {
   static const String _isPremiumKey = 'verified_premium_member_v2';
   static const String _premiumExpiryKey = 'verified_premium_expiry_date_v2';
 
-  PremiumStorageNotifier(this._box) : super(false) {
-    // Local cache is display-only. Server verification refreshes entitlement.
-    refresh();
-  }
-
-  bool get isPremium {
-    final flag = _box.get(_isPremiumKey, defaultValue: false) as bool? ?? false;
-    if (!flag) return false;
-
-    final expiryIso = _box.get(_premiumExpiryKey) as String?;
-    final expiryDate = expiryIso == null ? null : DateTime.tryParse(expiryIso);
-    if (expiryDate == null || !expiryDate.isAfter(DateTime.now())) {
-      _box.put(_isPremiumKey, false);
-      _box.delete(_premiumExpiryKey);
-      return false;
-    }
-    return true;
-  }
-
-  /// Test/admin utility only. Production entitlement must come from the server.
-  @Deprecated('Use applyVerifiedSubscription with a server-verified response.')
-  Future<void> setPremium(bool active) async {
-    if (!active) {
-      await applyVerifiedSubscription(active: false);
-      return;
-    }
-    throw StateError('Premium access can only be granted by server verification.');
-  }
+  // Never trust a Hive flag at startup. Entitlement must be refreshed from
+  // the authenticated server after a session has been restored.
+  PremiumStorageNotifier(this._box) : super(false);
 
   DateTime? get expiryDate {
     final expiryIso = _box.get(_premiumExpiryKey) as String?;
     return expiryIso == null ? null : DateTime.tryParse(expiryIso);
+  }
+
+  @Deprecated('Premium entitlement must be granted by a verified server response.')
+  Future<void> setPremium(bool active) async {
+    if (active) {
+      throw StateError(
+        'Premium access can only be granted by server-side subscription verification.',
+      );
+    }
+    await applyVerifiedSubscription(active: false);
   }
 
   Future<void> applyVerifiedSubscription({
@@ -63,7 +48,8 @@ class PremiumStorageNotifier extends StateNotifier<bool> {
     state = valid;
   }
 
+  /// Local cached entitlement is deliberately not restored as trusted state.
   void refresh() {
-    state = isPremium;
+    state = false;
   }
 }
