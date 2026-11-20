@@ -6,6 +6,7 @@
 begin;
 
 alter table public.profiles alter column is_premium set default false;
+alter table public.profiles add column if not exists date_of_birth date;
 update public.profiles set is_premium = false;
 alter table public.profiles alter column is_premium set not null;
 
@@ -61,7 +62,7 @@ revoke all on public.support_tickets from anon, authenticated;
 revoke all on public.user_flashcards from anon, authenticated;
 
 grant select on public.profiles to authenticated;
-grant update (username, avatar_id, target_language, knowledge_level)
+grant update (username, avatar_id, date_of_birth, target_language, knowledge_level)
   on public.profiles to authenticated;
 grant select on public.user_progress to authenticated;
 grant select, insert on public.support_tickets to authenticated;
