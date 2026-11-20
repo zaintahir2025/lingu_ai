@@ -10,6 +10,7 @@ create table if not exists public.profiles (
   email text unique not null,
   username text,
   avatar_id text default 'piko_head',
+  date_of_birth date,
   target_language text default 'es',
   knowledge_level text default 'beginner',
   role text not null default 'user' check (role in ('user', 'admin')),
@@ -116,7 +117,7 @@ revoke all on public.support_tickets from anon, authenticated;
 revoke all on public.user_flashcards from anon, authenticated;
 
 grant select on public.profiles to authenticated;
-grant update (username, avatar_id, target_language, knowledge_level)
+grant update (username, avatar_id, date_of_birth, target_language, knowledge_level)
   on public.profiles to authenticated;
 
 -- Progress mutations are intentionally not exposed as direct table writes.
