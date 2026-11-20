@@ -104,7 +104,8 @@ class SupabaseUserRepository implements UserRepository {
       username: profile['username'],
       targetLanguage: profile['target_language'],
       knowledgeLevel: profile['knowledge_level'],
-      role: profile['role'] ?? 'user',
+      role: profile['role'] == 'admin' ? 'admin' : 'user',
+      adminAccess: profile['role'] == 'admin',
     );
   }
 }
