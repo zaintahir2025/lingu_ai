@@ -27,7 +27,7 @@ class SupabaseAuthRepository implements AuthRepository {
           .select('username, target_language, knowledge_level, role')
           .eq('id', userId)
           .maybeSingle();
-      if (row is Map) return Map<String, dynamic>.from(row);
+      if (row != null) return Map<String, dynamic>.from(row);
     } catch (_) {
       // Missing profile is treated as a normal learner with incomplete setup.
     }
@@ -82,7 +82,7 @@ class SupabaseAuthRepository implements AuthRepository {
 
     await _tokenStorage.saveTokens(
       jwt: session.accessToken,
-      refreshToken: session.refreshToken,
+      refreshToken: session.refreshToken ?? '',
     );
 
     return _toAppUser(client, supaUser, fallbackEmail: email);
