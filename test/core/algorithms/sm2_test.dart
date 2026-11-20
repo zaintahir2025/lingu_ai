@@ -47,7 +47,7 @@ void main() {
         interval: 6,
       );
       expect(result.repetitions, 3);
-      expect(result.interval, 15); // It still increments but EF drops
+      expect(result.interval, 15);
       expect(result.easinessFactor, 2.36);
     });
 
@@ -72,7 +72,19 @@ void main() {
       );
       expect(result.repetitions, 0);
       expect(result.interval, 1);
-      expect(result.easinessFactor, 1.3); // Cannot drop below 1.3
+      expect(result.easinessFactor, 1.3);
+    });
+
+    test('out-of-range quality is clamped to the 0-5 range', () {
+      final result = calculateSM2(
+        quality: 10,
+        repetitions: 1,
+        easinessFactor: 2.5,
+        interval: 1,
+      );
+      expect(result.repetitions, 2);
+      expect(result.interval, 6);
+      expect(result.easinessFactor, 2.6);
     });
   });
 }
