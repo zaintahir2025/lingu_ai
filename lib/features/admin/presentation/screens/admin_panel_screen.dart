@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/shared/premium_badge.dart';
 import '../../../../core/storage/premium_storage.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../payment/data/payment_repository.dart';
 import '../../data/admin_repository.dart';
 
 class AdminPanelScreen extends ConsumerStatefulWidget {
@@ -433,8 +434,14 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen> {
     try {
       await ref.read(adminRepositoryProvider).setUserPremium(user.id, grant);
       final currentId = ref.read(authControllerProvider).user?.id;
-      if (currentId == user.id || currentId == null) {
-        await ref.read(premiumStorageProvider.notifier).setPremium(grant);
+      if (currentId == user.id) {
+        if (grant) {
+          await ref.read(paymentRepositoryProvider).refreshSubscription();
+        } else {
+          await ref
+              .read(premiumStorageProvider.notifier)
+              .applyVerifiedSubscription(active: false);
+        }
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
