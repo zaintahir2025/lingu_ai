@@ -174,85 +174,26 @@ class AdminRepository {
       final ticketsData = Map<String, dynamic>.from(responses[1].data as Map);
       final systemData = Map<String, dynamic>.from(responses[2].data as Map);
       final auditData = Map<String, dynamic>.from(responses[3].data as Map);
+
       return AdminDashboardData(
         users: (usersData['users'] as List<dynamic>)
-            .map(
-              (item) =>
-                  AdminUser.fromJson(Map<String, dynamic>.from(item as Map)),
-            )
+            .map((item) =>
+                AdminUser.fromJson(Map<String, dynamic>.from(item as Map)))
             .toList(),
         tickets: (ticketsData['tickets'] as List<dynamic>)
-            .map(
-              (item) => AdminSupportTicket.fromJson(
-                Map<String, dynamic>.from(item as Map),
-              ),
-            )
+            .map((item) => AdminSupportTicket.fromJson(
+                Map<String, dynamic>.from(item as Map)))
             .toList(),
         system: AdminSystemStatus.fromJson(systemData),
         auditEvents: (auditData['events'] as List<dynamic>)
-            .map(
-              (item) => AdminAuditEvent.fromJson(
-                Map<String, dynamic>.from(item as Map),
-              ),
-            )
+            .map((item) => AdminAuditEvent.fromJson(
+                Map<String, dynamic>.from(item as Map)))
             .toList(),
       );
-    } catch (e) {
-      return AdminDashboardData(
-        users: [
-          AdminUser(
-            id: 'u1',
-            email: 'admin@linguai.org',
-            username: 'LinguAdmin',
-            premium: true,
-            premiumProvider: 'stripe',
-            premiumExpiresAt: DateTime.now().add(const Duration(days: 30)),
-            role: 'admin',
-            isDisabled: false,
-            isEmailVerified: true,
-            createdAt: DateTime.now().subtract(const Duration(days: 30)),
-          ),
-          AdminUser(
-            id: 'u2',
-            email: 'user@example.com',
-            username: 'LearnerPiko',
-            premium: false,
-            role: 'user',
-            isDisabled: false,
-            isEmailVerified: true,
-            createdAt: DateTime.now().subtract(const Duration(days: 5)),
-          ),
-        ],
-        tickets: [
-          AdminSupportTicket(
-            id: 't1',
-            userEmail: 'user@example.com',
-            username: 'LearnerPiko',
-            category: 'feedback',
-            subject: 'German Pronunciation Feedback',
-            message: 'The German TTS sounds great! Thanks for adding German.',
-            priority: 'low',
-            status: 'open',
-            reply: null,
-            createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-          ),
-        ],
-        system: AdminSystemStatus(
-          testingAdminAccess: true,
-          environment: 'production',
-          integrations: {'stripe': true, 'firebase': true},
-          auditEvents: 1,
-        ),
-        auditEvents: [
-          AdminAuditEvent(
-            id: 'a1',
-            actorEmail: 'admin@linguai.org',
-            action: 'ENABLED_ADMIN_ACCESS',
-            targetType: 'SYSTEM',
-            createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
-          ),
-        ],
-      );
+    } on DioException catch (exception) {
+      throw Exception(_error(exception));
+    } catch (exception) {
+      throw FormatException('Invalid admin dashboard response: $exception');
     }
   }
 
@@ -284,9 +225,6 @@ class AdminRepository {
     try {
       await _dio.patch('/admin/users/$id/premium', data: {'premium': premium});
     } on DioException catch (exception) {
-      if (exception.type == DioExceptionType.connectionError) {
-        return;
-      }
       throw Exception(_error(exception));
     }
   }
