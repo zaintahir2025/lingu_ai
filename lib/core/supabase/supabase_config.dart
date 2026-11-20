@@ -3,19 +3,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseConfig {
-  static const String url = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: 'https://fpilwagdoodgdwgglgxf.supabase.co',
-  );
-
-  static const String publishableKey = String.fromEnvironment(
+  static const String url = String.fromEnvironment('SUPABASE_URL');
+  static const String _publishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
-    defaultValue: 'sb_publishable_p0Gu1RnE7p_vJSwVf5YRdA_wFaTUReE',
+  );
+  static const String _legacyAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
   );
 
-  static bool get isConfigured => url.isNotEmpty && publishableKey.isNotEmpty;
+  static String get publishableKey =>
+      _publishableKey.isNotEmpty ? _publishableKey : _legacyAnonKey;
+
+  static bool get isConfigured =>
+      url.startsWith('https://') && publishableKey.isNotEmpty;
 
   static Future<void> init() async {
+    if (!isConfigured) {
+      debugPrint(
+        'Supabase is not configured. Set SUPABASE_URL and '
+        'SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY).',
+      );
+      return;
+    }
+
     try {
       await Supabase.initialize(
         url: url,
@@ -23,8 +33,9 @@ class SupabaseConfig {
         debug: kDebugMode,
       );
       debugPrint('Supabase initialized successfully.');
-    } catch (e) {
-      debugPrint('Supabase initialization skipped/failed: $e');
+    } catch (error) {
+      // Keep the app bootable, but authentication remains unavailable.
+      debugPrint('Supabase initialization failed: $error');
     }
   }
 }
