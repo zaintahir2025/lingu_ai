@@ -149,7 +149,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           context: context,
           title: 'Message',
           message: next.registerError!,
-          type: next.status == AuthStatus.authenticated
+          type: next.status == AuthStatus.authenticated ||
+                  next.registerError!.startsWith('Account created.')
               ? NotificationType.success
               : NotificationType.error,
         );
