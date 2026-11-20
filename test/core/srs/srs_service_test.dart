@@ -29,5 +29,31 @@ void main() {
       expect(result.repetitions, 0);
       expect(result.intervalDays, 1);
     });
+
+    test('ratings above the supported range are clamped to five', () {
+      final result = SrsService().calculateNextReview(
+        currentEaseFactor: 2.5,
+        currentIntervalDays: 1,
+        currentRepetitions: 1,
+        currentErrorCount: 0,
+        qualityScore: 10,
+      );
+
+      expect(result.repetitions, 2);
+      expect(result.intervalDays, 6);
+      expect(result.easeFactor, 2.6);
+    });
+
+    test('a corrupt zero-day interval never schedules an immediate review', () {
+      final result = SrsService().calculateNextReview(
+        currentEaseFactor: 2.5,
+        currentIntervalDays: 0,
+        currentRepetitions: 2,
+        currentErrorCount: 0,
+        qualityScore: 4,
+      );
+
+      expect(result.intervalDays, 1);
+    });
   });
 }
