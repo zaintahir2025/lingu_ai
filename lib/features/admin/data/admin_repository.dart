@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/api_config.dart';
 import '../../../core/network/dio_client.dart';
 
 class AdminUser {
@@ -155,6 +156,9 @@ class AdminRepository {
   AdminRepository(this._dio);
   final Dio _dio;
 
+  String get _baseUrl =>
+      ApiConfig.baseUrl.replaceFirst(RegExp(r'/+
+
   String _error(DioException exception) {
     final data = exception.response?.data;
     return data is Map && data['error'] is String
@@ -165,10 +169,10 @@ class AdminRepository {
   Future<AdminDashboardData> loadDashboard() async {
     try {
       final responses = await Future.wait([
-        _dio.get('/admin/users'),
-        _dio.get('/admin/support'),
-        _dio.get('/admin/system'),
-        _dio.get('/admin/audit'),
+        _dio.get('$_baseUrl/admin/users'),
+        _dio.get('$_baseUrl/admin/support'),
+        _dio.get('$_baseUrl/admin/system'),
+        _dio.get('$_baseUrl/admin/audit'),
       ]);
       final usersData = Map<String, dynamic>.from(responses[0].data as Map);
       final ticketsData = Map<String, dynamic>.from(responses[1].data as Map);
@@ -199,7 +203,7 @@ class AdminRepository {
 
   Future<void> replyToTicket(String id, String reply) async {
     try {
-      await _dio.patch('/admin/support/$id/reply', data: {'reply': reply});
+      await _dio.patch('$_baseUrl/admin/support/$id/reply', data: {'reply': reply});
     } on DioException catch (exception) {
       throw Exception(_error(exception));
     }
@@ -207,7 +211,7 @@ class AdminRepository {
 
   Future<void> deleteTicket(String id) async {
     try {
-      await _dio.delete('/admin/support/$id');
+      await _dio.delete('$_baseUrl/admin/support/$id');
     } on DioException catch (exception) {
       throw Exception(_error(exception));
     }
@@ -215,7 +219,7 @@ class AdminRepository {
 
   Future<void> setUserDisabled(String id, bool disabled) async {
     try {
-      await _dio.patch('/admin/users/$id/status', data: {'disabled': disabled});
+      await _dio.patch('$_baseUrl/admin/users/$id/status', data: {'disabled': disabled});
     } on DioException catch (exception) {
       throw Exception(_error(exception));
     }
@@ -223,7 +227,98 @@ class AdminRepository {
 
   Future<void> setUserPremium(String id, bool premium) async {
     try {
-      await _dio.patch('/admin/users/$id/premium', data: {'premium': premium});
+      await _dio.patch('$_baseUrl/admin/users/$id/premium', data: {'premium': premium});
+    } on DioException catch (exception) {
+      throw Exception(_error(exception));
+    }
+  }
+
+  Future<void> deleteUser(String id, String confirmationEmail) async {
+    try {
+      await _dio.delete(
+        '/admin/users/$id',
+        data: {'confirmationEmail': confirmationEmail},
+      );
+    } on DioException catch (exception) {
+      throw Exception(_error(exception));
+    }
+  }
+}
+
+final adminRepositoryProvider = Provider<AdminRepository>((ref) {
+  return AdminRepository(ref.watch(dioProvider));
+});
+), '');
+
+  String _error(DioException exception) {
+    final data = exception.response?.data;
+    return data is Map && data['error'] is String
+        ? data['error'] as String
+        : 'The admin service is unavailable.';
+  }
+
+  Future<AdminDashboardData> loadDashboard() async {
+    try {
+      final responses = await Future.wait([
+        _dio.get('$_baseUrl/admin/users'),
+        _dio.get('$_baseUrl/admin/support'),
+        _dio.get('$_baseUrl/admin/system'),
+        _dio.get('$_baseUrl/admin/audit'),
+      ]);
+      final usersData = Map<String, dynamic>.from(responses[0].data as Map);
+      final ticketsData = Map<String, dynamic>.from(responses[1].data as Map);
+      final systemData = Map<String, dynamic>.from(responses[2].data as Map);
+      final auditData = Map<String, dynamic>.from(responses[3].data as Map);
+
+      return AdminDashboardData(
+        users: (usersData['users'] as List<dynamic>)
+            .map((item) =>
+                AdminUser.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList(),
+        tickets: (ticketsData['tickets'] as List<dynamic>)
+            .map((item) => AdminSupportTicket.fromJson(
+                Map<String, dynamic>.from(item as Map)))
+            .toList(),
+        system: AdminSystemStatus.fromJson(systemData),
+        auditEvents: (auditData['events'] as List<dynamic>)
+            .map((item) => AdminAuditEvent.fromJson(
+                Map<String, dynamic>.from(item as Map)))
+            .toList(),
+      );
+    } on DioException catch (exception) {
+      throw Exception(_error(exception));
+    } catch (exception) {
+      throw FormatException('Invalid admin dashboard response: $exception');
+    }
+  }
+
+  Future<void> replyToTicket(String id, String reply) async {
+    try {
+      await _dio.patch('$_baseUrl/admin/support/$id/reply', data: {'reply': reply});
+    } on DioException catch (exception) {
+      throw Exception(_error(exception));
+    }
+  }
+
+  Future<void> deleteTicket(String id) async {
+    try {
+      await _dio.delete('$_baseUrl/admin/support/$id');
+    } on DioException catch (exception) {
+      throw Exception(_error(exception));
+    }
+  }
+
+  Future<void> setUserDisabled(String id, bool disabled) async {
+    try {
+      await _dio.patch('$_baseUrl/admin/users/$id/status', data: {'disabled': disabled});
+    } on DioException catch (exception) {
+      throw Exception(_error(exception));
+    }
+  }
+
+  Future<void> setUserPremium(String id, bool premium) async {
+    try {
+      await _dio.patch('$_baseUrl/admin/users/$id/premium', data: {'premium': premium});
     } on DioException catch (exception) {
       throw Exception(_error(exception));
     }
