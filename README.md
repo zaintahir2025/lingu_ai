@@ -1,6 +1,8 @@
-# LinguAI - Enterprise Grade Gamified AI Language Learning Platform
+# LinguAI - Gamified AI Language Learning App
 
-LinguAI is an industry-grade, cross-platform language learning application engineered with Flutter and Dart Serverpod. The system integrates SuperMemo (SM-2) spaced repetition algorithms, real-time contextual AI tutoring via Google Gemini REST APIs, native speech synthesis, bi-directional localization (English and Urdu), and enterprise security patterns including JWT token rotation and server-verified Stripe monetization.
+LinguAI is a cross-platform Flutter language-learning application with English/Urdu interface localization, vocabulary lessons, quizzes, spaced repetition, progress tracking, speech synthesis and an AI tutor.
+
+> **Integration status:** The repository contains the Flutter client, local Drift database and Supabase client/schema. It does not currently contain the Serverpod/API backend source described in earlier sections of this README. REST-backed AI proxy, XP sync, admin operations and Stripe checkout require a separately deployed compatible API. They must be treated as unavailable until that server is configured and tested. PRO access is fail-closed and must be granted only after server-side payment verification.
 
 Live Web Application: https://zaintahir2025.github.io/lingu_ai/
 GitHub Repository: https://github.com/zaintahir2025/lingu_ai
@@ -21,9 +23,9 @@ LinguAI provides structured lesson tracks, vocabulary data, script practice, and
 * Dynamic right-to-left (RTL) layout switching and localized UI components for navigation, settings, quizzes, flashcards, and modals.
 
 ### 1.3 Adaptive Conversational AI Tutor
-* Contextual language tutoring powered by Google Gemini API integrations.
-* Client-side BYOK (Bring Your Own Key) support alongside server-hosted proxy execution for PRO tier subscribers.
-* Real-time grammar corrections, vocabulary explanations, and natural conversational dialogue practice.
+* Direct Gemini requests using a key supplied and owned by the individual user.
+* Optional API proxy integration through `API_URL`; this requires a separately deployed compatible backend.
+* Grammar corrections, vocabulary explanations, and conversational practice when the selected AI route is configured.
 
 ### 1.4 SuperMemo (SM-2) Spaced Repetition Engine
 * Algorithmic scheduling of review intervals based on user recall performance.
@@ -41,10 +43,10 @@ LinguAI provides structured lesson tracks, vocabulary data, script practice, and
 * Hearts System: Challenge mode with 5 lives vs. Unlimited Hearts for PRO subscribers.
 * Achievements & Leaderboard: Global rank tracking and performance analytics.
 
-### 1.7 Enterprise Security and Administration
-* Role-based access control (RBAC) distinguishing standard users from system administrators.
-* Admin panel (`/admin`) for account management, priority customer support ticketing, system metrics, and security audit logs.
-* Authenticated operations enforced server-side via BCrypt password hashing and JWT access/refresh token rotation.
+### 1.7 Security and Administration
+* Supabase Auth is used when Supabase build-time credentials are configured.
+* Admin role is read from the protected `profiles.role` column; the Flutter route guard is only a UI safeguard.
+* All admin actions must also be authorized by the server. The repository does not include that API implementation, so the admin panel requires a compatible external backend.
 
 ---
 
@@ -56,8 +58,9 @@ LinguAI provides structured lesson tracks, vocabulary data, script practice, and
 * Router: GoRouter (Declarative route tree with auth-guard navigation logic)
 * Local Database: Drift (SQLite) with WebAssembly (WASM) multi-threading for web clients
 * Key-Value Storage: Hive for secure preference and local token caching
-* Backend Server: Dart Serverpod with PostgreSQL data storage
-* Payment Gateway: Stripe Checkout and Webhooks (Server-verified entitlement)
+* Authentication and cloud schema: Supabase
+* Optional REST integrations: external API configured with `API_URL` (server source is not included here)
+* Payments: Stripe endpoints and webhooks must be implemented by the external server before PRO subscriptions can be enabled
 
 ### 2.2 System Directory Structure
 
@@ -87,14 +90,9 @@ lingu_ai/
 │   │   ├── review/          # SM-2 spaced repetition review session
 │   │   └── tutor/           # Conversational AI tutor interface
 │   └── l10n/                # Localization files (app_en.arb, app_ur.arb)
-├── linguai_backend/
-│   └── linguai_backend_server/
-│       ├── lib/
-│       │   ├── src/
-│       │   │   ├── generated/ # Serverpod protocol models
-│       │   │   ├── services/  # Security, mail, and encryption services
-│       │   │   └── web/       # REST API endpoints (api_route.dart)
-│       │   └── server.dart
+├── supabase/
+│   └── migrations/          # Supabase security migrations
+├── supabase_schema.sql      # Supabase tables, triggers and RLS policies
 ├── web/                     # Web deployment entry point, loader, and manifest
 ├── pubspec.yaml
 └── README.md
@@ -120,7 +118,7 @@ Where:
 
 ## 4. API Specification and Authentication
 
-All requests to `/api/v1` require Bearer Token authorization headers except public auth endpoints.
+The Flutter client expects the following REST API contract when `API_URL` is configured. No implementation of this API is included in this repository. All protected routes must validate the bearer token and authorize the user server-side.
 
 ### 4.1 Authentication Endpoints
 * `POST /api/v1/auth/register`: Creates new user account. Auto-verifies account in local/development mode when SMTP host is unconfigured.
@@ -154,20 +152,9 @@ flutter build web --release \
   --dart-define=API_URL=https://your-api-domain.com/api/v1
 ```
 
-### 5.2 Backend Environment Variables (`.env`)
+### 5.2 Supabase and optional API
 
-```ini
-SERVERPOD_PORT=8080
-SERVERPOD_RUN_MODE=development
-DATABASE_HOST=127.0.0.1
-DATABASE_PORT=5432
-DATABASE_NAME=linguai
-DATABASE_USER=postgres
-DATABASE_PASSWORD=postgres_password
-JWT_SECRET=your_secure_jwt_secret_key_here
-PUBLIC_API_URL=http://localhost:3000/api/v1
-PUBLIC_APP_URL=http://localhost:3000
-```
+Pass `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (or `SUPABASE_ANON_KEY`) as `--dart-define` values at build time. Set `API_URL` only when a compatible backend is actually deployed. Never put service-role keys or shared private API keys in a Flutter build.
 
 ---
 
@@ -193,19 +180,9 @@ PUBLIC_APP_URL=http://localhost:3000
    ./tool/start_local_web.sh
    ```
 
-### 6.3 Backend Installation and Execution
-1. Navigate to backend directory:
-   ```bash
-   cd linguai_backend/linguai_backend_server
-   ```
-2. Install backend dependencies:
-   ```bash
-   dart pub get
-   ```
-3. Start database and server instance:
-   ```bash
-   ../../tool/start_local_backend.sh
-   ```
+### 6.3 Backend
+
+No backend source is currently included in this repository. REST-dependent capabilities remain unavailable until a separately maintained server implementing the documented API contract is deployed and supplied through `API_URL`.
 
 ---
 
@@ -218,8 +195,9 @@ The web bundle is compiled to HTML/CSS/WASM JS and deployed to the `gh-pages` br
 flutter build web --release --base-href "/lingu_ai/"
 ```
 
-### 7.2 Containerized Backend Deployment
-The Serverpod backend is packaged using standard Docker containers connected to a managed PostgreSQL cluster (e.g., AWS RDS, GCP Cloud SQL) and deployed via Docker Compose or Kubernetes.
+### 7.2 Backend deployment
+
+Deploy and secure the optional REST API separately. Before enabling payments, admin actions or cloud sync, verify authentication, role checks, rate limits, webhook signatures and subscription status on that server.
 
 ---
 
