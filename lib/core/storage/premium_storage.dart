@@ -4,9 +4,9 @@ import '../local_storage/local_storage_provider.dart';
 
 final premiumStorageProvider =
     StateNotifierProvider<PremiumStorageNotifier, bool>((ref) {
-      final box = ref.watch(localStorageProvider);
-      return PremiumStorageNotifier(box);
-    });
+  final box = ref.watch(localStorageProvider);
+  return PremiumStorageNotifier(box);
+});
 
 class PremiumStorageNotifier extends StateNotifier<bool> {
   final Box _box;
@@ -14,54 +14,46 @@ class PremiumStorageNotifier extends StateNotifier<bool> {
   static const String _premiumExpiryKey = 'verified_premium_expiry_date_v2';
 
   PremiumStorageNotifier(this._box) : super(false) {
-    state = isPremium;
+    // Local cache is display-only. Server verification refreshes entitlement.
+    refresh();
   }
 
-  /// Returns true if the user is a Premium Member AND their subscription has not expired.
   bool get isPremium {
-    final flag =
-        (_box.get(_isPremiumKey, defaultValue: true) as bool?) ?? true;
+    final flag = _box.get(_isPremiumKey, defaultValue: false) as bool? ?? false;
     if (!flag) return false;
 
     final expiryIso = _box.get(_premiumExpiryKey) as String?;
-    if (expiryIso != null) {
-      final expiryDate = DateTime.tryParse(expiryIso);
-      if (expiryDate != null && DateTime.now().isAfter(expiryDate)) {
-        _box.put(_isPremiumKey, false);
-        return false;
-      }
+    final expiryDate = expiryIso == null ? null : DateTime.tryParse(expiryIso);
+    if (expiryDate == null || !expiryDate.isAfter(DateTime.now())) {
+      _box.put(_isPremiumKey, false);
+      _box.delete(_premiumExpiryKey);
+      return false;
     }
     return true;
   }
 
-  /// Sets premium state directly (for testing and admin toggle)
+  /// Test/admin utility only. Production entitlement must come from the server.
+  @Deprecated('Use applyVerifiedSubscription with a server-verified response.')
   Future<void> setPremium(bool active) async {
-    await _box.put(_isPremiumKey, active);
-    if (active) {
-      final expiryDate = DateTime.now().add(const Duration(days: 365));
-      await _box.put(_premiumExpiryKey, expiryDate.toIso8601String());
-    } else {
-      await _box.delete(_premiumExpiryKey);
+    if (!active) {
+      await applyVerifiedSubscription(active: false);
+      return;
     }
-    state = active;
+    throw StateError('Premium access can only be granted by server verification.');
   }
 
-  /// Returns the DateTime when the current 1-month premium pass expires, if active.
   DateTime? get expiryDate {
     final expiryIso = _box.get(_premiumExpiryKey) as String?;
-    if (expiryIso != null) {
-      return DateTime.tryParse(expiryIso);
-    }
-    return null;
+    return expiryIso == null ? null : DateTime.tryParse(expiryIso);
   }
 
-  /// Applies subscription state that has already been verified by the backend.
   Future<void> applyVerifiedSubscription({
     required bool active,
     DateTime? expiresAt,
   }) async {
-    final valid =
-        active && expiresAt != null && expiresAt.isAfter(DateTime.now());
+    final valid = active &&
+        expiresAt != null &&
+        expiresAt.isAfter(DateTime.now());
     await _box.put(_isPremiumKey, valid);
     if (valid) {
       await _box.put(_premiumExpiryKey, expiresAt.toIso8601String());
@@ -71,7 +63,6 @@ class PremiumStorageNotifier extends StateNotifier<bool> {
     state = valid;
   }
 
-  /// Refreshes state from Hive
   void refresh() {
     state = isPremium;
   }
